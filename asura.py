@@ -12,26 +12,27 @@ import asyncio
 import subprocess
 from pathlib import Path
 
-# ─── Setup Pathing (Cross-platform) ───
-BASE_DIR = Path(__file__).parent.absolute()
+# ─── Setup Pathing (Cross-platform & Symlink Aware) ───
+# Use Path(__file__).resolve() to follow symlinks to the actual project folder
+BASE_DIR = Path(__file__).resolve().parent
 SRC_DIR = BASE_DIR / "src"
 VENV_DIR = BASE_DIR / ".venv"
 
-# Inject paths
+# Force current working directory to the project root for UV operations
+os.chdir(str(BASE_DIR))
+
+# Inject paths early
 sys.path.insert(0, str(BASE_DIR))
 sys.path.insert(0, str(SRC_DIR))
 
-# ─── Early Imports (Bootstrap) ───
-try:
-    from cli.bootstrap import is_venv_ready, setup_venv, install_deps
-except ImportError:
-    # If imports fail, we might not be in the right dir or venv is totally broken
-    # We'll try to find them manually if needed, but standard install should work
-    pass
+def is_venv_ready():
+    """Check if the virtual environment exists and is healthy."""
+    if os.name == "nt":
+        return (VENV_DIR / "Scripts" / "python.exe").exists()
+    return (VENV_DIR / "bin" / "python").exists()
 
 def reexecute_in_venv():
     """Ensure we are running inside the project virtual environment."""
-    # Check if already in venv
     if os.environ.get("VIRTUAL_ENV") == str(VENV_DIR):
         return
 
@@ -44,13 +45,12 @@ def reexecute_in_venv():
     if python_exe.exists():
         # Re-execute with the venv python
         os.environ["VIRTUAL_ENV"] = str(VENV_DIR)
-        # Clear PYTHONPATH to avoid host leakage
         env = os.environ.copy()
-        if "PYTHONPATH" in env:
-            del env["PYTHONPATH"]
+        # Keep PYTHONPATH for src access
+        env["PYTHONPATH"] = f"{BASE_DIR}:{SRC_DIR}:{env.get('PYTHONPATH', '')}"
         
         try:
-            # sys.argv[0] is this script (asura.py)
+            # sys.argv[0] is the script path
             os.execve(str(python_exe), [str(python_exe)] + sys.argv, env)
         except Exception as e:
             print(f"⚠️ Re-execution failed: {e}. Attempting to continue...")
@@ -62,8 +62,7 @@ def _send_notification(title: str, body: str, icon: str = "📢"):
         msg = f"{icon} <b>{title}</b>\n\n{body}"
         notify_master(msg)
         return True
-    except Exception as e:
-        print(f"❌ Notification failed: {e}")
+    except Exception:
         return False
 
 def main():
@@ -81,18 +80,15 @@ def main():
 
     args = parser.parse_args()
 
-    # Step 1: Bootstrap check
-    if args.setup or not is_venv_ready(VENV_DIR):
-        print("🌱 ASURA: Initializing Environment...")
-        if not setup_venv(BASE_DIR, VENV_DIR):
-            print("❌ Venv setup failed.")
+    # Step 1: Bootstrap check (Internalized logic to avoid NameErrors)
+    if not is_venv_ready():
+        print("🌱 ASURA: Initializing Environment (UV Sync)...")
+        try:
+            # We use 'uv' directly as it's our project standard
+            subprocess.run(["uv", "sync", "--all-extras"], cwd=BASE_DIR, check=True)
+        except Exception as e:
+            print(f"❌ Failed to initialize venv: {e}")
             sys.exit(1)
-        if not install_deps(BASE_DIR):
-            print("❌ Dependencies installation failed.")
-            sys.exit(1)
-        if args.setup:
-            print("✅ Setup complete.")
-            sys.exit(0)
 
     # Step 2: Ensure VENV execution
     reexecute_in_venv()
@@ -102,8 +98,8 @@ def main():
         from rich.console import Console
         console = Console()
         from cli.main_entry import run_standalone_task, run_interactive_cli
-    except ImportError:
-        print("❌ Critical modules missing. Try running with --setup.")
+    except ImportError as e:
+        print(f"❌ Critical modules missing: {e}. Try running with --setup.")
         sys.exit(1)
 
     if args.command:
