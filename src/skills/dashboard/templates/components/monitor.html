@@ -1,0 +1,38 @@
+<!-- Unified Monitor Component -->
+<div id="page-unified-monitor" class="page">
+    <div class="monitor-container">
+        <header class="page-header">
+            <div class="flex-between">
+                <div>
+                    <h1 class="section-title">Unified Monitor</h1>
+                    <p class="tagline">REAL-TIME SYSTEM METRICS, ACTIVE JOBS, AND VCS HISTORY</p>
+                </div>
+                <div class="header-actions">
+                    <select id="monitor-filter" class="input-field" style="width: 150px;" onchange="loadUnifiedMonitor()">
+                        <option value="resources">Resource Usage</option>
+                        <option value="jobs">Active Jobs</option>
+                        <option value="vcs">VCS History</option>
+                    </select>
+                    <button class="btn-premium" onclick="loadUnifiedMonitor()">
+                        <span class="material-symbols-outlined">restart_alt</span>
+                        Refresh
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div id="monitor-content" class="monitor-grid">
+            <!-- Content injected via JS -->
+        </div>
+
+        <div id="monitor-details" class="monitor-details glass-card" style="display: none;">
+            <header class="panel-header">
+                <span class="material-symbols-outlined" style="color: var(--primary);">info</span>
+                <h3>Details</h3>
+            </header>
+            <div class="code-viewport">
+                <pre id="monitor-details-content" class="monitor-json"></pre>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,62 @@
+<!-- Inference Trace Component -->
+<div id="page-trace" class="page hidden flex-col w-full gap-8">
+    <!-- Header Widget -->
+    <header class="flex items-center justify-between bg-white border border-zinc-200 rounded-2xl p-10 shadow-sm">
+        <div class="flex items-center gap-5">
+            <div class="w-12 h-12 bg-zinc-950 text-white rounded-xl flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">radar</span>
+            </div>
+            <div>
+                <h1 class="text-4xl font-black tracking-tight text-zinc-900">Inference Trace</h1>
+                <p class="text-zinc-400 mt-1 text-[10px] font-bold tracking-[0.2em] uppercase">Sovereign Monitoring Active</p>
+            </div>
+        </div>
+        <span class="px-4 py-1.5 bg-black text-white text-[9px] font-black rounded-xl tracking-[0.2em] uppercase">Live Stream</span>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Drafts Gallery Widget -->
+        <aside class="w-full lg:w-72 flex flex-col gap-4">
+            <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm text-zinc-500">folder_open</span>
+                        <h2 class="text-sm font-black uppercase tracking-widest text-zinc-900">Drafts Gallery</h2>
+                    </div>
+                    <span class="bg-black text-white text-[9px] font-black px-2 py-0.5 rounded-lg">
+                        <span id="draftsCountBadge">0</span>
+                    </span>
+                </div>
+                <div id="draftsGallery" class="flex flex-col gap-3 max-h-[500px] overflow-y-auto custom-scrollbar">
+                    <div class="text-center py-8 text-zinc-200">
+                        <span class="material-symbols-outlined text-3xl">folder_open</span>
+                        <p class="text-[9px] font-black uppercase tracking-widest mt-2">No Drafts</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Terminal Widget -->
+        <main class="flex-1 bg-zinc-950 rounded-2xl border border-zinc-900 shadow-2xl flex flex-col overflow-hidden min-h-[600px]">
+            <div class="px-8 py-5 bg-zinc-900 flex items-center justify-between border-b border-zinc-800">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-sm text-zinc-400">terminal</span>
+                    <h3 class="text-[11px] font-black text-zinc-300 uppercase tracking-widest">Recent Inference Trace</h3>
+                </div>
+                <div class="flex gap-2">
+                    <div class="w-2.5 h-2.5 rounded-full bg-zinc-800"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-zinc-800"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-zinc-600 animate-pulse"></div>
+                </div>
+            </div>
+
+            <div id="traceTerminal" class="flex-1 p-8 overflow-y-auto font-mono text-xs text-zinc-500 space-y-3 custom-scrollbar scroll-smooth leading-relaxed">
+                <div id="traceLogsContainer" class="space-y-3">
+                    <span class="text-zinc-700 italic">Awaiting sovereign telemetry...</span>
+                </div>
+                <div id="traceBlinkingCursor" class="text-zinc-700 hidden animate-pulse">_</div>
+            </div>
+        </main>
+    </div>
+</div>

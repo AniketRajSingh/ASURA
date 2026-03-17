@@ -1,0 +1,256 @@
+{
+  "_comment": "ASURA Model Registry \u2014 Edit this file to add/update model capabilities",
+  "_version": "1.0",
+  "gpt-oss:20b": {
+    "display_name": "GPT-OSS 20B",
+    "architecture": "dense",
+    "total_params": "20B",
+    "active_params": null,
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "languages": 15,
+    "multimodal": {
+      "enabled": false,
+      "image": false,
+      "video": false,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": true
+    },
+    "provider_hints": {}
+  },
+  "qwen3.5:0.8b": {
+    "display_name": "Qwen3.5 0.8B Vision Draft",
+    "architecture": "dense",
+    "total_params": "1B",
+    "active_params": null,
+    "context_window": 32768,
+    "max_output_tokens": 2048,
+    "languages": 29,
+    "multimodal": {
+      "enabled": true,
+      "image": true,
+      "video": true,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": false,
+      "agentic": false
+    },
+    "provider_hints": {}
+  },
+  "qwen3.5:35b": {
+    "display_name": "Qwen3.5 35B-A3B",
+    "architecture": "moe",
+    "total_params": "35B",
+    "active_params": "3B",
+    "context_window": 262144,
+    "max_output_tokens": 8192,
+    "languages": 201,
+    "multimodal": {
+      "enabled": true,
+      "image": true,
+      "video": true,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": true,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": true
+    },
+    "provider_hints": {
+      "sglang": {
+        "served_model_name": "qwen3.5:35b"
+      }
+    }
+  },
+  "qwen3-32b": {
+    "display_name": "Qwen3 32B",
+    "architecture": "dense",
+    "total_params": "32B",
+    "active_params": null,
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "languages": 29,
+    "multimodal": {
+      "enabled": false,
+      "image": false,
+      "video": false,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": true,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": true
+    },
+    "provider_hints": {
+      "sglang": {
+        "quantization": "awq",
+        "served_model_name": "qwen3-32b"
+      }
+    }
+  },
+  "qwen3.5-9b": {
+    "display_name": "Qwen3.5 9B",
+    "architecture": "dense",
+    "total_params": "9B",
+    "active_params": null,
+    "context_window": 262144,
+    "max_output_tokens": 8192,
+    "languages": 201,
+    "multimodal": {
+      "enabled": true,
+      "image": true,
+      "video": true,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": true,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": true
+    },
+    "provider_hints": {}
+  },
+  "glm-4.7-flash": {
+    "display_name": "GLM 4.7 Flash",
+    "architecture": "moe",
+    "total_params": "30B",
+    "active_params": "3B",
+    "context_window": 200000,
+    "max_output_tokens": 8192,
+    "languages": 2,
+    "multimodal": {
+      "enabled": false,
+      "image": false,
+      "video": false,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": true
+    },
+    "provider_hints": {}
+  },
+  "mistral-small-24b": {
+    "display_name": "Mistral Small 3.1 24B",
+    "architecture": "dense",
+    "total_params": "24B",
+    "active_params": null,
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "languages": 12,
+    "multimodal": {
+      "enabled": false,
+      "image": false,
+      "video": false,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": true
+    },
+    "provider_hints": {}
+  },
+  "llama-3.3-70b-versatile": {
+    "display_name": "Llama 3.3 70B (Groq)",
+    "architecture": "dense",
+    "total_params": "70B",
+    "active_params": null,
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "languages": 8,
+    "multimodal": {
+      "enabled": false,
+      "image": false,
+      "video": false,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": true,
+      "agentic": false
+    },
+    "provider_hints": {
+      "groq": {
+        "model_id": "llama-3.3-70b-versatile"
+      }
+    }
+  },
+  "llama-3.1-8b-instant": {
+    "display_name": "Llama 3.1 8B Instant (Groq)",
+    "architecture": "dense",
+    "total_params": "8B",
+    "active_params": null,
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "languages": 8,
+    "multimodal": {
+      "enabled": false,
+      "image": false,
+      "video": false,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": false,
+      "agentic": false
+    },
+    "provider_hints": {
+      "groq": {
+        "model_id": "llama-3.1-8b-instant"
+      }
+    }
+  },
+  "_providers": {
+    "ollama": {
+      "base_url": "http://127.0.0.1:11434",
+      "api_style": "ollama"
+    },
+    "sglang": {
+      "base_url": "http://127.0.0.1:11435",
+      "api_style": "openai"
+    },
+    "groq": {
+      "base_url": "https://api.groq.com/openai/v1",
+      "api_style": "openai"
+    }
+  },
+  "_embedding": {
+    "model": "nomic-embed-text",
+    "provider": "ollama",
+    "endpoint": "/api/embed"
+  }
+}

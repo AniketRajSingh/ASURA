@@ -1,0 +1,55 @@
+<!-- Persona Editor Component -->
+<div id="page-persona" class="page hidden flex-col w-full gap-8">
+    <!-- Header Widget -->
+    <header class="flex justify-between items-center bg-white border border-zinc-200 rounded-2xl p-10 shadow-sm">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-zinc-900">Persona Matrix</h1>
+            <p class="text-zinc-400 mt-2 text-[10px] font-bold tracking-[0.2em] uppercase">Configure Primary Directives & Behavioral Constraints</p>
+        </div>
+        <button onclick="savePersona()" class="bg-black text-white px-10 py-3.5 rounded-xl flex items-center gap-3 hover:bg-zinc-900 transition-all font-black text-sm shadow-2xl active:scale-95">
+            <span class="material-symbols-outlined">save_as</span>
+            DEPLOY PROFILE
+        </button>
+    </header>
+
+    <!-- Dual Pane Editor -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[580px]">
+        <!-- Primary Directives Widget -->
+        <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+            <header class="px-8 py-5 bg-zinc-50/30 border-b border-zinc-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-zinc-950 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined text-white text-sm">terminal</span>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-zinc-900 uppercase tracking-tight">Primary Directives</h3>
+                        <p class="text-[9px] text-zinc-400 font-bold tracking-widest uppercase">SYS_CORE_01</p>
+                    </div>
+                </div>
+                <span class="bg-black text-white text-[9px] font-black px-3 py-1 rounded-lg tracking-wider uppercase">Active</span>
+            </header>
+            <textarea id="persona-directives" 
+                      class="flex-1 p-8 font-mono text-xs text-zinc-700 outline-none resize-none placeholder:text-zinc-300 leading-relaxed bg-white focus:bg-zinc-50/50 transition-colors custom-scrollbar" 
+                      placeholder="Enter core operational directives&#10;&#10;Example:&#10;- Always prioritize user safety&#10;- Maintain sovereign data integrity&#10;- Operate within ethical constraints"></textarea>
+        </div>
+
+        <!-- Behavioral Constraints Widget -->
+        <div class="bg-zinc-950 border border-zinc-900 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <header class="px-8 py-5 bg-zinc-900 border-b border-zinc-800 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-white/5 rounded-xl flex items-center justify-center border border-zinc-800">
+                        <span class="material-symbols-outlined text-zinc-300 text-sm">gavel</span>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-sm text-zinc-200 uppercase tracking-tight">Behavioral Constraints</h3>
+                        <p class="text-[9px] text-zinc-600 font-bold tracking-widest uppercase">ETHICS_MODULE_B</p>
+                    </div>
+                </div>
+                <span class="bg-zinc-800 text-zinc-400 text-[9px] font-black px-3 py-1 rounded-lg tracking-wider uppercase">Enforced</span>
+            </header>
+            <textarea id="persona-constraints" 
+                      class="flex-1 p-8 font-mono text-xs text-zinc-400 outline-none resize-none placeholder:text-zinc-700 leading-relaxed bg-zinc-950 focus:bg-zinc-900/30 transition-colors custom-scrollbar" 
+                      placeholder="# Define ethical boundaries...&#10;&#10;Example:&#10;- No harmful content generation&#10;- Respect user privacy&#10;- Transparent reasoning always"></textarea>
+        </div>
+    </div>
+</div>

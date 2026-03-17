@@ -1,0 +1,96 @@
+<div id="page-voice" class="page hidden flex-col w-full gap-8">
+    <!-- Header Widget -->
+    <header class="flex justify-between items-center bg-white border border-zinc-200 rounded-2xl p-10 shadow-sm">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-zinc-900">Voice Portal</h1>
+            <p class="text-zinc-400 mt-2 text-[10px] font-bold tracking-[0.2em] uppercase">Neural Audio Interface & Command Link</p>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="voice-latency" class="px-4 py-2 bg-zinc-50 border border-zinc-100 rounded-xl text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                Latency: <span class="text-zinc-900">-- ms</span>
+            </div>
+            <button onclick="toggleVoice()" class="bg-black text-white px-8 py-3 rounded-xl flex items-center gap-2 hover:bg-zinc-900 transition-all font-bold text-sm shadow-xl active:scale-95 group">
+                <span class="material-symbols-outlined text-lg group-active:rotate-180 transition-transform">mic</span>
+                Establish Link
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Portal Workspace -->
+    <div class="flex-1 min-h-[600px] bg-zinc-950 rounded-[2.5rem] border border-zinc-900 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center p-12">
+        <!-- Abstract Background Orbs -->
+        <div class="absolute top-[-10%] left-[-10%] w-96 h-96 bg-zinc-800/10 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-zinc-800/10 rounded-full blur-[120px]"></div>
+        
+        <!-- The Core Orb -->
+        <div class="relative w-64 h-64 flex items-center justify-center">
+            <!-- Pulsing Rings -->
+            <div class="absolute inset-0 border-2 border-zinc-800 rounded-full animate-[ping_3s_linear_infinite] opacity-20"></div>
+            <div class="absolute inset-4 border border-zinc-700 rounded-full animate-[ping_4s_linear_infinite_reverse] opacity-10"></div>
+            
+            <!-- Main Responsive Orb -->
+            <div id="voice-orb" class="w-48 h-48 bg-zinc-900 rounded-full border-4 border-zinc-800 shadow-[0_0_80px_rgba(255,255,255,0.05)] flex items-center justify-center transition-all duration-500 overflow-hidden relative group">
+                <!-- Inner Glow -->
+                <div class="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent opacity-50"></div>
+                
+                <!-- Dynamic Waveform Container -->
+                <div id="waveform" class="flex items-center gap-1.5 h-12">
+                    <div class="w-1.5 h-4 bg-zinc-700 rounded-full animate-bounce" style="animation-duration: 0.8s;"></div>
+                    <div class="w-1.5 h-8 bg-zinc-600 rounded-full animate-bounce" style="animation-duration: 1.2s;"></div>
+                    <div class="w-1.5 h-12 bg-zinc-400 rounded-full animate-bounce" style="animation-duration: 0.6s;"></div>
+                    <div class="w-1.5 h-6 bg-zinc-600 rounded-full animate-bounce" style="animation-duration: 1.0s;"></div>
+                    <div class="w-1.5 h-3 bg-zinc-800 rounded-full animate-bounce" style="animation-duration: 1.4s;"></div>
+                </div>
+            </div>
+
+            <!-- Status Ring Label -->
+            <div id="orb-status-text" class="absolute -bottom-16 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-black tracking-[0.4em] text-zinc-600 uppercase">
+                Ready for Handshake
+            </div>
+        </div>
+
+        <!-- Transcription Floating Panel -->
+        <div class="absolute bottom-12 left-12 right-12 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-3xl p-8 max-h-48 overflow-y-auto custom-scrollbar shadow-2xl">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-2 h-2 bg-zinc-500 rounded-full animate-pulse"></div>
+                <span class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Neural Stream</span>
+            </div>
+            <div id="transcript" class="text-zinc-200 text-sm font-medium leading-relaxed font-mono opacity-80">
+                Awaiting audio input...
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes ping {
+  75%, 100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+</style>
+
+<script>
+function toggleVoice() {
+    const orb = document.getElementById('voice-orb');
+    const statusText = document.getElementById('orb-status-text');
+    const transcript = document.getElementById('transcript');
+    
+    if (statusText.textContent.includes('READY') || statusText.textContent.includes('IDLE')) {
+        statusText.textContent = 'Listening...';
+        statusText.classList.replace('text-zinc-600', 'text-white');
+        orb.classList.add('shadow-[0_0_120px_rgba(255,255,255,0.15)]', 'scale-110', 'border-white/20');
+        transcript.innerHTML = '<span class="text-zinc-500 italic">Neural interface established. Monitoring audio...</span>';
+        showToast('🎙️ Voice link established', false);
+    } else {
+        statusText.textContent = 'Syncing...';
+        setTimeout(() => {
+            statusText.textContent = 'Ready for Handshake';
+            statusText.classList.replace('text-white', 'text-zinc-600');
+            orb.classList.remove('shadow-[0_0_120px_rgba(255,255,255,0.15)]', 'scale-110', 'border-white/20');
+            showToast('✅ Processing complete', false);
+        }, 1500);
+    }
+}
+</script>

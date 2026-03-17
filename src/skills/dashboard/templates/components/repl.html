@@ -1,0 +1,92 @@
+<!-- Python Live REPL Component -->
+<div id="page-repl" class="page hidden flex-col w-full h-[calc(100vh-96px)] gap-6">
+    <!-- Header Widget -->
+    <header class="flex justify-between items-center bg-white border border-zinc-200 rounded-2xl p-8 shadow-sm">
+        <div class="flex items-center gap-5">
+            <div class="w-12 h-12 bg-zinc-950 text-white rounded-xl flex items-center justify-center font-black text-sm tracking-tight">PY</div>
+            <div>
+                <h1 class="text-2xl font-black tracking-tight text-zinc-900">Kernel Live REPL</h1>
+                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-[0.2em] mt-1">ASURA_REPL_NODE — Direct Execution Engine</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-8">
+            <div class="flex flex-col items-end">
+                <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></span>
+                    <span class="text-sm font-black text-zinc-900" id="replTime">0.00s</span>
+                </div>
+                <span class="text-[9px] text-zinc-400 uppercase font-bold tracking-widest">Inference Time</span>
+            </div>
+            <button onclick="executeRepl()" class="bg-black text-white px-10 py-3.5 rounded-xl flex items-center gap-3 hover:bg-zinc-900 transition-all font-black text-sm shadow-2xl active:scale-95">
+                <span class="material-symbols-outlined">bolt</span>
+                EXECUTE
+            </button>
+        </div>
+    </header>
+
+    <!-- Editor + Output Grid -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0">
+        <!-- Editor Widget -->
+        <div class="flex flex-col bg-zinc-950 rounded-2xl border border-zinc-900 shadow-2xl overflow-hidden">
+            <div class="px-6 py-3 bg-zinc-900 flex items-center justify-between border-b border-zinc-800">
+                <div class="flex gap-2">
+                    <div class="w-3 h-3 rounded-full bg-zinc-700 hover:bg-red-500 transition-colors cursor-pointer"></div>
+                    <div class="w-3 h-3 rounded-full bg-zinc-700 hover:bg-yellow-500 transition-colors cursor-pointer"></div>
+                    <div class="w-3 h-3 rounded-full bg-zinc-700 hover:bg-green-500 transition-colors cursor-pointer"></div>
+                </div>
+                <span class="text-[10px] text-zinc-500 font-mono font-bold uppercase tracking-widest">mission_code.py</span>
+                <span class="text-[9px] text-zinc-600 font-bold uppercase">Python 3.11</span>
+            </div>
+            
+            <div class="flex-1 flex overflow-hidden">
+                <div id="replLineNumbers" class="w-14 bg-zinc-950 border-r border-zinc-900 py-5 text-center text-zinc-700 font-mono text-xs select-none leading-6">
+                    <div>1</div>
+                </div>
+                <textarea id="replCode" oninput="updateReplLines()" 
+                          class="flex-1 bg-zinc-950 p-5 text-zinc-300 font-mono text-sm outline-none resize-none custom-scrollbar placeholder:text-zinc-800 leading-6" 
+                          spellcheck="false" 
+                          placeholder="# Sovereign payload awaiting execution..."></textarea>
+            </div>
+        </div>
+
+        <!-- Output Widget -->
+        <div class="flex flex-col bg-black rounded-2xl border border-zinc-900 shadow-2xl overflow-hidden">
+            <div class="px-6 py-3 bg-zinc-950 flex items-center justify-between border-b border-zinc-900">
+                <div class="flex items-center gap-3 text-zinc-500">
+                    <span class="material-symbols-outlined text-sm">terminal</span>
+                    <span class="text-[10px] font-mono font-black uppercase tracking-widest">Standard Output</span>
+                </div>
+                <button onclick="document.getElementById('replOutput').innerHTML=''" class="text-zinc-700 hover:text-zinc-400 transition-colors p-1 rounded-lg hover:bg-zinc-900">
+                    <span class="material-symbols-outlined text-sm">delete_sweep</span>
+                </button>
+            </div>
+            <div id="replOutput" class="flex-1 p-8 overflow-y-auto font-mono text-xs text-zinc-500 space-y-2 custom-scrollbar scroll-smooth leading-relaxed">
+                <div class="text-zinc-700 tracking-tight italic">ASURA KERNEL [Build 4.0.1] — Ready for transmission...</div>
+            </div>
+            <div class="px-6 py-3 bg-zinc-950/80 border-t border-zinc-900 flex justify-between items-center">
+                <div class="flex gap-4">
+                    <span class="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Pipe: Active</span>
+                    <span class="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Stream: Live</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-1.5 h-1.5 bg-zinc-700 rounded-full animate-pulse"></div>
+                    <span class="text-[9px] font-black text-zinc-700 uppercase">Idle</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function updateReplLines() {
+        const textarea = document.getElementById('replCode');
+        const lines = textarea.value.split('\n').length;
+        const lineNumbers = document.getElementById('replLineNumbers');
+        let html = '';
+        const displayLines = Math.max(lines, 1);
+        for (let i = 1; i <= displayLines; i++) {
+            html += `<div class="leading-6">${i}</div>`;
+        }
+        lineNumbers.innerHTML = html;
+    }
+</script>

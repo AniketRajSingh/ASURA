@@ -1,0 +1,20 @@
+# System health check workflow
+name: health_check
+description: "Full system health audit: disk, memory, processes, and services"
+steps:
+  - name: disk_check
+    tool: shell
+    input: "df -h / | tail -1"
+
+  - name: memory_check
+    tool: shell
+    input: "vm_stat | head -5"
+
+  - name: process_check
+    tool: shell
+    input: "ps aux | head -10"
+
+  - name: report
+    tool: system_info
+    input: "full"
+    depends_on: [disk_check, memory_check, process_check]

@@ -1,0 +1,49 @@
+[project]
+name = "tf"
+version = "4.0.0"
+description = "Self-Updating AI Agent"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4",
+    "cloudinary",
+    "cryptography",
+    "duckduckgo-search",
+    "faiss-cpu",
+    "fastapi",
+    "html2image",
+    "psutil",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "python-telegram-bot[job-queue]>=20.0",
+    "requests",
+    "sentence-transformers",
+    "structlog",
+    "uvicorn",
+    "PyJWT",
+    "PyPDF2",
+    "rich>=13.0",
+    "textual>=0.40.0",
+    "watchdog>=6.0.0",
+    "faster-whisper>=1.2.1",
+    "kokoro>=0.9.4",
+    "soundfile>=0.13.1",
+    "torch>=2.10.0",
+    "numpy>=2.4.2",
+    "python-multipart>=0.0.22",
+    "pyautogui>=0.9.54",
+]
+
+[project.optional-dependencies]
+browser = ["playwright"]
+voice = ["openai-whisper", "sounddevice", "soundfile"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/skills", "src/core", "src/cli"]
+
+[project.scripts]
+asura = "asura.cli:main"

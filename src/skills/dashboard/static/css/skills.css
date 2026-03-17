@@ -1,0 +1,53 @@
+/* Skill Registry — Monochrome Refinement */
+.skills-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.panel-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.panel-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-muted);
+}
+
+.code-viewport {
+    background: var(--bg-alt);
+    border-radius: 8px;
+    padding: 20px;
+    max-height: 500px;
+    overflow: auto;
+}
+
+.skill-source {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text);
+}

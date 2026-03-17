@@ -1,0 +1,109 @@
+<!-- Long-Term Memory Component -->
+<div id="page-memory" class="page hidden flex-col w-full gap-8">
+    <header class="flex justify-between items-center bg-white border border-zinc-200 rounded-2xl p-10 shadow-sm">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-zinc-900">Latent Space Archival</h1>
+            <p class="text-zinc-400 mt-2 text-[10px] font-bold tracking-[0.2em] uppercase">Real-time RAG Retrieval & Vector Storage</p>
+        </div>
+        <button class="bg-black text-white px-8 py-3 rounded-xl flex items-center gap-2 hover:bg-zinc-900 transition-all font-bold text-sm shadow-xl" onclick="loadMemory()">
+            <span class="material-symbols-outlined text-lg">sync</span>
+            Sync Latent Space
+        </button>
+    </header>
+
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Main Fragment Grid -->
+        <div class="flex-1 flex flex-col gap-6">
+            <!-- Search & Filter Widget -->
+            <div class="bg-white border border-zinc-200 rounded-2xl shadow-sm overflow-hidden">
+                <div class="flex justify-between items-center px-8 py-5 border-b border-zinc-100 bg-zinc-50/30">
+                    <div class="flex gap-4">
+                        <button id="tab-rag" class="memory-tab active" onclick="switchMemoryTab('rag')">
+                            <span class="text-[10px] font-black uppercase tracking-widest">Latent RAG</span>
+                        </button>
+                        <button id="tab-vault" class="memory-tab" onclick="switchMemoryTab('vault')">
+                            <span class="text-[10px] font-black uppercase tracking-widest">Sovereign Vault</span>
+                        </button>
+                        <button id="tab-episodic" class="memory-tab" onclick="switchMemoryTab('episodic')">
+                            <span class="text-[10px] font-black uppercase tracking-widest">Episodic Trace</span>
+                        </button>
+                    </div>
+                    <div class="relative w-64">
+                        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 text-sm">search</span>
+                        <input id="memorySearch" class="w-full bg-white border border-zinc-200 rounded-xl pl-10 pr-4 py-2 text-[10px] font-bold outline-none focus:ring-2 focus:ring-zinc-100 focus:border-black transition-all placeholder:text-zinc-300" placeholder="Query vectors..." />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fragment View Containers -->
+            <div id="memory-rag-list" class="memory-container grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[620px] overflow-y-auto custom-scrollbar p-1">
+                <!-- RAG content -->
+            </div>
+            <div id="memory-vault-list" class="memory-container hidden grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[620px] overflow-y-auto custom-scrollbar p-1">
+                <!-- Vault content -->
+            </div>
+            <div id="memory-episodic-list" class="memory-container hidden flex flex-col gap-3 max-h-[620px] overflow-y-auto custom-scrollbar p-1">
+                <!-- Episodic content -->
+            </div>
+        </div>
+
+        <!-- Intelligence Sidebar -->
+        <aside class="w-full lg:w-80 flex flex-col gap-6">
+            <!-- Metrics Widget -->
+            <div class="bg-white border border-zinc-200 rounded-2xl p-8 shadow-sm flex flex-col gap-8">
+                <div class="flex items-center gap-3 border-b border-zinc-100 pb-6">
+                    <div class="w-10 h-10 bg-zinc-50 rounded-xl flex items-center justify-center border border-zinc-100">
+                        <span class="material-symbols-outlined text-lg text-zinc-600">monitoring</span>
+                    </div>
+                    <h2 class="font-black text-sm uppercase tracking-widest text-zinc-800">Intelligence Metrics</h2>
+                </div>
+
+                <div class="space-y-8">
+                    <div>
+                        <div class="flex justify-between items-end mb-1">
+                            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Global Tensors</span>
+                            <span id="mem-count" class="text-3xl font-black text-zinc-900">0</span>
+                        </div>
+                        <p class="text-[10px] text-zinc-300 border-t border-zinc-50 pt-2 font-medium">Active Semantic Embeddings</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-3">
+                            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Freshness Index</span>
+                            <span id="mem-freshness" class="text-sm font-black text-zinc-900">0%</span>
+                        </div>
+                        <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+                            <div id="mem-freshness-bar" class="bg-black h-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                        </div>
+                        <p id="mem-last-index" class="text-[9px] font-black text-zinc-400 mt-3 font-mono uppercase tracking-tighter">Last indexed: Recently</p>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-zinc-100 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Vector Core</span>
+                        <span class="flex items-center gap-2 text-[10px] font-black text-zinc-900">
+                            <span class="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></span>
+                            STABLE
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Retrieval Latency</span>
+                        <span class="text-[10px] font-black text-zinc-900">12ms</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hint Widget -->
+            <div class="bg-zinc-950 text-white rounded-2xl p-8 shadow-2xl">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-symbols-outlined text-sm text-zinc-400">info</span>
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Semantic Protocol</span>
+                </div>
+                <p class="text-[11px] leading-relaxed text-zinc-500 italic">
+                    Neural RAG retrieval uses cosine similarity traversal across indexed fragments. Frequent syncing ensures chronological accuracy.
+                </p>
+            </div>
+        </aside>
+    </div>
+</div>

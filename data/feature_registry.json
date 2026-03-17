@@ -1,0 +1,149 @@
+{
+  "features": {
+    "html_renderer": {
+      "name": "html_renderer",
+      "category": "content",
+      "capability": "Convert HTML/CSS to images",
+      "implementation": "playwright",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.110117",
+      "replaced_by": null,
+      "active": true
+    },
+    "image_upload": {
+      "name": "image_upload",
+      "category": "content",
+      "capability": "Upload images to cloud CDN",
+      "implementation": "cloudinary",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.111137",
+      "replaced_by": null,
+      "active": true
+    },
+    "web_search": {
+      "name": "web_search",
+      "category": "intelligence",
+      "capability": "Search the web for information",
+      "implementation": "duckduckgo_search",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.112426",
+      "replaced_by": null,
+      "active": true
+    },
+    "web_scraping": {
+      "name": "web_scraping",
+      "category": "intelligence",
+      "capability": "Extract content from web pages",
+      "implementation": "beautifulsoup4",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.114569",
+      "replaced_by": null,
+      "active": true
+    },
+    "rag_memory": {
+      "name": "rag_memory",
+      "category": "memory",
+      "capability": "Semantic memory storage and recall",
+      "implementation": "faiss+sentence-transformers",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.115762",
+      "replaced_by": null,
+      "active": true
+    },
+    "llm_generation": {
+      "name": "llm_generation",
+      "category": "ai",
+      "capability": "Generate text with LLM",
+      "implementation": "ollama",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.116436",
+      "replaced_by": null,
+      "active": true
+    },
+    "shell_execution": {
+      "name": "shell_execution",
+      "category": "system",
+      "capability": "Execute shell commands safely",
+      "implementation": "subprocess",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.117254",
+      "replaced_by": null,
+      "active": true
+    },
+    "browser_automation": {
+      "name": "browser_automation",
+      "category": "automation",
+      "capability": "Browse and interact with web pages",
+      "implementation": "playwright",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.117901",
+      "replaced_by": null,
+      "active": true
+    },
+    "voice_transcription": {
+      "name": "voice_transcription",
+      "category": "voice",
+      "capability": "Speech-to-text conversion",
+      "implementation": "whisper",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.118790",
+      "replaced_by": null,
+      "active": true
+    },
+    "tts_synthesis": {
+      "name": "tts_synthesis",
+      "category": "voice",
+      "capability": "Text-to-speech conversion",
+      "implementation": "gTTS",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.119664",
+      "replaced_by": null,
+      "active": true
+    },
+    "encryption": {
+      "name": "encryption",
+      "category": "security",
+      "capability": "Encrypt/decrypt files and data",
+      "implementation": "cryptography/fernet",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.120303",
+      "replaced_by": null,
+      "active": true
+    },
+    "code_review": {
+      "name": "code_review",
+      "category": "dev",
+      "capability": "Review code for quality and bugs",
+      "implementation": "ollama+prompts",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.120843",
+      "replaced_by": null,
+      "active": true
+    },
+    "doc_summarization": {
+      "name": "doc_summarization",
+      "category": "intelligence",
+      "capability": "Summarize documents and URLs",
+      "implementation": "ollama+prompts",
+      "version": "1.0",
+      "registered": "2026-03-16T14:03:32.121359",
+      "replaced_by": null,
+      "active": true
+    }
+  },
+  "replacements": [
+    {
+      "old": "voice_transcription",
+      "new": "faster-whisper",
+      "reason": "Optimized for lower memory and CPU usage via GGUF quantization and C++ bindings, critical given MEM warning (70.3%) and heavy inference loads.",
+      "confidence": 0.9
+    },
+    {
+      "old": "tts_synthesis",
+      "new": "pyttsx3",
+      "reason": "gTTS relies on external Google API (violates LOCAL rule). pyttsx3 is fully offline, lightweight, and uses system voices, reducing dependency risks without increasing disk/memory load.",
+      "confidence": 0.9
+    }
+  ],
+  "last_check": "2026-03-13T16:09:47.805204"
+}

@@ -1,0 +1,16 @@
+{
+    "description": "ASURA Hook Definitions",
+    "hooks": {
+        "PreToolUse": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 ${PROJECT_ROOT}/scripts/security_check.py",
+                        "timeout": 5
+                    }
+                ]
+            }
+        ]
+    }
+}

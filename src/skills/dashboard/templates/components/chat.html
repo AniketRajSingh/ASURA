@@ -1,0 +1,49 @@
+<!-- Chat Console Component -->
+<div id="page-chat" class="page hidden flex-col w-full h-[calc(100vh-96px)] gap-6">
+    <div class="flex-1 bg-white border border-zinc-200 rounded-2xl shadow-sm flex flex-col overflow-hidden">
+        <!-- Chat Header -->
+        <header class="p-8 border-b border-zinc-100 flex justify-between items-center bg-zinc-50/30">
+            <div>
+                <h2 class="text-2xl font-black text-zinc-900 tracking-tight">Neural Command Console</h2>
+                <p class="text-[10px] text-zinc-400 font-bold tracking-[0.2em] uppercase mt-1">Sovereign Uplink Layer 7</p>
+            </div>
+            <div class="flex gap-3">
+                <span class="px-4 py-1.5 bg-black text-white text-[9px] font-black rounded-lg tracking-widest uppercase shadow-lg">ENCRYPTED</span>
+            </div>
+        </header>
+
+        <!-- Message History -->
+        <div id="chatHistory" class="flex-1 overflow-y-auto p-10 space-y-8 custom-scrollbar bg-white selection:bg-zinc-100 selection:text-black">
+            <div class="chat-message system flex flex-col gap-3 group">
+                <div class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-black rounded-full"></span>
+                    <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">ASURA Core</span>
+                </div>
+                <div class="bg-zinc-50 border border-zinc-100 p-6 rounded-2xl rounded-tl-sm max-w-[80%] text-sm leading-relaxed text-zinc-800 shadow-sm group-hover:shadow-md transition-all">
+                    System initialized. Awaiting operator input. All cognitive cores reporting as nominal.
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <footer class="p-8 bg-zinc-50/50 border-t border-zinc-100">
+            <div class="relative group max-w-4xl mx-auto">
+                <textarea id="chatInput" 
+                          class="w-full bg-white border border-zinc-200 rounded-2xl p-6 pr-20 focus:ring-2 focus:ring-zinc-100 focus:border-black outline-none transition-all resize-none text-sm font-medium placeholder:text-zinc-300 shadow-sm"
+                          placeholder="Send a sovereign command..."
+                          rows="1"
+                          onkeydown="handleChatKeypress(event)"></textarea>
+                <div class="absolute right-4 bottom-4 flex items-center gap-2">
+                    <span class="text-[9px] font-bold text-zinc-300 uppercase tracking-widest mr-2 opacity-0 group-hover:opacity-100 transition-opacity">Command-Enter</span>
+                    <button onclick="sendChatMessage()" 
+                            class="p-3 bg-black text-white rounded-xl hover:bg-zinc-800 transition-all shadow-xl active:scale-90 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-lg">send</span>
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <div class="text-center opacity-30">
+        <small class="text-[9px] font-bold text-zinc-500 tracking-[0.4em] uppercase">Hyperion Engine • Sovereign Protocol 4.0</small>
+    </div>
+</div>

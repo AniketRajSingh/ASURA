@@ -1,0 +1,43 @@
+# rules/health.yaml — Health monitoring behavior rules
+# These replace hardcoded thresholds in resource_governor.py
+
+- name: disk_critical
+  trigger:
+    metric: disk_percent
+    operator: ">"
+    threshold: 95
+  actions:
+    - cleanup_logs
+    - notify_master
+  message: "⚠️ Disk usage above 95%! Running cleanup..."
+  cooldown_minutes: 60
+
+- name: disk_warning
+  trigger:
+    metric: disk_percent
+    operator: ">"
+    threshold: 85
+  actions:
+    - notify_master
+  message: "📊 Disk usage above 85%. Consider freeing space."
+  cooldown_minutes: 120
+
+- name: memory_critical
+  trigger:
+    metric: memory_percent
+    operator: ">"
+    threshold: 90
+  actions:
+    - notify_master
+  message: "⚠️ RAM usage above 90%!"
+  cooldown_minutes: 30
+
+- name: cpu_sustained
+  trigger:
+    metric: cpu_percent
+    operator: ">"
+    threshold: 95
+  actions:
+    - notify_master
+  message: "🔥 CPU sustained above 95%"
+  cooldown_minutes: 15

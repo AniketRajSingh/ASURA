@@ -1,0 +1,148 @@
+<!-- Plugins Directory Component -->
+<div id="page-plugins" class="page hidden flex-col gap-8 w-full">
+    <!-- Header Widget -->
+    <header class="flex justify-between items-center bg-white border border-zinc-200 rounded-2xl p-10 shadow-sm">
+        <div>
+            <h1 class="text-4xl font-black tracking-tight text-zinc-900">Plugins Directory</h1>
+            <p class="text-zinc-400 mt-2 text-[10px] font-bold tracking-[0.2em] uppercase">Cognitive Extensions & Skill Modules</p>
+        </div>
+        <button onclick="loadPlugins()" class="bg-black text-white px-8 py-3 rounded-xl flex items-center gap-2 hover:bg-zinc-900 transition-all font-bold text-sm shadow-xl active:scale-95">
+            <span class="material-symbols-outlined">refresh</span>
+            Refresh
+        </button>
+    </header>
+
+    <!-- Stats Row Widget -->
+    <div id="plugins-stats" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+
+    <!-- Plugins Grid Widget -->
+    <div id="plugins-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full"></div>
+
+    <!-- Empty State Widget -->
+    <div id="plugins-empty" class="hidden flex-col items-center justify-center py-24 text-zinc-200 gap-4">
+        <span class="material-symbols-outlined text-7xl">extension</span>
+        <p class="text-sm font-black uppercase tracking-[0.3em]">No Plugins Installed</p>
+        <p class="text-[11px] text-zinc-400 font-medium">Deploy new skills to extend ASURA's capabilities</p>
+    </div>
+</div>
+
+<script>
+function loadPlugins() {
+    fetch('/api/plugins')
+        .then(res => res.json())
+        .then(data => {
+            const grid = document.getElementById('plugins-grid');
+            const empty = document.getElementById('plugins-empty');
+            const stats = document.getElementById('plugins-stats');
+            const plugins = data.plugins || [];
+
+            // Stats Row
+            stats.innerHTML = `
+                <div class="bg-white border border-zinc-200 rounded-2xl p-8 shadow-sm hover:shadow-md transition-all">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Total Modules</p>
+                    <div class="text-4xl font-black text-zinc-900">${data.count || plugins.length}</div>
+                </div>
+                <div class="bg-white border border-zinc-200 rounded-2xl p-8 shadow-sm hover:shadow-md transition-all">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Active</p>
+                    <div class="text-4xl font-black text-zinc-900">${plugins.filter(p => p.enabled !== false).length}</div>
+                </div>
+                <div class="bg-white border border-zinc-200 rounded-2xl p-8 shadow-sm hover:shadow-md transition-all">
+                    <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em] mb-2">Categories</p>
+                    <div class="text-4xl font-black text-zinc-900">${getUniqueTagsCount(plugins)}</div>
+                </div>
+            `;
+
+            if (plugins.length === 0) {
+                grid.classList.add('hidden');
+                empty.classList.remove('hidden');
+                empty.classList.add('flex');
+            } else {
+                empty.classList.add('hidden');
+                empty.classList.remove('flex');
+                grid.classList.remove('hidden');
+                grid.innerHTML = plugins.map(p => createPluginCard(p)).join('');
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load plugins:', err);
+            showToast('Failed to load plugins', true);
+        });
+}
+
+function getUniqueTagsCount(plugins) {
+    const tags = new Set();
+    plugins.forEach(p => (p.tags || []).forEach(t => tags.add(t)));
+    return tags.size || 1;
+}
+
+function createPluginCard(plugin) {
+    const icon = getPluginIcon(plugin.name);
+    const tags = (plugin.tags || []).slice(0, 3);
+    return `
+        <div class="bg-white border border-zinc-200 rounded-2xl p-8 flex flex-col gap-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer" data-plugin="${plugin.name}">
+            <div class="flex items-start justify-between">
+                <div class="w-12 h-12 bg-zinc-50 rounded-xl flex items-center justify-center border border-zinc-100">
+                    <span class="material-symbols-outlined text-2xl text-zinc-700">${icon}</span>
+                </div>
+                <span class="flex items-center gap-1.5 px-3 py-1 bg-zinc-950 text-white text-[9px] font-black rounded-lg tracking-widest uppercase">
+                    <span class="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-pulse"></span>
+                    Active
+                </span>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-base font-black text-zinc-900 tracking-tight">${escapeHtml(plugin.name)}</h3>
+                <p class="text-xs text-zinc-400 mt-2 leading-relaxed font-medium">${escapeHtml((plugin.description || 'No description available').substring(0, 120))}...</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                ${tags.map(t => `<span class="px-3 py-1 bg-zinc-100 text-zinc-600 text-[9px] font-black rounded-lg uppercase tracking-wider">${escapeHtml(t)}</span>`).join('')}
+            </div>
+            <div class="flex gap-3 pt-4 border-t border-zinc-100">
+                <button onclick="viewPluginDocs('${escapeHtml(plugin.name)}')" class="flex-1 py-2.5 rounded-xl bg-zinc-50 border border-zinc-200 text-xs font-black text-zinc-700 uppercase tracking-widest hover:bg-zinc-100 transition-all">
+                    Docs
+                </button>
+                <button onclick="viewPluginUsage('${escapeHtml(plugin.name)}', ${JSON.stringify(plugin.functions).replace(/"/g, '&quot;')})" class="flex-1 py-2.5 rounded-xl bg-zinc-950 text-white text-xs font-black uppercase tracking-widest hover:bg-zinc-800 transition-all">
+                    Usage
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function getPluginIcon(name) {
+    const icons = {
+        'autonomous_logic': 'psychology', 'skill_registry': 'folder_special',
+        'conversation_handler': 'chat_bubble', 'memory': 'auto_graph',
+        'voice': 'mic', 'feature': 'analytics', 'shell': 'terminal',
+        'web': 'language', 'api': 'api', 'calendar': 'calendar_month',
+        'email': 'mail', 'knowledge': 'schema', 'todo': 'checklist'
+    };
+    const key = Object.keys(icons).find(k => name.toLowerCase().includes(k));
+    return icons[key] || 'extension';
+}
+
+function viewPluginDocs(pluginName) {
+    showModal(`Docs: ${pluginName}`, `<div class="p-4 text-zinc-400 font-black uppercase tracking-widest animate-pulse">Requesting Neural Documentation...</div>`);
+    fetch(`/api/skills/docs?name=${encodeURIComponent(pluginName)}`)
+        .then(res => res.json())
+        .then(data => {
+            const content = data.docs ? 
+                `<div class="p-8 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap font-medium">${escapeHtml(data.docs)}</div>` : 
+                `<div class="p-12 text-center text-zinc-300 font-black uppercase tracking-widest">No detailed documentation indexed for this module.</div>`;
+            showModal(`Docs: ${pluginName}`, content);
+        })
+        .catch(err => showModal('Error', 'Failed to retrieve documentation: ' + err.message));
+}
+
+function viewPluginUsage(pluginName, functions) {
+    const list = (functions || []).length > 0 ? 
+        functions.map(f => `<div class="p-4 bg-zinc-50 border border-zinc-100 rounded-xl font-mono text-xs text-zinc-600 mb-2">${escapeHtml(f)}</div>`).join('') :
+        `<div class="p-12 text-center text-zinc-300 font-black uppercase tracking-widest">No exported functions found for this module.</div>`;
+    
+    showModal(`Usage: ${pluginName}`, `
+        <div class="p-8 flex flex-col gap-4">
+            <h4 class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Exported Interface</h4>
+            ${list}
+        </div>
+    `);
+}
+</script>

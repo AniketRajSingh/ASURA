@@ -1,0 +1,74 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.claude/
+.tf_vcs/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Large binaries/Assets
+assets/
+payload_dump.json
+
+# Environment & Secrets
+.env
+.encryption_key
+*.tf_key
+tf_token.json
+
+# Data/Persistence
+usage_patterns.json
+data/logs/
+data/chat_history.json
+data/state.json
+data/knowledge_graph.json
+data/last_audit.json
+data/resource_stats.json
+data/system_observations.json
+data/drafts/
+data/browser_profile/
+data/backups/
+data/temp_post.jpg
+data/sessions/
+data/memory/
+data/memory_store/
+data/sub_agent_memory/
+data/update_history/
+data/*.webm
+data/*.txt
+
+# Keep essential config but ignore high-frequency dynamic state
+!data/hooks.json
+!data/feature_registry.json
+!data/todos.json
+
+# Build & Docs
+build/
+dist/
+*.spec
+docs/project_history/
+
+# Non-essential Scripts & Dirs
+tests/
+scripts/setup_*.py
+scripts/verify_*.py
+scripts/migrate_*.py
+scripts/security_check.py
+scripts/browser_login.py
+data/surgery/
+test_*.py
+verify_*.py
+asura_temp_*
+*.log
+!data/logs/audit.txt
+!data/logs/log.txt
+
+
+daemon.pid
+llm_usage.json
+.vscode

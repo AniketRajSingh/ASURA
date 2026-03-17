@@ -1,0 +1,121 @@
+/* 
+   ASURA Native Design System
+   Uses Textual's built-in theme variables for dynamic transitions.
+*/
+
+Screen {
+    background: $background;
+    color: $foreground;
+    overflow: hidden;
+    layout: vertical;
+}
+
+#tabs {
+    height: 1fr;
+}
+
+Header {
+    background: $surface;
+    color: $primary;
+    text-style: bold;
+    border-bottom: solid $panel;
+}
+
+Footer {
+    background: transparent;
+    color: $foreground 50%;
+}
+
+#custom-footer {
+    height: 1;
+    background: $surface;
+    border-top: solid $panel;
+    layout: horizontal;
+    align: right middle;
+}
+
+#token-stats {
+    width: auto;
+    background: $primary;
+    color: $background;
+    text-style: bold;
+    padding: 0 1;
+}
+
+#chat-container {
+    height: 1fr;
+    padding: 1 2;
+    overflow: hidden;
+}
+
+#message-list {
+    height: 1fr;
+    overflow-y: auto;
+    border: solid $panel;
+    background: $background;
+    padding: 1;
+}
+
+#input-area {
+    height: 3;
+    margin-top: 1;
+    border: solid $panel;
+    background: $surface;
+    layout: horizontal;
+    align: left middle;
+}
+
+#prompt-label {
+    padding: 0 1;
+    height: 1;
+    color: $warning;
+    text-style: bold;
+}
+
+#chat-input {
+    width: 1fr;
+    border: none;
+    background: $surface;
+    color: $foreground;
+    height: 1;
+}
+
+.user-message {
+    padding: 1 2;
+    margin: 1 0;
+    background: $accent 15%;
+    border-left: solid $accent;
+    color: $foreground;
+}
+
+.assistant-message {
+    padding: 1 2;
+    margin: 1 0;
+    background: $surface 40%;
+    border-left: solid $primary;
+    color: $foreground;
+}
+
+#stats-grid {
+    grid-size: 2;
+    grid-gutter: 2;
+    padding: 2;
+}
+
+.stat-card {
+    border: tall $primary;
+    padding: 1 2;
+    background: $surface;
+    color: $foreground;
+}
+
+Digits {
+    color: $secondary;
+    text-align: center;
+}
+
+#system-title {
+    padding: 1 2;
+    text-align: center;
+    text-style: bold italic;
+}

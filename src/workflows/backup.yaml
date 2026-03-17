@@ -1,0 +1,12 @@
+# Universal Backup workflow
+name: backup
+description: "Create a project backup using the cross-platform BackupManager"
+steps:
+  - name: create_snapshot
+    tool: shell
+    input: "python -c 'import sys; sys.path.insert(0, \"src\"); from skills.backup_manager.manager import create_snapshot; create_snapshot(\"Workflow triggered backup\")'"
+
+  - name: verify_backups
+    tool: shell
+    input: "python -c 'import os; print(\"Existing backups:\", os.listdir(\"data/backups\") if os.path.exists(\"data/backups\") else \"None\")'"
+    depends_on: [create_snapshot]

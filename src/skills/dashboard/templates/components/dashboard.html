@@ -1,0 +1,40 @@
+<!-- Main Dashboard Component -->
+<div id="page-dashboard" class="page hidden flex-col w-full gap-10">
+    
+    <!-- Hero Header -->
+    <header class="flex justify-between items-center bg-white border border-zinc-200 rounded-2xl p-10 shadow-sm">
+        <div>
+            <div class="flex items-center gap-4">
+                <span class="w-3 h-3 bg-black rounded-full animate-pulse border-4 border-zinc-100 ring-1 ring-zinc-300"></span>
+                <h1 class="text-4xl font-black tracking-tight text-zinc-900">System Sovereign</h1>
+            </div>
+            <p class="text-zinc-500 mt-3 font-medium">ASURA core operational. All cognitive pathways nominal.</p>
+        </div>
+        <div class="flex gap-4">
+            <button class="bg-zinc-100 text-zinc-900 px-8 py-3 rounded-xl flex items-center gap-2 hover:bg-zinc-200 transition-all font-bold text-sm tracking-tight border border-zinc-200 shadow-sm" onclick="showPage('repl')">
+                <span class="material-symbols-outlined text-lg">terminal</span>
+                LIVE REPL
+            </button>
+            <button class="bg-black text-white px-8 py-3 rounded-xl flex items-center gap-2 hover:bg-zinc-900 transition-all font-bold text-sm tracking-tight shadow-xl">
+                <span class="material-symbols-outlined text-lg">sync</span>
+                REBOOT
+            </button>
+        </div>
+    </header>
+
+    <!-- Modular Widget: Hero Stats -->
+    {% include "widgets/hero_stats.html" %}
+
+    <!-- Secondary Area: Ops & Intelligence -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <!-- Modular Widget: Pending Operations -->
+        <div class="lg:col-span-4 sticky top-12">
+            {% include "widgets/op_list.html" %}
+        </div>
+
+        <!-- Modular Widget: Intelligence Monitor -->
+        <div class="lg:col-span-8">
+            {% include "widgets/intel_monitor.html" %}
+        </div>
+    </div>
+</div>

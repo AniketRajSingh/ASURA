@@ -1,0 +1,16 @@
+# Agent Definitions Directory
+
+This directory contains declarative agent definitions in .md format.
+
+## Existing Agents
+
+- `asura_spawner.md` - Task decomposition and agent orchestration
+- `asura_despawner.md` - Systemic cleanup and task termination
+- `bug_hunter.md` - Bug detection and surgical fixing
+- `explorer.md` - Codebase navigation and discovery expert
+- `interactive_agent.md` - Sovereign tactical interface for OS operations
+- `reviewer.md` - Security and quality audit specialist
+- `simplifier.md` - Code refactoring and logic advisor
+- `validator.md` - System verification and test specialist
+
+Each agent is self-contained with its own role definition, capabilities, and focus areas. New agents can be added following the same markdown + YAML frontmatter pattern.

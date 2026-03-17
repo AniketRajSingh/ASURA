@@ -1,0 +1,1596 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ASURA — Sovereign Command Center</title>
+    <!-- Premium Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Product+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
+    <!-- Core External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>    <!-- Tailwind CSS Engine -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#000000',
+                        accent: '#666666',
+                        surface: '#ffffff',
+                        background: '#f8f9fa',
+                        zinc: {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            200: '#e4e4e7',
+                            300: '#d4d4d8',
+                            400: '#a1a1aa',
+                            500: '#71717a',
+                            600: '#52525b',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            900: '#18181b',
+                            950: '#09090b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Legacy Modular CSS (for component-specific refined styles) -->
+    <link rel="stylesheet" href="/static/css/base.css">
+    <style>
+        .memory-tab {
+            padding: 1rem 1.5rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            color: #71717a;
+        }
+        .memory-tab:hover {
+            color: #18181b;
+            border-bottom-color: #e4e4e7;
+        }
+        .memory-tab.active {
+            color: #000000;
+            border-bottom-color: #000000;
+        }
+
+        /* Markdown Styling Fallback for marked.js */
+        .prose h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem; border-bottom: 1px solid #f4f4f5; padding-bottom: 0.5rem; }
+        .prose h2 { font-size: 1.25rem; font-weight: 800; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .prose h3 { font-size: 1.1rem; font-weight: 800; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+        .prose p { margin-bottom: 1rem; line-height: 1.6; color: #3f3f46; }
+        .prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1rem; list-style-type: disc; }
+        .prose li { margin-bottom: 0.5rem; }
+        .prose code { background: #f4f4f5; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85em; }
+        .prose strong { font-weight: 700; color: #18181b; }
+        .prose blockquote { border-left: 4px solid #e4e4e7; padding-left: 1rem; font-style: italic; color: #71717a; margin-bottom: 1rem; }
+    </style>
+</head>
+
+<body class="bg-[#f8f9fa] text-black font-['Product_Sans'] selection:bg-black selection:text-white">
+    <div class="flex h-screen w-full overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20 shadow-sm">
+            <div class="p-8 flex items-center gap-3 border-b border-gray-50">
+                <div class="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="material-symbols-outlined text-2xl">shield</span>
+                </div>
+                <div class="text-xl font-bold tracking-tighter">ASURA</div>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white active-page:shadow-md" onclick="showPage('dashboard')">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('chat')">
+                    <span class="material-symbols-outlined">forum</span>
+                    <span>Chat Console</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('voice')">
+                    <span class="material-symbols-outlined">mic</span>
+                    <span>Voice Portal</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('memory', loadMemory)">
+                    <span class="material-symbols-outlined">memory</span>
+                    <span>Memory Store</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('evolution', loadEvolution)">
+                    <span class="material-symbols-outlined">psychology</span>
+                    <span>Evolution</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('trace', () => { loadDrafts(); loadIntelligence(); })">
+                    <span class="material-symbols-outlined">radar</span>
+                    <span>Trace</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('repl')">
+                    <span class="material-symbols-outlined">terminal</span>
+                    <span>Live REPL</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('skills', listSkills)">
+                    <span class="material-symbols-outlined">extension</span>
+                    <span>Skill Registry</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('knowledge', loadKnowledgeGraph)">
+                    <span class="material-symbols-outlined">schema</span>
+                    <span>Architecture</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('persona', loadPersona)">
+                    <span class="material-symbols-outlined">settings_account_box</span>
+                    <span>Persona</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('settings', loadSettings)">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Settings</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('security', loadSecurityPage)">
+                    <span class="material-symbols-outlined">security</span>
+                    <span>Security</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('logs')">
+                    <span class="material-symbols-outlined">list_alt</span>
+                    <span>Audit Logs</span>
+                </button>
+                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('plugins', loadPlugins)">
+                    <span class="material-symbols-outlined">apps</span>
+                    <span>Plugins</span>
+                </button>
+            </nav>
+
+            <div class="p-6 border-t border-gray-100 bg-gray-50/50">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-400"></span>
+                    <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">System Active</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Operator:</span>
+                    <span class="text-xs font-bold text-black">{{ master_name }}</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <main class="flex-1 overflow-y-auto bg-[#f8f9fa] custom-scrollbar py-8 px-8">
+            <div class="w-full flex flex-col gap-0">
+                {% include "components/dashboard.html" %}
+                {% include "components/architecture.html" %}
+                {% include "components/chat.html" %}
+                {% include "components/voice.html" %}
+                {% include "components/monitor.html" %}
+                {% include "components/skills.html" %}
+                {% include "components/memory.html" %}
+                {% include "components/evolution.html" %}
+                {% include "components/trace.html" %}
+                {% include "components/repl.html" %}
+                {% include "components/persona.html" %}
+                {% include "components/settings.html" %}
+                {% include "components/security.html" %}
+                {% include "components/logs.html" %}
+                {% include "components/plugins.html" %}
+            </div>
+        </main>
+    </div>
+
+    <!-- UI Overlay Components -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div id="cmd-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card glass-card">
+            <header class="modal-header">
+                <h3 id="modal-title">Output</h3>
+                <button onclick="document.getElementById('cmd-modal').style.display='none'" class="close-btn">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </header>
+            <div id="modal-content" class="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Initialization ───
+        window.addEventListener('DOMContentLoaded', () => {
+            showPage('dashboard');
+            loadUnifiedMonitor();
+            listSkills();
+            loadDrafts();
+            loadMemory();
+            loadSettings();
+            loadPersona();
+            loadSecurityPage();
+            loadEvolution();
+        });
+
+        // ─── Live Progress (SSE) ───
+        const evtSource = new EventSource("/api/progress");
+        evtSource.onmessage = function (event) {
+            const data = JSON.parse(event.data);
+            const card = document.getElementById('progress-card');
+            if (!card) return;
+
+            if (data.progress >= 100) {
+                setTimeout(() => { card.style.display = 'none'; }, 5000);
+            } else {
+                card.style.display = 'block';
+            }
+            
+            const pStatus = document.getElementById('p-status');
+            const pPercent = document.getElementById('p-percent');
+            const pBar = document.getElementById('p-bar');
+            const pSummary = document.getElementById('p-summary');
+
+            if (pStatus) pStatus.textContent = data.status;
+            if (pPercent) pPercent.textContent = data.progress + '%';
+            if (pBar) pBar.style.width = data.progress + '%';
+            if (pSummary) pSummary.textContent = data.summary || '';
+
+            if (data.progress === 100) {
+                showToast('✅ ' + data.status, false);
+            }
+        };
+
+        // ─── Theme & UI ───
+        if (localStorage.getItem('theme') === 'light') document.body.classList.replace('dark-theme', 'light-theme');
+        
+        function toggleTheme() {
+            const isLight = document.body.classList.contains('light-theme');
+            if (isLight) {
+                document.body.classList.replace('light-theme', 'dark-theme');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.replace('dark-theme', 'light-theme');
+                localStorage.setItem('theme', 'light');
+            }
+        }
+
+        function showToast(message, isError) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${isError ? 'error' : 'success'} glass-card`;
+            toast.innerHTML = `<span class="material-symbols-outlined">${isError ? 'error' : 'check_circle'}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function showModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-content').textContent = content;
+            document.getElementById('cmd-modal').style.display = 'flex';
+        }
+
+        // ─── Navigation ───
+        function showPage(name, callback) {
+            document.querySelectorAll('.page').forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('flex');
+            });
+            
+            const pageEl = document.getElementById('page-' + name);
+            if (!pageEl) { console.warn('showPage: unknown page', name); return; }
+            
+            pageEl.classList.remove('hidden');
+            pageEl.classList.add('flex');
+            
+            // Sidebar highlighting
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('bg-black', 'text-white', 'shadow-md');
+                link.classList.add('text-gray-500');
+                if (link.getAttribute('onclick')?.includes(`'${name}'`)) {
+                    link.classList.add('bg-black', 'text-white', 'shadow-md');
+                    link.classList.remove('text-gray-500');
+                }
+            });
+
+            if (callback) callback();
+        }
+
+        // ─── Chat Logic ───
+        let _chatTurn = 0;
+        
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            
+            input.value = '';
+            input.style.height = 'auto';
+
+            const msgs = document.getElementById('chatHistory');
+            const turnId = 'chat-turn-' + (++_chatTurn);
+            const safeMsg = msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // User Message
+            msgs.innerHTML += `
+                <div class="chat-message user animate-slide-in">
+                    <div class="message-meta">Operator</div>
+                    <div class="message-bubble">${safeMsg}</div>
+                </div>
+            `;
+            
+            // Loading State
+            msgs.innerHTML += `
+                <div id="${turnId}" class="chat-message system animate-slide-in">
+                    <div class="message-meta">ASURA</div>
+                    <div class="message-bubble loading">
+                        <span>Processing</span>
+                        <div class="dot-typing"></div>
+                    </div>
+                </div>
+            `;
+            
+            msgs.scrollTop = msgs.scrollHeight;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await res.json();
+                const aiEl = document.getElementById(turnId);
+                
+                if (aiEl) {
+                    const reply = data.response || 'Inquiry processed. No output generated.';
+                    aiEl.querySelector('.message-bubble').classList.remove('loading');
+                    aiEl.querySelector('.message-bubble').innerHTML = renderMarkdown(reply);
+                }
+            } catch (e) {
+                const aiEl = document.getElementById(turnId);
+                if (aiEl) {
+                    aiEl.querySelector('.message-bubble').innerHTML = `<div class="error-text">Link failure: ${e.message}</div>`;
+                }
+            }
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        // ─── Markdown (marked.js) ───
+        function renderMarkdown(text) {
+            if (!text) return '';
+            try { return marked.parse(text); } 
+            catch (e) { return text; }
+        }
+
+        // ─── Voice Portal ───
+        let mediaRecorder;
+        let audioChunks = [];
+        let isListening = false;
+        let isSpeaking = false;
+        let isProcessingVoice = false;
+        let audioStream;
+        let audioContext;
+        let audioPlayer = new Audio();
+
+        async function toggleVoice() {
+            if (isListening && isSpeaking) {
+                isSpeaking = false;
+                isProcessingVoice = true;
+                if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+            } else if (isListening) {
+                stopListeningSession();
+            } else {
+                startListeningSession();
+            }
+        }
+
+        function stopListeningSession() {
+            isListening = false;
+            if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+            if (audioContext) audioContext.close();
+            if (audioStream) audioStream.getTracks().forEach(t => t.stop());
+            document.getElementById('orb').classList.remove('listening');
+            document.getElementById('orbStatus').textContent = 'Activate ASURA Voice Portal';
+        }
+
+        async function startListeningSession() {
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                const analyser = audioContext.createAnalyser();
+                const microphone = audioContext.createMediaStreamSource(audioStream);
+                microphone.connect(analyser);
+                analyser.fftSize = 512;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                isListening = true;
+                document.getElementById('orb').classList.add('listening');
+                document.getElementById('orbStatus').textContent = 'ASURA is listening...';
+
+                let silenceStart = Date.now();
+                let baselineNoise = 10;
+                let noiseSamples = [];
+
+                audioPlayer.onended = () => {
+                    isProcessingVoice = false;
+                    isSpeaking = false;
+                    document.getElementById('orbStatus').textContent = 'ASURA is listening...';
+                    document.getElementById('transcript').textContent = 'Awaiting input...';
+                };
+
+                function checkAudioLevel() {
+                    if (!isListening) return;
+                    if (isProcessingVoice || !audioPlayer.paused) {
+                        requestAnimationFrame(checkAudioLevel);
+                        return;
+                    }
+
+                    analyser.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+                    let volume = sum / bufferLength;
+
+                    if (!isSpeaking) {
+                        noiseSamples.push(volume);
+                        if (noiseSamples.length > 50) noiseSamples.shift();
+                        baselineNoise = noiseSamples.reduce((a, b) => a + b, 0) / noiseSamples.length;
+                    }
+
+                    let threshold = Math.max(baselineNoise + 20, 20);
+
+                    if (volume > threshold) {
+                        if (!isSpeaking) {
+                            isSpeaking = true;
+                            audioChunks = [];
+                            mediaRecorder = new MediaRecorder(audioStream);
+                            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                            mediaRecorder.onstop = () => {
+                                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                                sendVoice(audioBlob);
+                            };
+                            mediaRecorder.start();
+                            document.getElementById('orbStatus').textContent = 'Recording transmission...';
+                        }
+                        silenceStart = Date.now();
+                    } else {
+                        if (isSpeaking && (Date.now() - silenceStart > 1800)) {
+                            isSpeaking = false;
+                            isProcessingVoice = true;
+                            if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+                        }
+                    }
+                    requestAnimationFrame(checkAudioLevel);
+                }
+                checkAudioLevel();
+            } catch (err) {
+                showToast('Microphone access denied', true);
+            }
+        }
+
+        async function sendVoice(audioBlob) {
+            document.getElementById('transcript').textContent = 'Decrypting...';
+            document.getElementById('orbStatus').textContent = 'Inference in progress...';
+            try {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'voice.webm');
+                const res = await fetch('/api/voice', { method: 'POST', body: formData });
+
+                if (res.ok) {
+                    if (res.headers.get("content-type")?.includes("audio")) {
+                        document.getElementById('transcript').textContent = 'ASURA speaking...';
+                        document.getElementById('orbStatus').textContent = 'System response transmitted';
+                        const audioBlobResponse = await res.blob();
+                        audioPlayer.src = URL.createObjectURL(audioBlobResponse);
+                        audioPlayer.play();
+                    } else {
+                        document.getElementById('transcript').textContent = 'Transmission received. No audio response.';
+                        isProcessingVoice = false;
+                    }
+                } else {
+                    document.getElementById('transcript').textContent = 'Signal failure.';
+                    isProcessingVoice = false;
+                }
+            } catch (e) {
+                document.getElementById('transcript').textContent = 'Network disruption.';
+                isProcessingVoice = false;
+            }
+        }
+
+        // ─── Resource Monitoring ───
+        let resourceChart;
+
+        function initResourceChart() {
+            const canvas = document.getElementById('resourceChart');
+            if (!canvas || resourceChart) return;
+            const ctx = canvas.getContext('2d');
+            resourceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { 
+                            label: 'CPU %', 
+                            data: [], 
+                            borderColor: '#000000', 
+                            borderWidth: 2, 
+                            tension: 0.4, 
+                            fill: false, 
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        { 
+                            label: 'RAM %', 
+                            data: [], 
+                            borderColor: '#aaaaaa', 
+                            borderWidth: 1.5, 
+                            borderDash: [5, 5],
+                            tension: 0.4, 
+                            fill: false, 
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { 
+                        y: { 
+                            min: 0, 
+                            max: 100, 
+                            ticks: { color: '#999', padding: 10 }, 
+                            grid: { color: '#f0f0f0' } 
+                        },
+                        x: { display: false }
+                    },
+                    plugins: { legend: { display: false } },
+                    animation: false,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        async function updateResourceChart() {
+            try {
+                // Always init the chart first (safe to call multiple times)
+                initResourceChart();
+
+                // console.log("Fetching resource stats...");
+                const res = await fetch('/api/system/resources');
+                const data = await res.json();
+                // console.log("Resource data received:", data);
+                if (!resourceChart || !data || data.length === 0) {
+                    return;
+                }
+
+                resourceChart.data.labels = data.map(d => {
+                    const date = new Date(d.timestamp);
+                    return date.toLocaleTimeString();
+                });
+                resourceChart.data.datasets[0].data = data.map(d => d.cpu);
+                resourceChart.data.datasets[1].data = data.map(d => d.mem);
+                resourceChart.update('none');
+                
+                // Keep trace stream updated if dashboard is visible
+                const dashboardPage = document.getElementById('page-dashboard');
+                if (dashboardPage && !dashboardPage.classList.contains('hidden')) {
+                    loadIntelligence();
+                }
+            } catch (e) { console.error("Resource link failure:", e); }
+        }
+
+        // Init chart immediately on load, then poll every 10s
+        updateResourceChart();
+        setInterval(updateResourceChart, 10000);
+
+        // ─── System Activity & VCS ───
+        async function loadJobsAndVCS() {
+            try {
+                const [jobRes, vcsRes] = await Promise.all([
+                    fetch('/api/system/processes'),
+                    fetch('/api/vcs/history')
+                ]);
+                
+                const jobs = await jobRes.json();
+                const jobList = document.getElementById('process-list');
+                jobList.innerHTML = jobs.map(j => `
+                    <div class="activity-item">
+                        <div class="activity-meta">
+                            <span class="activity-id">[${j.job_id}]</span>
+                            <span class="activity-status ${j.status}">${j.status.toUpperCase()}</span>
+                        </div>
+                        <div class="activity-name">${j.name}</div>
+                        <div class="activity-cmd">${j.command}</div>
+                    </div>
+                `).join('') || '<div class="empty-state">No active system processes.</div>';
+
+                const history = await vcsRes.json();
+                const vcsList = document.getElementById('vcs-list');
+                vcsList.innerHTML = history.reverse().map(h => `
+                    <div class="activity-item">
+                        <div class="activity-meta">
+                            <span class="activity-id">[${h.id.substring(0, 7)}]</span>
+                            <span class="activity-time">${new Date(h.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div class="activity-name">${h.message}</div>
+                        <div class="activity-file">${h.file}</div>
+                    </div>
+                `).join('') || '<div class="empty-state">No recorded code patches.</div>';
+            } catch (e) { console.error("Activity link failure:", e); }
+        }
+
+        // ─── System Configuration ───
+        async function loadSettings() {
+            const list = document.getElementById('settings-list');
+            list.innerHTML = '<div class="loading-state">Synchronizing settings...</div>';
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+
+                let html = `
+                    <div class="settings-group glass-card">
+                        <header class="group-header">
+                            <span class="material-symbols-outlined">fingerprint</span>
+                            <h3>Neural Identity</h3>
+                        </header>
+                        <div class="group-content">
+                            <div class="input-container">
+                                <label>Operator Name</label>
+                                <input type="text" class="input-field" id="set-MASTER_NAME" value="${data.MASTER_NAME || ''}">
+                            </div>
+                            <div class="input-container">
+                                <label>Telegram Uplink</label>
+                                <input type="password" class="input-field" id="set-TELEGRAM_BOT_TOKEN" value="${data.TELEGRAM_BOT_TOKEN || ''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group glass-card highlight">
+                        <header class="group-header">
+                            <span class="material-symbols-outlined">psychology</span>
+                            <h3>Core LLM Provider</h3>
+                        </header>
+                        <div class="group-content">
+                            <select id="set-LLM_PROVIDER" class="input-field">
+                                <option value="ollama" ${data.LLM_PROVIDER === 'ollama' ? 'selected' : ''}>Ollama (Local Node)</option>
+                                <option value="groq" ${data.LLM_PROVIDER === 'groq' ? 'selected' : ''}>Groq (Cloud Accelerator)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group glass-card">
+                        <header class="group-header">
+                            <span class="material-symbols-outlined">hub</span>
+                            <h3>Ollama Node</h3>
+                        </header>
+                        <div class="group-content">
+                            <div class="input-container">
+                                <label>Terminal Endpoint</label>
+                                <input type="text" class="input-field" id="set-OLLAMA_BASE_URL" value="${data.OLLAMA_BASE_URL || ''}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group glass-card">
+                        <header class="group-header">
+                            <span class="material-symbols-outlined">bolt</span>
+                            <h3>Groq Acceleration</h3>
+                        </header>
+                        <div class="group-content">
+                            <div class="input-container"><label>API Key</label><input type="password" class="input-field" id="set-GROQ_API_KEY" value="${data.GROQ_API_KEY || ''}"></div>
+                            <div class="input-container"><label>Primary Model</label><input type="text" class="input-field" id="set-GROQ_MODEL" value="${data.GROQ_MODEL || ''}"></div>
+                        </div>
+                    </div>
+                `;
+                list.innerHTML = html;
+            } catch (e) {
+                list.innerHTML = `<div class="error-card glass-card">⚠️ System link failure: ${e.message}<br><button class="btn-premium" onclick="loadSettings()">Recursive Retry</button></div>`;
+            }
+        }
+
+        async function updateSettings() {
+            const data = {};
+            document.querySelectorAll('[id^="set-"]').forEach(i => {
+                data[i.id.replace('set-', '')] = i.value;
+            });
+            const res = await fetch('/api/settings/update', {
+                method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await res.json();
+            showToast('✅ ' + (result.status || 'Settings updated'), false);
+        }
+
+        async function loadPersona() {
+            try {
+                const res = await fetch('/api/persona');
+                const data = await res.json();
+                const directives = document.getElementById('persona-directives');
+                const constraints = document.getElementById('persona-constraints');
+                if (directives) directives.value = (data.directives || []).join('\n');
+                if (constraints) constraints.value = (data.constraints || []).join('\n');
+            } catch (e) { console.error("Persona link failure:", e); }
+        }
+
+        async function triggerEvolve() {
+            showToast('🚀 Evolution sequence initiated...', false);
+            try {
+                const res = await fetch('/api/evolve');
+                const data = await res.json();
+                showToast('✅ ' + data.status, false);
+            } catch (e) { showToast('❌ Evolution failed: ' + e.message, true); }
+        }
+
+        async function updatePersona() {
+            const directives = document.getElementById('persona-directives');
+            const constraints = document.getElementById('persona-constraints');
+            const data = {
+                directives: directives ? directives.value.split('\n').filter(l => l.trim()) : [],
+                constraints: constraints ? constraints.value.split('\n').filter(l => l.trim()) : []
+            };
+            try {
+                const res = await fetch('/api/persona/update', {
+                    method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await res.json();
+                showToast(result.status || 'Persona updated', false);
+            } catch (e) { showToast('❌ Sync failure: ' + e.message, true); }
+        }
+
+        // ─── Batch 3: Memory & Intelligence ───
+        async function loadDrafts() {
+            try {
+                const res = await fetch('/api/drafts/list');
+                const data = await res.json();
+                const list = document.getElementById('draftsGallery');
+                document.getElementById('draftsCountBadge').textContent = data.length || 0;
+                
+                list.innerHTML = data.map((d) => `
+                    <div class="group flex items-stretch justify-between gap-3 rounded-xl bg-white border border-zinc-200 p-4 hover:border-zinc-400 hover:shadow-sm transition-all cursor-pointer relative overflow-hidden">
+                        <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-zinc-200 group-hover:bg-zinc-900 transition-colors"></div>
+                        <div class="flex flex-col gap-2 flex-1 pl-2">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-zinc-400">description</span>
+                                <p class="text-zinc-900 text-sm font-bold leading-tight truncate max-w-[180px]" title="${d.name}">${d.name}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <p class="text-zinc-400 text-xs font-mono">${(d.size / 1024).toFixed(1)} KB</p>
+                                <p class="text-zinc-400 text-xs font-mono flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-zinc-300 inline-block"></span>
+                                    ${new Date(d.modified).toLocaleTimeString()}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                `).join('') || '<div class="text-zinc-400 text-xs text-center py-4 font-medium">No active drafts found.</div>';
+            } catch (e) {
+               console.error("Failed loading drafts:", e);
+            }
+        }
+
+        // ─── Memory Store (Multi-Layer) ───
+        function switchMemoryTab(tabId) {
+            document.querySelectorAll('.memory-tab').forEach(t => t.classList.remove('active', 'border-black'));
+            document.querySelectorAll('.memory-container').forEach(c => c.classList.add('hidden'));
+            
+            const activeTab = document.getElementById('tab-' + tabId);
+            if (activeTab) {
+                activeTab.classList.add('active', 'border-black');
+            }
+            
+            const activeContainer = document.getElementById('memory-' + tabId + '-list');
+            if (activeContainer) {
+                activeContainer.classList.remove('hidden');
+            }
+        }
+
+        async function loadMemory() {
+            const ragList = document.getElementById('memory-rag-list');
+            const vaultList = document.getElementById('memory-vault-list');
+            const episodicList = document.getElementById('memory-episodic-list');
+            
+            const memCount = document.getElementById('mem-count');
+            const freshness = document.getElementById('mem-freshness');
+            const bar = document.getElementById('mem-freshness-bar');
+            const lastIndex = document.getElementById('mem-last-index');
+
+            const loader = `<div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-300 gap-4"><span class="material-symbols-outlined text-4xl animate-spin">sync</span><p class="text-[10px] font-black uppercase tracking-[0.3em]">Synchronizing...</p></div>`;
+            if (ragList) ragList.innerHTML = loader;
+            if (vaultList) vaultList.innerHTML = loader;
+            if (episodicList) episodicList.innerHTML = loader;
+
+            try {
+                const [statsRes, ragRes, vaultRes, episodicRes] = await Promise.all([
+                    fetch('/api/memory/stats'),
+                    fetch('/api/memory/rag'),
+                    fetch('/api/memory/vault'),
+                    fetch('/api/memory/episodes')
+                ]);
+                
+                const stats = await statsRes.json();
+                if (memCount) memCount.innerText = (stats.total_memories || 0) + (stats.vault_count || 0) + (stats.episodic_count || 0);
+                if (freshness) freshness.innerText = (stats.freshness_score || 94) + '%';
+                if (bar) bar.style.width = (stats.freshness_score || 94) + '%';
+                
+                // Render RAG
+                const ragDocs = await ragRes.json();
+                if (ragList) {
+                    if (!ragDocs || ragDocs.length === 0) {
+                        ragList.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-200 gap-4"><span class="material-symbols-outlined text-5xl">inventory_2</span><p class="text-[10px] font-black uppercase tracking-[0.3em]">Latent space empty</p></div>`;
+                    } else {
+                        ragList.innerHTML = ragDocs.reverse().map(d => renderMemoryCard(d, 'Semantic Fragment', 'psychology')).join('');
+                    }
+                }
+
+                // Render Vault
+                const vaultDocs = await vaultRes.json();
+                if (vaultList) {
+                    if (!vaultDocs || vaultDocs.length === 0) {
+                        vaultList.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-200 gap-4"><span class="material-symbols-outlined text-5xl">shield</span><p class="text-[10px] font-black uppercase tracking-[0.3em]">Vault empty</p></div>`;
+                    } else {
+                        vaultList.innerHTML = vaultDocs.reverse().map(d => renderMemoryCard({
+                            text: d.fact,
+                            timestamp: d.timestamp,
+                            metadata: { source: d.category }
+                        }, 'Permanent Fact', 'verified')).join('');
+                    }
+                }
+
+                // Render Episodic
+                const episodes = await episodicRes.json();
+                if (episodicList) {
+                    if (!episodes || episodes.length === 0) {
+                        episodicList.innerHTML = `<div class="col-span-full flex flex-col items-center justify-center py-20 text-zinc-200 gap-4"><span class="material-symbols-outlined text-5xl">history</span><p class="text-[10px] font-black uppercase tracking-[0.3em]">No recent activity</p></div>`;
+                    } else {
+                        episodicList.innerHTML = episodes.map(e => `
+                            <div class="bg-white border border-zinc-200 rounded-xl p-4 flex gap-4 items-start hover:border-black transition-all">
+                                <div class="text-[10px] font-mono text-zinc-400 mt-0.5">${e.ts.split('T')[1].split('.')[0]}</div>
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[8px] font-black uppercase rounded">${e.category}</span>
+                                        <div class="flex gap-0.5 text-[8px] text-zinc-300">
+                                            ${'★'.repeat(Math.round(e.importance*5))}${'☆'.repeat(5-Math.round(e.importance*5))}
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-zinc-800 leading-normal">${escapeHtml(e.event)}</p>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
+                }
+
+                if (lastIndex) {
+                    const latest = ragDocs[0] || vaultDocs[0] || episodes[0];
+                    lastIndex.innerText = latest ? new Date(latest.timestamp || latest.ts || Date.now()).toLocaleDateString() : 'Recently';
+                }
+            } catch (e) {
+                console.error("Memory load failed", e);
+            }
+        }
+
+        const memoryCache = {};
+
+        function renderMemoryCard(d, typeLabel, icon) {
+            const docId = d.id || `mem-${Math.random().toString(16).slice(2, 10)}`;
+            memoryCache[docId] = d;
+            
+            const content = (d.content || d.text || d.page_content || '');
+            const displayContent = content.length > 200 ? content.substring(0, 200) + '...' : content;
+            const source = d.metadata?.source || d.metadata?.source_file || 'KERNEL_CORE';
+
+            return `
+                <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-zinc-400 transition-all flex flex-col gap-4 group cursor-pointer" 
+                     onclick="viewMemoryDetail('${docId}')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 bg-zinc-50 rounded-lg flex items-center justify-center border border-zinc-100">
+                                <span class="material-symbols-outlined text-sm text-zinc-600">${icon}</span>
+                            </div>
+                            <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">${typeLabel}</span>
+                        </div>
+                        <span class="material-symbols-outlined text-xs text-zinc-200 group-hover:text-zinc-900 transition-colors" 
+                              title="Source: ${source}"
+                              onclick="event.stopPropagation(); showToast('Source: ${source}', false)">link</span>
+                    </div>
+                    <div class="text-sm leading-relaxed text-zinc-700">${escapeHtml(displayContent)}</div>
+                    <div class="pt-4 border-t border-zinc-50 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xs text-zinc-400">source</span>
+                            <span class="text-[9px] font-black text-zinc-400 uppercase tracking-tighter truncate max-w-[120px]">${escapeHtml(source)}</span>
+                        </div>
+                        <span class="text-[8px] font-bold text-zinc-300 uppercase tracking-widest">Click to Expand</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function viewMemoryDetail(docId) {
+            const d = memoryCache[docId];
+            if (!d) return;
+
+            const modal = document.getElementById('cmd-modal');
+            const title = document.getElementById('modal-title');
+            const content = document.getElementById('modal-content');
+            
+            const rawText = d.content || d.text || d.page_content || '';
+            const source = d.metadata?.source || d.metadata?.source_file || 'KERNEL_CORE';
+            
+            title.innerHTML = `<span class="flex items-center gap-2"><span class="material-symbols-outlined">psychology</span> Memory Fragment Detail</span>`;
+            
+            // Render markdown using marked.js if available, else use fallback
+            let renderedHtml = '';
+            if (typeof marked !== 'undefined') {
+                renderedHtml = `
+                    <div class="prose prose-sm max-w-none">
+                        <div class="mb-4 pb-4 border-b border-zinc-100 flex justify-between items-center text-[10px] uppercase font-black tracking-widest text-zinc-400">
+                            <span>Source: ${source}</span>
+                            <span>ID: ${d.id || 'N/A'}</span>
+                        </div>
+                        ${marked.parse(rawText)}
+                    </div>
+                `;
+            } else {
+                renderedHtml = `
+                    <div class="text-[10px] text-zinc-400 mb-4 px-2 py-1 bg-zinc-50 inline-block rounded">MARKDOWN RENDERER LOAD FAIL - RAW VIEW</div>
+                    <pre class="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 font-sans">${escapeHtml(rawText)}</pre>
+                `;
+            }
+            
+            content.innerHTML = renderedHtml;
+            modal.style.display = 'flex';
+        }
+
+        async function loadIntelligence() {
+            try {
+                const res = await fetch('/api/intelligence/trace');
+                const data = await res.json();
+                const container = document.getElementById('traceLogsContainer');
+                
+                if (container) {
+                    container.innerHTML = data.map(t => {
+                        const isAction = (t.action || '').includes('ACTION') || (t.action || '').includes('_') || (t.action || '').length > 10;
+                        return `
+                            <div class="trace-line ${isAction ? 'highlight' : ''}">
+                                <span class="trace-time">[${t.timestamp?.includes('T') ? t.timestamp.split('T')[1].split('.')[0] : (t.timestamp || 'LIVE')}]</span>
+                                <span class="trace-action">> ${t.action}</span>
+                                ${t.reasoning ? `<div class="trace-reasoning">${t.reasoning}</div>` : ''}
+                            </div>
+                        `;
+                    }).join('') || '<div class="empty-state">Awaiting inference...</div>';
+                }
+            } catch (e) { console.error("Trace load failed:", e); }
+        }
+
+        async function loadEvolution() {
+            try {
+                const res = await fetch('/api/features/list');
+                const data = await res.json();
+                const features = data.features || {};
+                
+                // Update cognitive capabilities count
+                const count = Object.keys(features).length;
+                const skillsEl = document.getElementById('skillsCount');
+                if (skillsEl) skillsEl.textContent = count;
+                
+                // Animate orb as visual feedback
+                const orb = document.getElementById('evolutionOrb');
+                if (orb) {
+                    orb.style.transform = 'scale(1.05)';
+                    setTimeout(() => orb.style.transform = 'scale(1)', 2000);
+                }
+            } catch (e) {
+                console.error("Evolution load failed", e);
+            }
+        }
+
+        async function triggerEvolution() {
+            const btn = document.getElementById('evolveButton');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> EVOLVING...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/evolve', { method: 'POST' });
+                const data = await res.json();
+                showToast('🚀 ' + data.status, false);
+                await loadEvolution(); // Refresh data
+            } catch (e) {
+                showToast('❌ Evolution failed: ' + e.message, true);
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // ─── Batch 4: Task & Skill Control ───
+        async function loadTasksControl() {
+            const res = await fetch('/api/system/processes');
+            const jobs = await res.json();
+            const list = document.getElementById('task-control-list');
+            if (list) {
+                list.innerHTML = jobs.map(j => `
+                    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col gap-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-black text-sm text-zinc-900 tracking-tight">${escapeHtml(j.name)}</h3>
+                                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">PID: ${j.pid} | ID: ${j.job_id.substring(0, 8)}</p>
+                            </div>
+                            <span class="flex items-center gap-1.5 px-3 py-1 bg-zinc-950 text-white text-[9px] font-black rounded-lg tracking-widest uppercase">
+                                <span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span>
+                                Live
+                            </span>
+                        </div>
+                        <div class="flex gap-2">
+                             <button class="flex-1 py-1.5 rounded-lg bg-zinc-100 text-zinc-600 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-200 transition-all">Details</button>
+                             <button class="flex-1 py-1.5 rounded-lg bg-red-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all" onclick="cancelJob('${j.job_id}')">Terminate</button>
+                        </div>
+                    </div>
+                `).join('') || `
+                    <div class="col-span-full py-12 flex flex-col items-center justify-center text-zinc-300 gap-3">
+                        <span class="material-symbols-outlined text-4xl">task</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest">No active system threads</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function cancelJob(jobId) {
+            if (!confirm('Are you sure you want to terminate job ' + jobId + '?')) return;
+            const res = await fetch('/api/system/control', {
+                method: 'POST', body: JSON.stringify({ job_id: jobId }), headers: { 'Content-Type': 'application/json' }
+            });
+            const result = await res.json();
+            showToast(result.status === 'cancelled' ? '✅ Job terminated' : '❌ Failed: ' + result.error, result.status !== 'cancelled');
+            loadTasksControl();
+        }
+
+        async function executeRepl() {
+            const codeInput = document.getElementById('replCode');
+            const outputTerminal = document.getElementById('replOutput');
+            const code = codeInput ? codeInput.value : '';
+            
+            if (!code.trim()) return;
+
+            const startTime = performance.now();
+            outputTerminal.innerHTML += `<div class="text-[var(--accent)] mb-1 font-mono">> Executing payload...</div>`;
+            
+            try {
+                const res = await fetch('/api/system/repl', {
+                    method: 'POST', body: JSON.stringify({ code: code }), headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                const executionTime = ((performance.now() - startTime) / 1000).toFixed(2);
+                
+                document.getElementById('replTime').textContent = executionTime + 's';
+                
+                if (data.output) {
+                     outputTerminal.innerHTML += `<div class="text-slate-300 font-mono whitespace-pre-wrap">${data.output.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+                } else if (data.error) {
+                     outputTerminal.innerHTML += `<div class="text-rose-400 font-mono whitespace-pre-wrap">${data.error}</div>`;
+                }
+                
+                outputTerminal.scrollTop = outputTerminal.scrollHeight;
+            } catch (e) {
+                outputTerminal.innerHTML += `<div class="text-rose-400 font-mono whitespace-pre-wrap">Connection Error: ${e.message}</div>`;
+            }
+        }
+
+        async function listSkills() {
+            const res = await fetch('/api/skills/list');
+            const skills = await res.json();
+            const selector = document.getElementById('skill-selector');
+            selector.innerHTML = '<option value="">Select a skill...</option>' +
+                Object.keys(skills).map(s => `<option value="${s}">${s}</option>`).join('');
+        }
+
+        async function loadSkillSource(skill) {
+            if (!skill) return;
+            const view = document.getElementById('skill-source-view');
+            view.innerHTML = '<div class="py-12 flex flex-col items-center justify-center text-zinc-300 gap-3"><span class="material-symbols-outlined animate-spin">sync</span><p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Decrypting Logic...</p></div>';
+            try {
+                const res = await fetch('/api/skills/source', { headers: { 'X-Skill-Name': skill } });
+                const data = await res.json();
+                view.innerHTML = `<pre class="p-8 font-mono text-xs text-zinc-600 leading-relaxed overflow-x-auto custom-scrollbar">${escapeHtml(data.source || 'No source found.')}</pre>`;
+            } catch (e) { 
+                view.innerHTML = `<div class="p-8 text-red-500 font-bold text-xs uppercase tracking-widest">Breach Trace: ${e.message}</div>`; 
+            }
+        }
+
+        async function loadSkillDocs(skill) {
+            if (!skill) return;
+            const view = document.getElementById('skill-docs-view');
+            view.innerHTML = '<div class="py-12 flex flex-col items-center justify-center text-zinc-300 gap-3"><span class="material-symbols-outlined animate-spin">sync</span><p class="text-[10px] font-black uppercase tracking-widest text-zinc-400">Retrieving Directives...</p></div>';
+            try {
+                const res = await fetch(`/api/skills/docs?name=${skill}`);
+                const data = await res.json();
+                view.innerHTML = data.docs 
+                    ? `<div class="p-10 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap font-medium">${escapeHtml(data.docs)}</div>` 
+                    : '<div class="p-10 text-zinc-300 text-xs font-black uppercase tracking-widest">No documentation found.</div>';
+            } catch (e) { 
+                view.innerHTML = `<div class="p-8 text-red-500 font-bold text-xs uppercase tracking-widest">Retrieval Error: ${e.message}</div>`; 
+            }
+        }
+
+        async function testTokenization() {
+            const text = document.getElementById('token-test-input').value;
+            if (!text) return;
+            const result = document.getElementById('token-count-result');
+            result.textContent = 'Counting...';
+            const res = await fetch('/api/intelligence/tokenize', {
+                method: 'POST', body: JSON.stringify({ text }), headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            result.textContent = data.count + ' tokens';
+        }
+
+        async function toggleGlobalLock(active) {
+            const res = await fetch('/api/security/lock', {
+                method: 'POST', body: JSON.stringify({ active }), headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            showToast('🛡️ ' + data.status, active);
+            loadSecurityPage();
+        }
+
+        // ─── Unified Monitor Logic ───
+        async function loadUnifiedMonitor() {
+            const container = document.getElementById('monitor-content');
+            const filter = document.getElementById('monitor-filter').value;
+
+            container.innerHTML = `
+                <div class="col-span-full py-20 flex flex-col items-center justify-center text-zinc-200 gap-4 animate-pulse">
+                    <span class="material-symbols-outlined text-5xl">radar</span>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em]">Querying ASURA Telemetry...</p>
+                </div>
+            `;
+
+            try {
+                if (filter === 'resources') {
+                    const res = await fetch('/api/system/resources');
+                    const data = await res.json();
+                    if (!data || data.length === 0) {
+                        container.innerHTML = `
+                            <div class="col-span-full py-20 bg-zinc-50 border border-zinc-100 rounded-2xl flex flex-col items-center justify-center text-zinc-400 gap-3">
+                                <span class="material-symbols-outlined text-3xl">query_stats</span>
+                                <p class="text-[10px] font-black uppercase tracking-widest text-center">No historical telemetry captured yet.</p>
+                            </div>`;
+                        return;
+                    }
+                    container.innerHTML = data.reverse().slice(0, 8).map(d => `
+                        <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col gap-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">${new Date(d.timestamp).toLocaleTimeString()}</span>
+                                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div class="text-2xl font-black text-zinc-900">CPU ${d.cpu}%</div>
+                                <div class="text-[10px] font-bold text-zinc-400">RAM ${d.mem}%</div>
+                            </div>
+                            <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="bg-black h-full" style="width:${d.cpu}%"></div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else if (filter === 'vcs') {
+                    const res = await fetch('/api/vcs/history');
+                    const data = await res.json();
+                    container.innerHTML = data.reverse().map(h => `
+                        <div class="col-span-full bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:border-zinc-400 transition-all flex items-center justify-between gap-6">
+                            <div class="flex items-center gap-5 flex-1">
+                                <div class="w-10 h-10 bg-zinc-50 rounded-xl flex items-center justify-center border border-zinc-100 text-zinc-400">
+                                    <span class="material-symbols-outlined">commit</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="font-black text-sm text-zinc-900 tracking-tight">${escapeHtml(h.message)}</h4>
+                                    <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-1">${escapeHtml(h.file)} — ${new Date(h.timestamp).toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="font-mono text-[10px] bg-zinc-950 text-white px-3 py-1 rounded-lg">${h.id.substring(0, 7)}</span>
+                                <button onclick="viewDiff('${h.id}')" class="p-2 hover:bg-zinc-50 rounded-lg transition-colors">
+                                    <span class="material-symbols-outlined text-sm text-zinc-400">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('') || '<div class="col-span-full p-20 text-center text-zinc-300 font-black uppercase tracking-widest text-xs">VCS Registry is clean.</div>';
+                } else {
+                    const res = await fetch('/api/system/processes');
+                    const jobs = await res.json();
+                    container.innerHTML = jobs.map(j => `
+                        <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col gap-4">
+                            <h4 class="text-xs font-black text-zinc-900 tracking-widest uppercase">${escapeHtml(j.name)}</h4>
+                            <div class="flex justify-between items-center text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                                <span>Status: ${j.status === 'running' ? '<span class="text-green-600">Active</span>' : '<span class="text-zinc-400">Wait</span>'}</span>
+                                <span>PID: ${j.pid}</span>
+                            </div>
+                            <div class="p-4 bg-zinc-50 rounded-xl font-mono text-[9px] text-zinc-500 overflow-hidden text-ellipsis whitespace-nowrap border border-zinc-100">
+                                ${escapeHtml(j.command)}
+                            </div>
+                            <button class="w-full py-2 bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-600 hover:text-white transition-all" onclick="cancelJob('${j.job_id}')">Terminate Job</button>
+                        </div>
+                    `).join('') || '<div class="col-span-full p-20 text-center text-zinc-300 font-black uppercase tracking-widest text-xs">No active background logic.</div>';
+                }
+            } catch (e) {
+                container.innerHTML = `<div class="col-span-full p-8 bg-red-50 text-red-500 rounded-2xl text-xs font-bold border border-red-100 flex items-center gap-3"><span class="material-symbols-outlined">error</span> Telemetry Breach: ${e.message}</div>`;
+            }
+        }
+
+        async function killJob(pid) {
+            if (!confirm('Are you sure you want to kill this task?')) return;
+            const res = await fetch('/api/system/jobs/kill', {
+                method: 'POST', body: JSON.stringify({ pid }), headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            showToast(data.status, false);
+            loadUnifiedMonitor();
+        }
+
+        async function viewDiff(hash) {
+            const res = await fetch(`/api/vcs/diff?hash=${hash}`);
+            const data = await res.json();
+            document.getElementById('monitor-details').style.display = 'block';
+            document.getElementById('monitor-details-content').textContent = data.diff || 'No diff available.';
+            document.getElementById('monitor-details').scrollIntoView({ behavior: 'smooth' });
+        }
+
+
+        async function checkHealth() {
+
+            const grid = document.getElementById('health-grid');
+            grid.innerHTML = '<div class="card">Running diagnostics...</div>';
+
+            // Mocking health check for now, can be expanded to real checks
+            const checks = [
+                { name: 'Ollama API', status: 'Online', color: 'var(--green)' },
+                { name: 'FAISS Vector D', status: 'Healthy', color: 'var(--green)' },
+                { name: 'Auth Gateway', status: 'Operational', color: 'var(--green)' },
+                { name: 'PTY Job Manager', status: 'Operational', color: 'var(--green)' },
+                { name: 'Audit Logging', status: 'Active', color: 'var(--green)' },
+                { name: 'Skill Registry', status: 'Operational', color: 'var(--green)' }
+            ];
+
+            grid.innerHTML = checks.map(c => `
+                <div class="card" style="text-align:center;">
+                    <div class="card-label">${c.name}</div>
+                    <div style="font-size:18px; font-weight:700; color:${c.color}">${c.status}</div>
+                </div>
+            `).join('');
+        }
+
+        // ─── Security & Governance ───
+        async function loadSecurityPage() {
+            try {
+                const [intRes, vaultRes, auditRes] = await Promise.all([
+                    fetch('/api/security/integrity'),
+                    fetch('/api/security/vault'),
+                    fetch('/api/security/audit-trail')
+                ]);
+                
+                const integrity = await intRes.json();
+                const integrityEl = document.getElementById('integrity-report');
+                if (integrityEl) {
+                    integrityEl.innerHTML = Object.entries(integrity).map(([k, v]) => `
+                        <div class="integrity-row">
+                            <span class="integrity-label">${k.replace(/_/g, ' ')}</span>
+                            <span class="integrity-value">${v}</span>
+                        </div>
+                    `).join('');
+                }
+
+                const vault = await vaultRes.json();
+                const vaultEl = document.getElementById('vault-list');
+                if (vaultEl) {
+                    vaultEl.innerHTML = Object.entries(vault).map(([k, v]) => `
+                        <div class="vault-item">
+                            <div class="vault-key">${k}</div>
+                            <div class="vault-value">${v}</div>
+                        </div>
+                    `).join('');
+                }
+
+                const auditData = await auditRes.json();
+                const auditEl = document.getElementById('security-audit-trail');
+                if (auditEl) {
+                    auditEl.innerHTML = auditData.logs.map(l => `<div class="log-line">${l}</div>`).join('') || '<div class="empty-state">No audit traces found.</div>';
+                }
+            } catch (e) { console.error("Security link failure:", e); }
+        }
+
+        async function rotateKey() {
+            try {
+                const res = await fetch('/api/security/rotate-key', { method: 'POST' });
+                const data = await res.json();
+                showToast('✅ ' + (data.status || 'Key rotation complete'), false);
+                loadSecurityPage();
+            } catch (e) { showToast('❌ Rotation failure', true); }
+        }
+
+        async function exportData() {
+            try {
+                const res = await fetch('/api/security/export', { method: 'POST' });
+                showToast('✅ Neural archive exported', false);
+            } catch (e) { showToast('❌ Export failure', true); }
+        }
+
+        // ─── Architectural Knowledge Graph ───
+        let currentGraphCategory = 'overview';
+        let graphLiveEnabled = true;
+
+        function toggleGraphFeature() {
+            const toggle = document.getElementById('disable-graph-toggle');
+            graphLiveEnabled = toggle ? !toggle.checked : true;
+            if (graphLiveEnabled) {
+                loadKnowledgeGraph();
+            } else {
+                showToast('Live Graph Disabled', false);
+            }
+        }
+
+        function switchGraphCategory(cat) {
+            currentGraphCategory = cat;
+            document.querySelectorAll('.graph-tab').forEach(btn => btn.classList.remove('active'));
+            if (event.target) event.target.classList.add('active');
+            loadKnowledgeGraph();
+        }
+
+        function handleNodeClick(nodeId) {
+            const data = window.graphNodesData || {};
+            const node = data[nodeId];
+            if (!node) return;
+
+            const panel = document.getElementById('node-detail-panel');
+            const title = document.getElementById('ndp-title');
+            const content = document.getElementById('ndp-content');
+
+            if (title) title.textContent = node.label || nodeId;
+
+            let detailsHtml = `
+                <div style="margin-bottom:8px;"><strong>Type:</strong> ${node.type?.toUpperCase() || 'UNDEFINED'}</div>
+                <div style="margin-bottom:8px;"><strong>Health:</strong> <span style="color:${node.health > 80 ? 'var(--green)' : node.health > 40 ? 'var(--amber)' : 'var(--red)'}">${node.health || 0}%</span></div>
+            `;
+
+            if (node.metadata?.abs_path) {
+                detailsHtml += `<div style="margin-bottom:8px; word-break:break-all;"><strong>Path:</strong><br>${node.metadata.abs_path}</div>`;
+            }
+            if (node.metadata?.description) {
+                detailsHtml += `<div style="margin-bottom:8px;"><strong>Desc:</strong><br>${node.metadata.description}</div>`;
+            }
+
+            if (content) content.innerHTML = detailsHtml;
+            if (panel) panel.style.display = 'block';
+        }
+
+        // Must expose to global window for mermaid click events
+        window.handleNodeClick = handleNodeClick;
+
+        async function loadKnowledgeGraph() {
+            if (!graphLiveEnabled) return;
+
+            const container = document.getElementById('knowledge-graph-container');
+            const graphDiv = document.getElementById('d3-graph');
+            const loading = document.getElementById('graph-loading');
+
+            loading.style.display = 'block';
+            graphDiv.innerHTML = '';
+
+            try {
+                const res = await fetch(`/api/knowledge/graph?cat=${currentGraphCategory}`);
+                const data = await res.json();
+
+                if (!data.nodes || data.nodes.length === 0) {
+                    loading.textContent = 'No architectural data found. Try running a health probe.';
+                    return;
+                }
+
+                // --- D3 Force Graph Logic ---
+                const width = graphDiv.clientWidth || 800;
+                const height = graphDiv.clientHeight || 600;
+
+                const svg = d3.select(graphDiv).append("svg")
+                    .attr("width", "100%")
+                    .attr("height", "100%")
+                    .attr("viewBox", [0, 0, width, height]);
+
+                const containerGroup = svg.append("g");
+
+                // Add Zoom Support
+                const zoom = d3.zoom()
+                    .scaleExtent([0.1, 4])
+                    .on("zoom", (event) => {
+                        containerGroup.attr("transform", event.transform);
+                    });
+                svg.call(zoom);
+
+                // Setup Physics Simulation wrapper
+                const simulation = d3.forceSimulation()
+                    .force("link", d3.forceLink().id(d => d.id).distance(100))
+                    .force("charge", d3.forceManyBody().strength(-300))
+                    .force("center", d3.forceCenter(width / 2, height / 2))
+                    .force("collide", d3.forceCollide().radius(40));
+
+                let allNodes = data.nodes.map(d => Object.create(d));
+                // Initially collapsed, except overview sys_asura which we expand to avoid confusion
+                allNodes.forEach(n => {
+                    n.collapsed = true;
+                });
+                let allLinks = data.edges.map(d => Object.create(d));
+
+                // Identify root(s)
+                let roots = allNodes.filter(n => n.id === 'sys_asura' || n.id === currentGraphCategory);
+                if (roots.length === 0) roots = [allNodes[0]]; // fallback if necessary
+
+                // Expand roots to first-level children by default
+                roots.forEach(r => r.collapsed = false);
+
+                let link = containerGroup.append("g").selectAll(".d3-link");
+                let node = containerGroup.append("g").selectAll(".d3-node");
+                let label = containerGroup.append("g").selectAll(".d3-label-text");
+
+                function update() {
+                    const activeIds = new Set();
+                    const queue = roots.map(r => r.id);
+                    queue.forEach(id => activeIds.add(id));
+
+                    let idx = 0;
+                    while (idx < queue.length) {
+                        const currId = queue[idx++];
+                        const n = allNodes.find(x => x.id === currId);
+                        if (n && !n.collapsed) {
+                            allLinks.filter(l => (l.source.id || l.source) === currId).forEach(l => {
+                                const targetId = l.target.id || l.target;
+                                if (!activeIds.has(targetId)) {
+                                    activeIds.add(targetId);
+                                    queue.push(targetId);
+                                }
+                            });
+                        }
+                    }
+
+                    const nodes = allNodes.filter(n => activeIds.has(n.id));
+                    const links = allLinks.filter(l => activeIds.has(l.source.id || l.source) && activeIds.has(l.target.id || l.target));
+
+                    // Links
+                    link = link.data(links, d => d.source.id + "-" + d.target.id);
+                    link.exit().remove();
+                    const linkEnter = link.enter().append("line")
+                        .attr("class", "d3-link")
+                        .attr("stroke", "var(--border)")
+                        .attr("stroke-opacity", 0.6)
+                        .attr("stroke-width", 1.5);
+                    link = linkEnter.merge(link);
+
+                    // Nodes
+                    node = node.data(nodes, d => d.id);
+                    node.exit().remove();
+                    const nodeEnter = node.enter().append("circle")
+                        .attr("class", "d3-node")
+                        .attr("r", d => d.type === "category" ? 25 : (d.type === "agent" ? 15 : 10))
+                        .attr("fill", d => d.health > 80 ? '#22c55e' : (d.health > 40 ? '#f59e0b' : '#ef4444'))
+                        .attr("stroke", d => {
+                            // Only add ring if it has children and is collapsed
+                            const hasChildren = allLinks.some(l => (l.source.id || l.source) === d.id);
+                            return (d.collapsed && hasChildren) ? "var(--text)" : "none";
+                        })
+                        .attr("stroke-width", 2)
+                        .on("click", (event, d) => {
+                            if (event.shiftKey) {
+                                window.handleNodeClick(d.id); // Shift-click -> open details
+                            } else {
+                                // Default click opens details AND toggles collapse
+                                window.handleNodeClick(d.id);
+                                d.collapsed = !d.collapsed;
+                                update();
+                            }
+                        })
+                        .call(drag(simulation));
+
+                    // Add tooltips
+                    nodeEnter.append("title").text(d => `Shift+Click for details\n${d.metadata?.label || d.id}`);
+
+                    node = nodeEnter.merge(node);
+
+                    // Labels
+                    label = label.data(nodes, d => d.id);
+                    label.exit().remove();
+                    const labelEnter = label.enter().append("text")
+                        .attr("class", "d3-label-text")
+                        .attr("dx", 15)
+                        .attr("dy", 4)
+                        .attr("fill", "var(--text)")
+                        .style("pointer-events", "none")
+                        .text(d => d.metadata?.label || d.id.split("/").pop());
+                    label = labelEnter.merge(label);
+
+                    simulation.nodes(nodes);
+                    simulation.force("link").links(links);
+                    simulation.alpha(1).restart();
+                }
+
+                update();
+
+                // Store nodes for global click handler lookup
+                graphNodesData = {};
+                data.nodes.forEach(n => graphNodesData[n.id] = n);
+
+                simulation.on("tick", () => {
+                    link
+                        .attr("x1", d => d.source.x)
+                        .attr("y1", d => d.source.y)
+                        .attr("x2", d => d.target.x)
+                        .attr("y2", d => d.target.y);
+
+                    node
+                        .attr("cx", d => d.x)
+                        .attr("cy", d => d.y);
+
+                    label
+                        .attr("x", d => d.x)
+                        .attr("y", d => d.y);
+                });
+
+                loading.style.display = 'none';
+
+                // Helper for drag interaction
+                function drag(simulation) {
+                    function dragstarted(event) {
+                        if (!event.active) simulation.alphaTarget(0.3).restart();
+                        event.subject.fx = event.subject.x;
+                        event.subject.fy = event.subject.y;
+                    }
+                    function dragged(event) {
+                        event.subject.fx = event.x;
+                        event.subject.fy = event.y;
+                    }
+                    function dragended(event) {
+                        if (!event.active) simulation.alphaTarget(0);
+                        event.subject.fx = null;
+                        event.subject.fy = null;
+                    }
+                    return d3.drag()
+                        .on("start", dragstarted)
+                        .on("drag", dragged)
+                        .on("end", dragended);
+                }
+
+            } catch (e) {
+                loading.textContent = 'Failed to load graph: ' + e.message;
+            }
+        }
+
+        async function runCmd(cmd) {
+            showToast('🔄 Executing: ' + cmd, false);
+            try {
+                const res = await fetch('/api/command', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: cmd })
+                });
+                const data = await res.json();
+                if (data.response && data.response.length > 150) {
+                    showModal(cmd, data.response);
+                } else {
+                    showToast(data.response || 'Done.', false);
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, true);
+            }
+        }
+        // ─── Utilities ───
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+
+</html>

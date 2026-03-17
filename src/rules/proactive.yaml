@@ -1,0 +1,38 @@
+# rules/proactive.yaml — Proactive behavior rules
+# These replace hardcoded timing in proactive.py and curiosity.py
+
+- name: idle_curiosity
+  trigger:
+    event: idle
+    minutes: 15
+  actions:
+    - run_curiosity_scan
+  message: "🧠 Running idle-time curiosity scan..."
+  cooldown_minutes: 30
+
+- name: idle_evolve
+  trigger:
+    event: idle
+    minutes: 60
+  actions:
+    - run_evolve
+  message: "🧬 Running idle-time evolution cycle..."
+  cooldown_minutes: 360
+
+- name: startup_assessment
+  trigger:
+    event: startup
+  actions:
+    - run_self_assessment
+    - check_for_upgrades
+  message: "🔍 Running startup self-assessment..."
+  cooldown_minutes: 0
+
+- name: daily_backup
+  trigger:
+    event: schedule
+    cron: "0 3 * * *"
+  actions:
+    - create_backup
+  message: "💾 Running daily backup..."
+  cooldown_minutes: 1440

@@ -1,0 +1,66 @@
+/* Chat Component Styles - Greyscale Sync */
+.chat-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 32px;
+}
+
+.chat-header {
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.message {
+    max-width: 80%;
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    position: relative;
+    border: 1px solid var(--border);
+}
+
+.message.user {
+    align-self: flex-end;
+    background: var(--primary);
+    color: white;
+}
+
+.message.asura {
+    align-self: flex-start;
+    background: var(--bg-alt);
+    color: var(--text);
+}
+
+.chat-input-area {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.chat-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    color: var(--text);
+    font-family: var(--font-main);
+}
+
+.chat-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}

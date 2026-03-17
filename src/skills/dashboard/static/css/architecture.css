@@ -1,0 +1,93 @@
+/* Architecture Graph — Monochrome Refinement */
+.architecture-container {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.tab-nav {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    margin-top: 16px;
+}
+
+.tab-btn {
+    padding: 8px 16px;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--font-main);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+    border-color: var(--text-dim);
+}
+
+.tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.architecture-main {
+    position: relative;
+    height: 600px;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.graph-viewport {
+    flex: 1;
+    cursor: grab;
+}
+
+.graph-viewport:active {
+    cursor: grabbing;
+}
+
+/* D3 Node & Link Overrides for Monochrome */
+#d3-graph circle {
+    fill: #ffffff !important;
+    stroke: #000000 !important;
+    stroke-width: 2px !important;
+}
+
+#d3-graph line {
+    stroke: #e0e0e0 !important;
+    stroke-opacity: 0.6 !important;
+}
+
+#d3-graph text {
+    font-family: var(--font-main);
+    font-size: 10px;
+    fill: var(--text-muted);
+}
+
+/* Modal / Detail Panel */
+.detail-panel {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 300px;
+    max-height: calc(100% - 48px);
+    z-index: 10;
+    display: none;
+    flex-direction: column;
+    box-shadow: var(--shadow-md);
+}
+
+.toggle-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}

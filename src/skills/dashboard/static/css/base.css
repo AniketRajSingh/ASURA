@@ -1,0 +1,136 @@
+@import url('https://fonts.cdnfonts.com/css/product-sans');
+
+:root {
+    /* Refined Monochrome Palette */
+    --primary: #000000;
+    --primary-hover: #333333;
+    
+    --bg: #ffffff;
+    --bg-alt: #f8f9fa;
+    --surface: #ffffff;
+    
+    --text: #000000;
+    --text-muted: #666666;
+    --text-dim: #999999;
+    
+    --border: #e0e0e0;
+    --border-light: #f0f0f0;
+    
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    
+    --font-main: 'Product Sans', sans-serif;
+    --sidebar-width: 260px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-main);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+}
+
+/* Base Component Styles */
+.glass-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-premium {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-family: var(--font-main);
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease;
+}
+
+.btn-premium:hover {
+    background: var(--primary-hover);
+}
+
+.nav-link {
+    width: 100%;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 14px;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.nav-link:hover {
+    background: var(--bg-alt);
+    color: var(--text);
+}
+
+.nav-link.active {
+    background: var(--primary);
+    color: white;
+    font-weight: 500;
+}
+
+.nav-link .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* Global Utility & Custom Elements */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #e5e7eb;
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #d1d5db;
+}
+
+/* Animations */
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.98); }
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 2s infinite ease-in-out;
+}
+
+/* Active Page State Hack for Sidebar Hooks */
+.active-page {
+    /* These classes are handled via JS manipulation of Tailwind classes, 
+       but we keep the selector logic clean in code. */
+}

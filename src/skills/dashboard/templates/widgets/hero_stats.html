@@ -1,0 +1,60 @@
+<!-- Widget: Hero Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+    <!-- CPU Widget -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Neural Load</p>
+                <h3 class="text-4xl font-bold mt-1 tracking-tighter text-zinc-900" id="m-cpu">{{ cpu }}%</h3>
+            </div>
+            <div class="w-12 h-12 bg-zinc-50 rounded-xl flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors duration-500">
+                <span class="material-symbols-outlined text-2xl">memory</span>
+            </div>
+        </div>
+        <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-black h-full transition-all duration-1000 ease-out" id="bar-cpu" style="width: {{ cpu }}%"></div>
+        </div>
+        <div class="mt-4 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">System Thread Active</span>
+        </div>
+    </div>
+
+    <!-- RAM Widget -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Synaptic Cache</p>
+                <h3 class="text-4xl font-bold mt-1 tracking-tighter text-zinc-900" id="m-mem">{{ mem }}%</h3>
+            </div>
+            <div class="w-12 h-12 bg-zinc-50 rounded-xl flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors duration-500">
+                <span class="material-symbols-outlined text-2xl">dataset</span>
+            </div>
+        </div>
+        <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-black h-full transition-all duration-1000 ease-out" id="bar-mem" style="width: {{ mem }}%"></div>
+        </div>
+        <div class="mt-4 flex items-center gap-1.5 text-zinc-400">
+            <span class="text-[9px] font-bold uppercase tracking-widest">Optimized Allocation</span>
+        </div>
+    </div>
+
+    <!-- Storage Widget -->
+    <div class="bg-white border border-zinc-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all group">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <p class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Data Horizon</p>
+                <h3 class="text-4xl font-bold mt-1 tracking-tighter text-zinc-900" id="m-disk">{{ disk }}%</h3>
+            </div>
+            <div class="w-12 h-12 bg-zinc-50 rounded-xl flex items-center justify-center group-hover:bg-black group-hover:text-white transition-colors duration-500">
+                <span class="material-symbols-outlined text-2xl">storage</span>
+            </div>
+        </div>
+        <div class="w-full bg-zinc-100 h-1.5 rounded-full overflow-hidden">
+            <div class="bg-black h-full transition-all duration-1000 ease-out" id="bar-disk" style="width: {{ disk }}%"></div>
+        </div>
+        <div class="mt-4 flex items-center gap-1.5 text-zinc-400">
+            <span class="text-[9px] font-bold uppercase tracking-widest">Persistent Integrity Check</span>
+        </div>
+    </div>
+</div>
