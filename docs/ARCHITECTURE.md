@@ -43,6 +43,7 @@ ASURA operates via an iterative **ReAct (Reason + Act)** loop, implemented in `s
 | **curiosity** | Autonomous Curiosity Engine | `src/core/curiosity.py` |
 | **declarative_agent_loader** | Declarative Agent System | `src/core/declarative_agent_loader.py` |
 | **doc_updater** | Autonomous Documentation Daemon | `src/core/doc_updater.py` |
+| **federation** | Peer-to-Peer AI Synchronization | `src/core/federation.py` |
 | **formatter** |  | `src/core/formatter.py` |
 | **gateway** | Interactive Gateway | `src/core/gateway.py` |
 | **habits** | AI Idle Habits | `src/core/habits.py` |
