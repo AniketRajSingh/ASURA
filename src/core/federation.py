@@ -84,7 +84,7 @@ class SovereignFederation:
         git._git(f'commit -m "{message}"')
         
         # 4. Push to shared remote
-        res = git._git(f"push {config.SHARED_GIT_REMOTE} main")
+        res = git._git(f"push {config.SHARED_GIT_REMOTE} master")
         if res["success"]:
             log_app(f"✅ Federation: Evolution pushed to {config.SHARED_GIT_REMOTE}")
             return True
@@ -117,7 +117,7 @@ class SovereignFederation:
             git._git("stash")
             
         # 4. Pull
-        res = git._git(f"pull {config.SHARED_GIT_REMOTE} main")
+        res = git._git(f"pull {config.SHARED_GIT_REMOTE} master")
         
         # 5. Restore dirty state
         if is_dirty:
