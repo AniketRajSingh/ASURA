@@ -1140,9 +1140,86 @@
         }
 
         // ─── Unified Monitor Logic ───
-        async function loadUnifiedMonitor() {
+        async function loadClusterVitals() {
             const container = document.getElementById('monitor-content');
+            container.innerHTML = `
+                <div class="col-span-full py-20 flex flex-col items-center justify-center text-zinc-200 gap-4">
+                    <span class="material-symbols-outlined text-5xl animate-spin">hub</span>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em]">Mapping Sovereign Cluster...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch('/api/cluster/health');
+                const data = await res.json();
+                
+                container.innerHTML = data.map(node => {
+                    const sys = node.system || {};
+                    const cpu = sys.cpu?.usage_percent || 0;
+                    const mem = sys.memory?.used_percent || 0;
+                    const disk = sys.disk?.used_percent || 0;
+                    const isOnline = node.status === "online";
+                    
+                    return `
+                        <div class="bg-white border ${node.is_local ? 'border-zinc-950' : 'border-zinc-200'} rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col gap-6 relative overflow-hidden">
+                            ${node.is_local ? '<div class="absolute top-0 right-0 px-3 py-1 bg-zinc-950 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-xl">Local Node</div>' : ''}
+                            
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-black text-zinc-900 tracking-tight">${node.instance_name}</h3>
+                                    <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">${node.url || 'Internal Link'}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold uppercase tracking-tighter ${isOnline ? 'text-green-600' : 'text-red-600'}">${node.status.toUpperCase()}</span>
+                                    <span class="w-2.5 h-2.5 ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'} rounded-full"></span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">CPU</span>
+                                    <div class="text-xl font-black text-zinc-900">${cpu}%</div>
+                                    <div class="w-full bg-zinc-100 h-1 rounded-full overflow-hidden">
+                                        <div class="bg-zinc-900 h-full" style="width:${cpu}%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Memory</span>
+                                    <div class="text-xl font-black text-zinc-900">${mem}%</div>
+                                    <div class="w-full bg-zinc-100 h-1 rounded-full overflow-hidden">
+                                        <div class="bg-zinc-900 h-full" style="width:${mem}%"></div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-[9px] font-black text-zinc-400 uppercase tracking-widest">Storage</span>
+                                    <div class="text-xl font-black text-zinc-900">${disk}%</div>
+                                    <div class="w-full bg-zinc-100 h-1 rounded-full overflow-hidden">
+                                        <div class="bg-zinc-900 h-full" style="width:${disk}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pt-4 border-t border-zinc-50 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm text-zinc-400">robot</span>
+                                    <span class="text-[9px] font-bold text-zinc-500 uppercase">Telegram: ${node.telegram_active ? 'LEADER' : 'STANDBY'}</span>
+                                </div>
+                                <button class="px-3 py-1 bg-zinc-50 hover:bg-zinc-900 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest rounded-lg">Details</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                container.innerHTML = `<div class="col-span-full p-8 bg-red-50 text-red-500 rounded-2xl text-xs font-bold border border-red-100">Cluster Sync Error: ${e.message}</div>`;
+            }
+        }
+
+        async function loadUnifiedMonitor() {
             const filter = document.getElementById('monitor-filter').value;
+            if (filter === 'cluster') {
+                return loadClusterVitals();
+            }
+            const container = document.getElementById('monitor-content');
 
             container.innerHTML = `
                 <div class="col-span-full py-20 flex flex-col items-center justify-center text-zinc-200 gap-4 animate-pulse">

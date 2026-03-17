@@ -30,6 +30,11 @@ class SovereignAuthority:
         self._active = True
         log_app(f"Sovereign Power Lock engaged ({self.os_type})")
         
+        # ── Start Jiggler Thread ────────────
+        self._jiggler_active = True
+        self._thread = threading.Thread(target=self._jiggler_loop, daemon=True)
+        self._thread.start()
+
         if self.os_type == "darwin":
             # macOS: Use caffeinate
             try:
@@ -56,11 +61,28 @@ class SovereignAuthority:
             # Windows: Use SetThreadExecutionState via ctypes
             try:
                 import ctypes
-                # ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED
-                ctypes.windll.kernel32.SetThreadExecutionState(0x80000001 | 0x00000001 | 0x00000040)
+                # ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_AWAYMODE_REQUIRED | ES_DISPLAY_REQUIRED
+                ctypes.windll.kernel32.SetThreadExecutionState(0x80000001 | 0x00000001 | 0x00000040 | 0x00000002)
                 log_audit("POWER", "Windows sleep prevented via SetThreadExecutionState")
             except Exception as e:
                 log_app(f"Windows Power Lock failed: {e}")
+
+    def _jiggler_loop(self):
+        """Periodically simulate activity to trick OS power management."""
+        import pyautogui
+        # Disable pyautogui fail-safe for this background task
+        pyautogui.FAILSAFE = False
+        
+        log_app("🖱️ Activity Jiggler active.")
+        while self._jiggler_active:
+            try:
+                # Move mouse by 1 pixel and back
+                pyautogui.moveRel(1, 0, duration=0.1)
+                pyautogui.moveRel(-1, 0, duration=0.1)
+                # Or press an innocuous key like shift
+                # pyautogui.press('shift')
+            except Exception: pass
+            time.sleep(120) # Every 2 minutes
 
     def release_lock(self):
         """Allow system to sleep again."""
@@ -69,6 +91,7 @@ class SovereignAuthority:
             
         log_app("Sovereign Power Lock released")
         self._active = False
+        self._jiggler_active = False
         
         if self._lock_process:
             self._lock_process.terminate()

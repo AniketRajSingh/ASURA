@@ -176,6 +176,10 @@ async def start_parallel_services():
     scheduler = SchedulerDaemon(notify_fn=notify)
     curiosity = CuriosityEngine(notify_fn=notify)
     observer = FileSystemObserver(notify_fn=notify)
+    
+    # ── Start Federation Sync ───────────
+    from core.federation import federation
+    federation.start_sync_daemon()
 
     # 2. Build Async Tasks
     tasks = [
@@ -227,26 +231,31 @@ async def start_parallel_services():
         tasks.append(asyncio.create_task(asyncio.to_thread(start_api_server)))
     except Exception as e: log_app(f"API skip: {e}")
 
-    # 5. Start Telegram Bots Async
-    from skills.telegram_bot.bot import create_core_bot, create_insta_bot
+    # 5. Start Telegram Bots Async (Federated Election)
+    from core.federation import federation
+    is_leader = await federation.should_start_bot()
     
-    log_app("Starting Dual Telegram Bots (Core + Insta)...")
-    core_app = create_core_bot()
-    insta_app = create_insta_bot()
-    
-    # Initialize and start both
-    await core_app.initialize()
-    await core_app.start()
-    await insta_app.initialize()
-    await insta_app.start()
+    if is_leader:
+        from skills.telegram_bot.bot import create_core_bot, create_insta_bot
+        log_app("Starting Dual Telegram Bots (Cluster Leader)...")
+        core_app = create_core_bot()
+        insta_app = create_insta_bot()
+        
+        await core_app.initialize()
+        await core_app.start()
+        await insta_app.initialize()
+        await insta_app.start()
 
-    # Start polling for both
-    if os.environ.get("ASURA_MANAGED_BOT") != "true":
-        await core_app.updater.start_polling()
-        await insta_app.updater.start_polling()
-        log_app("🤖 Dual Bots Polling: ACTIVE")
+        if os.environ.get("ASURA_MANAGED_BOT") != "true":
+            await core_app.updater.start_polling()
+            await insta_app.updater.start_polling()
+            log_app("🤖 Dual Bots Polling: ACTIVE")
+        
+        # Set global flag for health checks
+        os.environ["ASURA_TELEGRAM_ACTIVE"] = "true"
     else:
-        log_app("📡 Dual Bots Polling: DEFERRED (Managed by Gateway)")
+        log_app("📡 Following peer leader. Telegram bots remain dormant.")
+        os.environ["ASURA_TELEGRAM_ACTIVE"] = "false"
     
     # 6. Keep the process alive indefinitely
     # Since daemons and bot polling run in background threads/tasks,

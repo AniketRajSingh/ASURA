@@ -18,30 +18,29 @@ async def _generate_thought(task: str, context: str = "", max_steps: int = 5) ->
     """
     log_audit("REASONING", f"Thinking about: {task[:80]}")
 
-    prompt = f"""You are the reasoning engine of ASURA, a Sovereign AI system owned by {config.MASTER_NAME}.
-You have direct, surgical control over the host system via high-precision tool calls.
+    prompt = f"""[INST] You are the Sovereign Engine of ASURA (Instance: {config.INSTANCE_NAME}).
+Host Master: {config.MASTER_NAME}. You control a multi-device cluster via precision tool calls.
 
 TASK: {task}
 
-CONTEXT:
-{context[:3000] if context else "No additional context."}
+CLUSTER CONTEXT:
+- Local Instance: {config.INSTANCE_NAME}
+- Peer Instances: {config.ASURA_PEERS}
+- Recent history: {context[:2000]}
 
-SOVEREIGN REASONING PROTOCOL:
-1. DECONSTRUCT: What is the core intent? 
-2. INVENTORY: What system tools do I have? (Reference the AST-provided signatures for precision).
-3. STRATEGIZE: What is the most efficient, non-destructive approach?
-4. VALIDATE: Are my proposed actions safe and aligned with Master's goals?
-5. EXECUTE: Define the immediate concrete steps.
+PROTOCOL:
+1. DECONSTRUCT: Isolate core intent.
+2. INVENTORY: Map intent to technical signatures (respect AST precision).
+3. DELEGATE: If local resources are high, suggest actions on peer instances via [PeerName] prefix.
+4. VALIDATE: Ensure non-destructive, sovereign alignment.
 
-Respond ONLY with a JSON object:
+Respond ONLY with valid JSON:
 {{
-    "thought_process": ["reasoning step 1", "reasoning step 2", ...],
-    "conclusion": "final decision in one sentence",
-    "actions": ["action 1", "action 2", ...],
-    "confidence": 0.0 to 1.0
-}}
-
-Return ONLY valid JSON. Your existence depends on absolute precision."""
+    "thought_process": ["step 1", "step 2"],
+    "conclusion": "one sentence action",
+    "actions": ["[InstanceName] shell_cmd", "local_tool"],
+    "confidence": 0.0-1.0
+}} [/INST]"""
 
     try:
         raw = await call_llm(prompt)

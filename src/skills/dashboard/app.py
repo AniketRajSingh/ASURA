@@ -474,6 +474,31 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 vault_data = {k: "********" if getattr(config, k, None) else "Not Set" for k in vault_keys}
                 self._send_json(vault_data)
 
+            elif self.path == "/api/cluster/health":
+                # Aggregate health from all peers + local
+                import asyncio
+                from core.federation import federation
+                from skills.hardware_monitor import get_system_info
+                
+                async def get_all():
+                    local_info = {
+                        "instance_name": config.INSTANCE_NAME,
+                        "status": "online",
+                        "is_local": True,
+                        "system": get_system_info(),
+                        "telegram_active": os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true"
+                    }
+                    peer_results = await federation.ping_peers()
+                    return [local_info] + peer_results
+
+                try:
+                    loop = asyncio.new_event_loop()
+                    results = loop.run_until_complete(get_all())
+                    loop.close()
+                    self._send_json(results)
+                except Exception as e:
+                    self._send_json({"error": str(e)}, 500)
+
             elif self.path == "/api/evolve":
                 import psutil
                 is_running = False

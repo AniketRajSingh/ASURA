@@ -67,7 +67,12 @@ def create_app():
     @app.get("/health")
     def health():
         from skills.hardware_monitor import get_system_info
-        return {"status": "ok", "system": get_system_info()}
+        return {
+            "status": "ok", 
+            "instance_name": config.INSTANCE_NAME,
+            "telegram_active": os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true",
+            "system": get_system_info()
+        }
 
     # ── Skills ────────────────────────────────────────────────
     @app.get("/skills")

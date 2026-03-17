@@ -191,9 +191,13 @@ class ASURASettings(BaseSettings):
 
     # ─── Dashboard ────────────────────────────────────────
     DASHBOARD_PORT: int = Field(default=8082, ge=1, le=65535)
+    # The URL your phone uses to reach the dashboard (e.g. http://192.168.1.5:8082)
+    TELEGRAM_WEBAPP_URL: Optional[str] = Field(default=None, json_schema_extra={"env": "ASURA_WEBAPP_URL"})
     TRACE_HISTORY_LIMIT: int = 50
 
     # ─── Federation & Peer Sync ───────────────────────────
+    # Unique name for this instance (e.g., PC-1, RND-PC)
+    INSTANCE_NAME: str = Field(default="Sovereign-Core", json_schema_extra={"env": "ASURA_INSTANCE_NAME"})
     # List of sibling ASURA URLs: ["http://192.168.1.50:8080"]
     ASURA_PEERS: list[str] = Field(default_factory=list, json_schema_extra={"env": "ASURA_PEERS"})
     # Shared Git Remote for code sync (e.g., "origin" or a local path)

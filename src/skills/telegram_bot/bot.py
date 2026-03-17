@@ -23,6 +23,7 @@ from telegram.ext import (
     CallbackQueryHandler,
     ConversationHandler,
     MessageHandler,
+    InlineQueryHandler,
     ContextTypes,
     filters,
 )
@@ -41,7 +42,8 @@ from skills.telegram_bot.handlers import (
     topic_callback, suggest_topic_input,
     preview_callback, caption_input,
     cancel, chat_handler, send_topic_buttons, cmd_hibernate,
-    cmd_screenshot, voice_handler, photo_handler, checklist_callback
+    cmd_screenshot, voice_handler, photo_handler, checklist_callback,
+    inline_query_handler
 )
 from skills.ai_content.generator import generate_topics
 
@@ -248,6 +250,9 @@ def create_core_bot():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, requires_permission("chat")(chat_handler)))
     app.add_handler(MessageHandler(filters.VOICE, requires_permission("chat")(voice_handler)))
     app.add_handler(MessageHandler(filters.PHOTO, requires_permission("visual")(photo_handler)))
+    
+    # ─── Inline Mode ─────────────
+    app.add_handler(InlineQueryHandler(inline_query_handler))
     
     global _core_app
     _core_app = app

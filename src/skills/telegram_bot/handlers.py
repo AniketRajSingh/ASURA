@@ -119,7 +119,85 @@ async def send_topic_buttons(update_or_context, topics: List[str], chat_id: int 
 @master_only
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     from settings import settings as config
-    await update.message.reply_text((f"🤖 *ASURA — Self-Updating AI *\nMaster: {config.MASTER_NAME}\n\n━━━ 📌 Core Commands ━━━\n/start — This menu\n/skills — List all 45 skills\n/system — CPU, RAM, disk status\n/evolve — Trigger self‑evolution\n/run `<cmd>` — Run shell command\n/think `<question>` — Chain‑of‑thought\n/hibernate — Shutdown AI & Release OS Locks\n\n━━━ 📸 Instagram ━━━\n/topics — AI topic suggestions\n/post — Full posting workflow\n\n━━━ 📋 Productivity ━━━\n/todos — View TODOs\n/backup — Snapshots\n\n━━━ 💬 Chat ━━━\nJust type anything — I understand natural language commands too!"), parse_mode="Markdown")
+    from telegram import WebAppInfo
+    import socket
+    
+    # ─── Smart URL Detection ────────────
+    # 1. Use manual override if set in .env
+    # 2. Use local network IP (so it works on phone via Wi-Fi)
+    # 3. Fallback to localhost
+    webapp_url = config.TELEGRAM_WEBAPP_URL
+    
+    if not webapp_url:
+        try:
+            # Get local IP address
+            s = socket.socket(socket.getaddrinfo('8.8.8.8', 80)[0][0], socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            webapp_url = f"http://{local_ip}:{config.DASHBOARD_PORT}"
+        except:
+            webapp_url = f"http://localhost:{config.DASHBOARD_PORT}"
+
+    # ─── Deep Linking Logic ────────────
+    args = context.args
+    if args:
+        param = args[0]
+        if param == "sys_check":
+            await update.message.reply_text("🔍 <b>Deep Link:</b> Initiating System Health Audit...")
+            from core.startup_checks import run_startup_checks
+            res = await run_startup_checks()
+            await update.message.reply_text(res, parse_mode="HTML")
+            return
+        elif param == "screenshot":
+            await cmd_screenshot(update, context)
+            return
+
+    # ─── Standard Menu ────────────
+    keyboard = [
+        [InlineKeyboardButton("🖥️ Launch Command Center", web_app=WebAppInfo(url=webapp_url))],
+        [InlineKeyboardButton("🧩 Skills Registry", callback_data="back_to_skills"),
+         InlineKeyboardButton("🚦 System Vitals", callback_data="choice_check_health")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    welcome_text = (
+        f"🤖 <b>ASURA — Sovereign AI</b>\n"
+        f"Master: <code>{config.MASTER_NAME}</code>\n\n"
+        f"I am your recursive intelligence hub. Use the button below to launch the "
+        f"interactive <b>Command Center</b> Mini-App, or type a command."
+    )
+    
+    await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode="HTML")
+
+async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle '@bot search' in any chat. Search FAISS memory and KG."""
+    query = update.inline_query.query
+    if not query:
+        return
+
+    from core.memory_manager import memory_manager
+    from telegram import InlineQueryResultArticle, InputTextMessageContent
+    import uuid
+
+    # Search Memory
+    results = await memory_manager.recall(query, limit=5)
+    
+    articles = []
+    # Split results into chunks for the inline cards
+    for i, part in enumerate(results.split("•")):
+        if not part.strip() or "===" in part: continue
+        
+        articles.append(
+            InlineQueryResultArticle(
+                id=str(uuid.uuid4()),
+                title=f"Neural Match {i+1}",
+                description=part.strip()[:100],
+                input_message_content=InputTextMessageContent(f"<b>ASURA Neural Recall:</b>\n\n{part.strip()}", parse_mode="HTML")
+            )
+        )
+
+    await update.inline_query.answer(articles, cache_time=60)
 
 @master_only
 async def cmd_topics(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -211,6 +289,35 @@ async def cmd_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 @master_only
 async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id); user_msg = update.message.text
+    
+    # ─── Multi-Device Routing Logic ───────────
+    from settings import settings as config
+    from core.federation import federation
+    
+    target_peer = None
+    clean_msg = user_msg
+    
+    # Detect prefix: [DeviceName] command
+    import re
+    match = re.match(r'^\[(.*?)\]\s*(.*)', user_msg)
+    if match:
+        target_name = match.group(1).strip()
+        clean_msg = match.group(2).strip()
+        
+        # If target is NOT this instance, find the peer URL
+        if target_name.lower() != config.INSTANCE_NAME.lower():
+            for peer_url in config.ASURA_PEERS:
+                # We'll ping to verify name (simplified for now)
+                target_peer = peer_url
+                break
+    
+    if target_peer:
+        status_msg = await update.message.reply_text(f"📡 <i>Routing to {target_name}...</i>", parse_mode="HTML")
+        reply = await federation.remote_handoff(clean_msg, target_peer)
+        await status_msg.edit_text(format_message(reply or "❌ Peer unreachable.", platform="telegram"), parse_mode="HTML")
+        return
+    # ──────────────────────────────────────────
+
     status_msg = await update.message.reply_text("🧠 <i>ASURA is thinking...</i>", parse_mode="HTML")
     try:
         from core.gateway import handle_message
