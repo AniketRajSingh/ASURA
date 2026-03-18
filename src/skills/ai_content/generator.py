@@ -487,38 +487,42 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
 
     history.append({"role": "user", "content": user_message})
 
-    try:
-        from core.declarative_agent_loader import get_agent_loader
-        loader = get_agent_loader()
-        
-        selected_agent = None
-        if agent_name:
-            selected_agent = loader.get_agent(agent_name)
-        
-        if not selected_agent:
-            best_match = await loader.find_agent_for_query_async(user_message)
-            selected_agent = loader.get_agent(best_match)
+    # ─── TURBO-PARALLEL: Concurrent Preparation ────────────
+    from core.declarative_agent_loader import get_agent_loader
+    from core.context_manager import compact_history
+    loader = get_agent_loader()
+    
+    async def get_agent_task():
+        if agent_name: return loader.get_agent(agent_name)
+        log_app(f"DEBUG: Parallel agent selection for: {user_message[:20]}...")
+        best_match = await loader.find_agent_for_query_async(user_message)
+        return loader.get_agent(best_match)
 
+    try:
+        # Run Agent Selection, History Compaction, and Config Loading in parallel
+        selected_agent, compacted, project_config = await asyncio.gather(
+            get_agent_task(),
+            compact_history(history),
+            asyncio.to_thread(_load_project_config)
+        )
+        
         if selected_agent:
             system_content = selected_agent.content
             log_audit("GENERATOR_STREAM", f"Using agent persona: {selected_agent.name}")
         else:
             from skills.conversation.history import get_system_prompt
             system_content = get_system_prompt(platform=platform)
-    except Exception:
+            
+    except Exception as e:
+        log_app(f"DEBUG: Parallel prep failed: {e}")
         system_content = f"You are ASURA, a Sovereign AI. Platform: {platform}"
+        compacted = history[-10:] if len(history) > 10 else history
+        project_config = ""
 
-    project_config = _load_project_config()
     enhanced_system = system_content + project_config
     system_msg = {"role": "system", "content": enhanced_system}
-
-    try:
-        from core.context_manager import compact_history
-        compacted = await compact_history(history)
-    except ImportError:
-        compacted = history[-10:] if len(history) > 10 else history
-
     messages = [system_msg] + [{"role": m["role"], "content": m["content"]} for m in compacted]
+    # ──────────────────────────────────────────────────────
     provider = getattr(config, "LLM_PROVIDER", "ollama").lower()
 
     try:
@@ -563,11 +567,13 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
                                 yield f"[METADATA]{json.dumps(metrics)}[/METADATA]"
                         except: continue
             else:
-                # Default Ollama
-                async with httpx.AsyncClient(timeout=180) as client:
+                # Default Ollama - Use FAST model for stream responsiveness if not specified
+                active_model = config.OLLAMA_MODEL_FAST if not agent_name else config.OLLAMA_MODEL
+                log_app(f"DEBUG: Initiating Ollama stream (Model: {active_model})")
+                async with httpx.AsyncClient(timeout=180, trust_env=False) as client:
                     async with client.stream(
                         "POST", f"{config.OLLAMA_BASE_URL}/api/chat",
-                        json={"model": config.OLLAMA_MODEL, "messages": messages, "stream": True},
+                        json={"model": active_model, "messages": messages, "stream": True},
                     ) as resp:
                         async for line in resp.aiter_lines():
                             if not line: continue

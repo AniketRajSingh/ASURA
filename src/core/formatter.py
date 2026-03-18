@@ -107,28 +107,29 @@ def format_message(text: str, platform: str = "cli"):
 
     elif platform == "telegram":
         # Telegram HTML mode is more robust for mobile clients.
-        # 1. Handle tables first (wrap markdown tables in <pre> so they don't break)
-        processed = text
+        # 1. Strip internal RAG/Memory tags
+        processed = re.sub(r'\[(EPISODIC|VAULT|ARCH)\]\s*', '', text)
         
-        # Simple table detection and wrapping to prevent parsing issues in Telegram
+        # 2. Strip Action/Observation markers (since they are now split into separate messages)
+        processed = re.sub(r'\[/?(ACTION|OBSERVATION)\]', '', processed)
+
+        # 3. Handle Mermaid diagrams (Telegram doesn't render them)
+        processed = re.sub(r'```mermaid.*?```', r'📊 <b>[Mermaid Diagram]</b>\n<i>(Use a Mermaid viewer for full visualization)</i>', processed, flags=re.DOTALL)
+
+        # 3. Handle tables first (wrap markdown tables in <pre> so they don't break)
         table_pattern = r'((?:\|.*\|(?:\n|$))+(?:\|[- :|]*\|(?:\n|$))+(?:\|.*\|(?:\n|$))+)'
-        
         def wrap_table(match):
             return f"\n<pre>{match.group(1).strip()}</pre>\n"
-        
         processed = re.sub(table_pattern, wrap_table, processed, flags=re.MULTILINE)
         
-        # 2. Escape HTML entities NOT in our pre blocks or basic tags
-        # (This is tricky with regex, simpler is usually better)
-        # For now, we'll do basic markdown to HTML mapping
-        
-        # Escape dangerous characters first
+        # 4. Escape HTML entities NOT in our pre blocks or basic tags
         processed = processed.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        
-        # Restore pre tags that were escaped during the previous step
         processed = processed.replace("&lt;pre&gt;", "<pre>").replace("&lt;/pre&gt;", "</pre>")
+        processed = processed.replace("&lt;b&gt;", "<b>").replace("&lt;/b&gt;", "</b>")
+        processed = processed.replace("&lt;i&gt;", "<i>").replace("&lt;/i&gt;", "</i>")
+        processed = processed.replace("&lt;code&gt;", "<code>").replace("&lt;/code&gt;", "</code>")
         
-        # Bold/Italic mapping for Telegram HTML
+        # 5. Bold/Italic/Code mapping
         processed = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', processed)
         processed = re.sub(r'\*(.*?)\*', r'<i>\1</i>', processed)
         processed = re.sub(r'`(.*?)`', r'<code>\1</code>', processed)

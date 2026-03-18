@@ -10,8 +10,12 @@ from __future__ import annotations
 
 import os
 from typing import Optional
-from pydantic_settings import BaseSettings
-from pydantic import Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field, field_validator, AliasChoices
+from dotenv import load_dotenv
+
+# Ensure .env is loaded BEFORE class definition
+load_dotenv()
 
 def _detect_root(start_path: str = None) -> str:
     """Canonical project root detection to avoid circular imports."""
@@ -31,18 +35,18 @@ _DETECTED_ROOT = _detect_root(_ENGINE_HOME)
 class ASURASettings(BaseSettings):
     """Validated, typed settings for ASURA Self-Updating AI."""
 
-    model_config = {
-        "env_prefix": "ASURA_",
-        "env_file": os.path.join(_ENGINE_HOME, ".env"),
-        "env_file_encoding": "utf-8",
-        "extra": "ignore",
-    }
+    model_config = SettingsConfigDict(
+        env_prefix="ASURA_",
+        env_file=os.path.join(_ENGINE_HOME, ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # ─── Paths ────────────────────────────────────────────
     SRC_DIR: str = _SRC_DIR
     ENGINE_HOME: str = _ENGINE_HOME
     BASE_DIR: str = _ENGINE_HOME  # Compatibility alias
-    PROJECT_ROOT: str = Field(default=_DETECTED_ROOT, json_schema_extra={"env": "ASURA_PROJECT_ROOT"})
+    PROJECT_ROOT: str = Field(default=_DETECTED_ROOT, validation_alias=AliasChoices("ASURA_PROJECT_ROOT", "PROJECT_ROOT"))
     DATA_DIR: str = _DATA_DIR
 
     ASSETS_DIR: str = os.path.join(_ENGINE_HOME, "assets")
@@ -52,62 +56,64 @@ class ASURASettings(BaseSettings):
     AUDIT_LOG_PATH: str = os.path.join(_DATA_DIR, "logs", "audit.txt")
     APP_LOG_PATH: str = os.path.join(_DATA_DIR, "logs", "log.txt")
     LOG_DIR: str = os.path.join(_DATA_DIR, "logs")
+    LOGS_DIR: str = os.path.join(_DATA_DIR, "logs")
     TODO_PATH: str = os.path.join(_DATA_DIR, "todos.json")
     DRAFTS_DIR: str = os.path.join(_DATA_DIR, "drafts")
     BROWSER_PROFILE_DIR: str = os.path.join(_DATA_DIR, "browser_profile")
 
     # ─── Master Identity ──────────────────────────────────
-    MASTER_NAME: str = Field(default="Aniket Raj Singh", json_schema_extra={"env": "ASURA_MASTER_NAME"})
-    MASTER_USERNAME: Optional[str] = Field(default=None, json_schema_extra={"env": "ASURA_MASTER_USERNAME"})
+    MASTER_NAME: str = Field(default="Aniket Raj Singh", validation_alias=AliasChoices("ASURA_MASTER_NAME", "MASTER_NAME"))
+    MASTER_USERNAME: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_MASTER_USERNAME", "MASTER_USERNAME"))
 
     # ─── Telegram Bots ────────────────────────────────────
-    TELEGRAM_BOT_TOKEN: str = Field(default="YOUR_BOT_TOKEN", json_schema_extra={"env": "ASURA_TELEGRAM_BOT_TOKEN"})
-    INSTAGRAM_BOT_TOKEN: str = Field(default="YOUR_INSTA_BOT_TOKEN", json_schema_extra={"env": "ASURA_INSTA_BOT_TOKEN"})
-    TELEGRAM_ADMIN_CHAT_ID: int = Field(default=0, json_schema_extra={"env": "ASURA_TELEGRAM_ADMIN_CHAT_ID"})
-    PUBLIC_ACCESS_ALLOWED: bool = Field(default=False, json_schema_extra={"env": "ASURA_PUBLIC_ACCESS_ALLOWED"})
+    # Mapped to the corrected environment keys
+    TELEGRAM_BOT_TOKEN: str = Field(default="YOUR_BOT_TOKEN", validation_alias=AliasChoices("ASURA_TELEGRAM_BOT_TOKEN", "TELEGRAM_BOT_TOKEN"))
+    INSTAGRAM_BOT_TOKEN: str = Field(default="YOUR_INSTA_BOT_TOKEN", validation_alias=AliasChoices("ASURA_INSTA_BOT_TOKEN", "INSTA_BOT_TOKEN"))
+    TELEGRAM_ADMIN_CHAT_ID: int = Field(default=0, validation_alias=AliasChoices("ASURA_TELEGRAM_ADMIN_CHAT_ID", "TELEGRAM_ADMIN_CHAT_ID"))
+    PUBLIC_ACCESS_ALLOWED: bool = Field(default=False, validation_alias=AliasChoices("ASURA_PUBLIC_ACCESS_ALLOWED", "PUBLIC_ACCESS_ALLOWED"))
 
     # ─── Cloudinary ───────────────────────────────────────
-    CLOUDINARY_CLOUD_NAME: str = Field(default="YOUR_CLOUDINARY_NAME", json_schema_extra={"env": "ASURA_CLOUDINARY_NAME"})
-    CLOUDINARY_API_KEY: str = Field(default="YOUR_CLOUDINARY_API_KEY", json_schema_extra={"env": "ASURA_CLOUDINARY_API_KEY"})
-    CLOUDINARY_API_SECRET: str = Field(default="YOUR_CLOUDINARY_API_SECRET", json_schema_extra={"env": "ASURA_CLOUDINARY_API_SECRET"})
+    CLOUDINARY_CLOUD_NAME: str = Field(default="YOUR_CLOUDINARY_NAME", validation_alias=AliasChoices("ASURA_CLOUDINARY_NAME", "CLOUDINARY_CLOUD_NAME"))
+    CLOUDINARY_API_KEY: str = Field(default="YOUR_CLOUDINARY_API_KEY", validation_alias=AliasChoices("ASURA_CLOUDINARY_API_KEY", "CLOUDINARY_API_KEY"))
+    CLOUDINARY_API_SECRET: str = Field(default="YOUR_CLOUDINARY_API_SECRET", validation_alias=AliasChoices("ASURA_CLOUDINARY_API_SECRET", "CLOUDINARY_API_SECRET"))
 
     # ─── Instagram ────────────────────────────────────────
-    INSTAGRAM_ACCESS_TOKEN: str = Field(default="YOUR_INSTAGRAM_ACCESS_TOKEN", json_schema_extra={"env": "ASURA_INSTAGRAM_ACCESS_TOKEN"})
-    IG_BUSINESS_ID: str = Field(default="YOUR_IG_BUSINESS_ID", json_schema_extra={"env": "ASURA_IG_BUSINESS_ID"})
+    INSTAGRAM_ACCESS_TOKEN: str = Field(default="YOUR_INSTAGRAM_ACCESS_TOKEN", validation_alias=AliasChoices("ASURA_INSTAGRAM_ACCESS_TOKEN", "INSTAGRAM_ACCESS_TOKEN"))
+    IG_BUSINESS_ID: str = Field(default="YOUR_IG_BUSINESS_ID", validation_alias=AliasChoices("ASURA_IG_BUSINESS_ID", "IG_BUSINESS_ID"))
 
     # ─── LLM Providers & Routing ──────────────────────────
-    LLM_PROVIDER: str = "ollama"  # "ollama", "sglang", or "groq"
+    LLM_PROVIDER: str = Field(default="ollama", validation_alias=AliasChoices("ASURA_LLM_PROVIDER", "LLM_PROVIDER"))
     
-    # Provider-Specific URLs (these can be overridden in .env)
-    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434", json_schema_extra={"env": "ASURA_OLLAMA_BASE_URL"})
-    SGLANG_BASE_URL: str = Field(default="http://localhost:11435", json_schema_extra={"env": "ASURA_SGLANG_BASE_URL"})
-    GROQ_API_KEY: Optional[str] = Field(default=None, json_schema_extra={"env": "ASURA_GROQ_API_KEY"})
-    OPENROUTER_API_KEY: Optional[str] = Field(default=None, json_schema_extra={"env": "ASURA_OPENROUTER_API_KEY"})
+    # Provider-Specific URLs
+    OLLAMA_BASE_URL: str = Field(default="http://localhost:11434", validation_alias=AliasChoices("ASURA_OLLAMA_BASE_URL", "OLLAMA_BASE_URL"))
+    SGLANG_BASE_URL: str = Field(default="http://localhost:11435", validation_alias=AliasChoices("ASURA_SGLANG_BASE_URL", "SGLANG_BASE_URL"))
+    GROQ_API_KEY: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_GROQ_API_KEY", "GROQ_API_KEY"))
+    OPENROUTER_API_KEY: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"))
     
-    # Active Models
-    OLLAMA_MODEL: str = Field(default="qwen3.5:35b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL"})
-    OLLAMA_MODEL_FAST: str = Field(default="qwen3.5:0.8b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_FAST"})
-    GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile", json_schema_extra={"env": "ASURA_GROQ_MODEL"})
-    OPENROUTER_MODEL_FREE: str = Field(default="google/gemini-2.0-flash-exp:free", json_schema_extra={"env": "ASURA_OPENROUTER_MODEL_FREE"})
-    GROQ_MODEL_HEAVY: str = Field(default="llama-3.3-70b-versatile", json_schema_extra={"env": "ASURA_GROQ_MODEL_HEAVY"})
-    GROQ_MODEL_FAST: str = Field(default="llama-3.3-70b-specdec", json_schema_extra={"env": "ASURA_GROQ_MODEL_FAST"})
+    # Models
+    OLLAMA_MODEL: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL", "OLLAMA_MODEL"))
+    OLLAMA_MODEL_FAST: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_FAST", "OLLAMA_MODEL_FAST"))
+    GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias=AliasChoices("ASURA_GROQ_MODEL", "GROQ_MODEL"))
+    OPENROUTER_MODEL_FREE: str = Field(default="google/gemini-2.0-flash-exp:free", validation_alias=AliasChoices("ASURA_OPENROUTER_MODEL_FREE", "OPENROUTER_MODEL_FREE"))
+    GROQ_MODEL_HEAVY: str = Field(default="llama-3.3-70b-versatile", validation_alias=AliasChoices("ASURA_GROQ_MODEL_HEAVY", "GROQ_MODEL_HEAVY"))
+    GROQ_MODEL_FAST: str = Field(default="llama-3.3-70b-specdec", validation_alias=AliasChoices("ASURA_GROQ_MODEL_FAST", "GROQ_MODEL_FAST"))
     
-    # Model Roles (Overrideable via ASURA_OLLAMA_MODEL_...)
-    OLLAMA_MODEL_REASONING: str = Field(default="qwen3.5:35b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_REASONING"})
-    OLLAMA_MODEL_VISION: str = Field(default="qwen3.5:0.8b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_VISION"})
-    OLLAMA_MODEL_CAPTION: str = Field(default="qwen3.5:0.8b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_CAPTION"})
-    OLLAMA_MODEL_SUMMARY: str = Field(default="qwen3.5:0.8b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_SUMMARY"})
-    OLLAMA_MODEL_CODE: str = Field(default="qwen3.5:35b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_CODE"})
-    OLLAMA_MODEL_REVIEWER: str = Field(default="qwen3.5:35b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_REVIEWER"})
-    OLLAMA_MODEL_INTENT: str = Field(default="qwen3.5:0.8b", json_schema_extra={"env": "ASURA_OLLAMA_MODEL_INTENT"})
+    # Role-based models
+    OLLAMA_MODEL_REASONING: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REASONING", "OLLAMA_MODEL_REASONING"))
+    OLLAMA_MODEL_VISION: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_VISION", "OLLAMA_MODEL_VISION"))
+    OLLAMA_MODEL_CAPTION: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_CAPTION", "OLLAMA_MODEL_CAPTION"))
+    OLLAMA_MODEL_SUMMARY: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_SUMMARY", "OLLAMA_MODEL_SUMMARY"))
+    OLLAMA_MODEL_CODE: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_CODE", "OLLAMA_MODEL_CODE"))
+    OLLAMA_MODEL_REVIEWER: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REVIEWER", "OLLAMA_MODEL_REVIEWER"))
+    OLLAMA_MODEL_INTENT: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_INTENT", "OLLAMA_MODEL_INTENT"))
 
-    # ─── Voice Server ─────────────────────────────────────
-    VOICE_SERVER_URL: str = Field(default="http://192.168.3.173:8090", json_schema_extra={"env": "ASURA_VOICE_SERVER_URL"})
-    TTS_ENGINE: str = Field(default="qwen3", json_schema_extra={"env": "ASURA_TTS_ENGINE"}) # "kokoro" or "qwen3"
+    # ─── Voice & Audio ────────────────────────────────────
+    VOICE_SERVER_URL: str = Field(default="http://192.168.3.173:8090", validation_alias=AliasChoices("ASURA_VOICE_SERVER_URL", "VOICE_SERVER_URL"))
+    TTS_ENGINE: str = Field(default="qwen3", validation_alias=AliasChoices("ASURA_TTS_ENGINE", "TTS_ENGINE"))
 
     @property
     def OLLAMA_MODELS(self) -> dict:
-        """Dynamic lookup for backward compatibility."""
+        """Dynamic lookup for backward compatibility and avoiding Pydantic parsing crashes."""
         return {
             "default": self.OLLAMA_MODEL,
             "chat": self.OLLAMA_MODEL,
@@ -121,8 +127,8 @@ class ASURASettings(BaseSettings):
         }
 
     # LLM Quotas & Limits
-    GROQ_DAILY_LIMIT: int = Field(default=100, json_schema_extra={"env": "ASURA_GROQ_DAILY_LIMIT"})
-    OPENROUTER_DAILY_LIMIT: int = Field(default=100, json_schema_extra={"env": "ASURA_OPENROUTER_DAILY_LIMIT"})
+    GROQ_DAILY_LIMIT: int = Field(default=14400, validation_alias=AliasChoices("ASURA_GROQ_DAILY_LIMIT", "GROQ_DAILY_LIMIT"))
+    OPENROUTER_DAILY_LIMIT: int = Field(default=14400, validation_alias=AliasChoices("ASURA_OPENROUTER_DAILY_LIMIT", "OPENROUTER_DAILY_LIMIT"))
 
     # ─── Schedule ─────────────────────────────────────────
     DAILY_TRIGGER_HOUR: int = Field(default=9, ge=0, le=23)
@@ -136,8 +142,10 @@ class ASURASettings(BaseSettings):
     LOG_RETENTION_DAYS: int = Field(default=7, ge=1)
     SELF_ASSESSMENT_THRESHOLD: int = Field(default=6, ge=1, le=10)
     PROTECTED_FILES: list[str] = Field(default_factory=lambda: [
-        "config.py",
-        os.path.join("core", "self_updater.py"),
+        "asura.py",
+        "src/main.py",
+        "src/settings.py",
+        "src/core/self_updater.py",
     ])
 
     # ─── Memory ───────────────────────────────────────────
@@ -176,7 +184,7 @@ class ASURASettings(BaseSettings):
     CALENDAR_PATH: str = os.path.join(_DATA_DIR, "calendar.json")
 
     # ─── Reasoning & Scaling ──────────────────────────────
-    REASONING_COMPLEXITY_THRESHOLD: int = Field(default=150, ge=50, le=1000)
+    REASONING_COMPLEXITY_THRESHOLD: float = Field(default=0.7, validation_alias=AliasChoices("ASURA_REASONING_COMPLEXITY_THRESHOLD", "REASONING_COMPLEXITY_THRESHOLD"))
     REASONING_MAX_RECURSION: int = Field(default=3, ge=1, le=10)
 
     # ─── Network ──────────────────────────────────────────
@@ -187,31 +195,25 @@ class ASURASettings(BaseSettings):
 
     # ─── Security ─────────────────────────────────────────
     ENCRYPTION_KEY_PATH: str = os.path.join(_DATA_DIR, ".encryption_key")
-    JWT_SECRET: str = Field(default="asura-sovereign-master-key-32byte", json_schema_extra={"env": "ASURA_JWT_SECRET"})
+    JWT_SECRET: str = Field(default="asura-sovereign-master-key-32byte", validation_alias=AliasChoices("ASURA_JWT_SECRET", "JWT_SECRET"))
+    MASTER_PASSWORD: str = Field(default="khuljaasura", validation_alias=AliasChoices("ASURA_MASTER_PASSWORD", "MASTER_PASSWORD"))
 
     # ─── Dashboard ────────────────────────────────────────
     DASHBOARD_PORT: int = Field(default=8082, ge=1, le=65535)
-    # The URL your phone uses to reach the dashboard (e.g. http://192.168.1.5:8082)
-    TELEGRAM_WEBAPP_URL: Optional[str] = Field(default=None, json_schema_extra={"env": "ASURA_WEBAPP_URL"})
+    TELEGRAM_WEBAPP_URL: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_WEBAPP_URL", "TELEGRAM_WEBAPP_URL"))
     TRACE_HISTORY_LIMIT: int = 50
 
     # ─── Federation & Peer Sync ───────────────────────────
-    # Unique name for this instance (e.g., PC-1, RND-PC)
-    INSTANCE_NAME: str = Field(default="Sovereign-Core", json_schema_extra={"env": "ASURA_INSTANCE_NAME"})
-    # List of sibling ASURA URLs: ["http://192.168.1.50:8080"]
-    ASURA_PEERS: list[str] = Field(default_factory=list, json_schema_extra={"env": "ASURA_PEERS"})
-    # Shared Git Remote for code sync (e.g., "origin" or a local path)
-    SHARED_GIT_REMOTE: str = Field(default="origin", json_schema_extra={"env": "ASURA_SHARED_GIT_REMOTE"})
-    # Enable automatic memory synchronization with peers
-    AUTO_MEMORY_SYNC: bool = Field(default=True, json_schema_extra={"env": "ASURA_AUTO_MEMORY_SYNC"})
-    # Peer Auth Token (Shared secret between instances)
-    PEER_AUTH_TOKEN: str = Field(default="sovereign-peer-secret", json_schema_extra={"env": "ASURA_PEER_AUTH_TOKEN"})
+    INSTANCE_NAME: str = Field(default="Sovereign-Core", validation_alias=AliasChoices("ASURA_INSTANCE_NAME", "INSTANCE_NAME"))
+    ASURA_PEERS: list[str] = Field(default_factory=list, validation_alias=AliasChoices("ASURA_PEERS", "PEERS"))
+    SHARED_GIT_REMOTE: str = Field(default="origin", validation_alias=AliasChoices("ASURA_SHARED_GIT_REMOTE", "SHARED_GIT_REMOTE"))
+    AUTO_MEMORY_SYNC: bool = Field(default=True, validation_alias=AliasChoices("ASURA_AUTO_MEMORY_SYNC", "AUTO_MEMORY_SYNC"))
+    PEER_AUTH_TOKEN: str = Field(default="sovereign-peer-secret", validation_alias=AliasChoices("ASURA_PEER_AUTH_TOKEN", "PEER_AUTH_TOKEN"))
 
     @field_validator("TELEGRAM_BOT_TOKEN")
     @classmethod
     def validate_bot_token(cls, v: str) -> str:
-        if not v or v == "YOUR_BOT_TOKEN":
-            raise ValueError("TELEGRAM_BOT_TOKEN must be set")
+        # Loosened for runtime flexibility as requested
         return v
 
     @field_validator("OLLAMA_BASE_URL")

@@ -118,6 +118,6 @@ REASONING_COMPLEXITY_THRESHOLD = _s.REASONING_COMPLEXITY_THRESHOLD
 REASONING_MAX_RECURSION = _s.REASONING_MAX_RECURSION
 
 # ── Auth ──────────────────────────────────────────────────────
-MASTER_PASSWORD = os.environ.get("MASTER_PASSWORD", "khuljaasura")
+MASTER_PASSWORD = _s.MASTER_PASSWORD
 JWT_SECRET = os.environ.get("JWT_SECRET", "asura-sovereign-master-key-32byte")  # must be >= 32 bytes
 API_KEY = os.environ.get("API_KEY", "asura-sk-sovereign-master-key")

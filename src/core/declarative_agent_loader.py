@@ -128,16 +128,25 @@ class AgentLoader:
                 log_audit("INTENT", f"Keyword Match: {agent_id}")
                 return agent_id
 
-        # 2. 🤖 LEVEL 3: 0.8B LLM Pass
+        # 2. 🤖 LEVEL 3: 0.8B LLM Pass (with strict timeout)
         from core.llm import call_llm
         from core.model_manager import model_manager
+        import asyncio
         
         agent_names = list(self.agents.keys())
         prompt = f"[INST] Select agent for: \"{query[:200]}\"\nChoices: {agent_names}\nRespond with ONLY name.[/INST]"
 
         try:
             fast_model = model_manager.get_model_for_task("fast")
-            response = await call_llm(prompt, model=fast_model, temperature=0.0)
+            from skills.logger import log_app
+            log_app(f"DEBUG: Intent recognition Level 3 starting (Model: {fast_model})...")
+            
+            # Force a strict timeout for intent recognition
+            response = await asyncio.wait_for(
+                call_llm(prompt, model=fast_model, temperature=0.0),
+                timeout=5.0
+            )
+            
             selected = response.strip().lower().split()[0].replace(".", "").replace("'", "")
             
             if selected in self.agents:
@@ -146,7 +155,12 @@ class AgentLoader:
                 self._save_cache()
                 log_audit("INTENT", f"Learned NEW Intent: {query_norm} -> {selected}")
                 return selected
-        except Exception: pass
+        except asyncio.TimeoutError:
+            log_app("DEBUG: Intent recognition timed out after 5s. Falling back.")
+        except Exception as e:
+            log_app(f"DEBUG: Intent recognition failed: {e}")
+        
+        return "asura_spawner" # Default fallback
 
         return "interactive_agent"
 

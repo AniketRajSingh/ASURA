@@ -154,8 +154,22 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             return
 
     # ─── Standard Menu ────────────
+    from telegram import ReplyKeyboardMarkup
+    
+    # Persistent Bottom Keyboard
+    reply_kb = ReplyKeyboardMarkup([
+        ["🖥️ Dashboard", "🧩 Skills"],
+        ["🚦 Health", "📸 Screenshot", "🔍 Think"]
+    ], resize_keyboard=True)
+
+    # Inline Action Buttons
+    if webapp_url.startswith("https://"):
+        launch_btn = InlineKeyboardButton("🖥️ Launch Command Center", web_app=WebAppInfo(url=webapp_url))
+    else:
+        launch_btn = InlineKeyboardButton("🖥️ Launch Command Center", url=webapp_url)
+
     keyboard = [
-        [InlineKeyboardButton("🖥️ Launch Command Center", web_app=WebAppInfo(url=webapp_url))],
+        [launch_btn],
         [InlineKeyboardButton("🧩 Skills Registry", callback_data="back_to_skills"),
          InlineKeyboardButton("🚦 System Vitals", callback_data="choice_check_health")]
     ]
@@ -165,10 +179,12 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         f"🤖 <b>ASURA — Sovereign AI</b>\n"
         f"Master: <code>{config.MASTER_NAME}</code>\n\n"
         f"I am your recursive intelligence hub. Use the button below to launch the "
-        f"interactive <b>Command Center</b> Mini-App, or type a command."
+        f"interactive <b>Command Center</b> Mini-App, or use the menu buttons below."
     )
     
     await update.message.reply_text(welcome_text, reply_markup=reply_markup, parse_mode="HTML")
+    # Also send the persistent keyboard
+    await update.message.reply_text("<i>Persistent menu activated.</i>", reply_markup=reply_kb, parse_mode="HTML")
 
 async def inline_query_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle '@bot search' in any chat. Search FAISS memory and KG."""
@@ -289,7 +305,50 @@ async def cmd_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 @master_only
 async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = str(update.effective_user.id); user_msg = update.message.text
-    
+    if not user_msg: return
+
+    # ─── Persistent Menu Mapping ────────────
+    from skills.telegram_bot.bot import cmd_skills, cmd_think
+    if user_msg == "🖥️ Dashboard":
+        return await cmd_start(update, context)
+    elif user_msg == "🧩 Skills":
+        return await cmd_skills(update, context)
+    elif user_msg == "🚦 Health":
+        from core.startup_checks import run_startup_checks
+        from skills.hardware_monitor.monitor import get_resource_summary
+        
+        status_msg = await update.message.reply_text("🚦 <i>Analyzing system vitals...</i>", parse_mode="HTML")
+        
+        # Concurrently get hardware stats and run health probes
+        integrity_res, hardware_stats = await asyncio.gather(
+            run_startup_checks(),
+            asyncio.to_thread(get_resource_summary)
+        )
+        
+        full_report = (
+            f"📊 <b>ASURA System Vitals</b>\n\n"
+            f"{hardware_stats}\n\n"
+            f"🛠️ <b>Integrity Check:</b>\n{integrity_res}"
+        )
+        await status_msg.edit_text(full_report, parse_mode="HTML")
+        return
+    elif user_msg == "📸 Screenshot":
+        return await cmd_screenshot(update, context)
+    elif user_msg == "🔍 Think":
+        from telegram import ForceReply
+        return await update.message.reply_text(
+            "🧠 <b>Deep Reasoning Mode</b>\nWhat should I reason about?", 
+            reply_markup=ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+
+    # Handle replies to the "Think" prompt
+    if update.message.reply_to_message and "What should I reason about?" in update.message.reply_to_message.text:
+        from skills.telegram_bot.bot import cmd_think
+        # Create a mock context with the user message as an argument
+        context.args = [user_msg]
+        return await cmd_think(update, context)
+
     # ─── Multi-Device Routing Logic ───────────
     from settings import settings as config
     from core.federation import federation
@@ -323,12 +382,14 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         from core.gateway import handle_message
         from skills.telegram_bot.bot import send_smart_reply
         from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+        
+        # Use Fast model for general chat responsiveness
         stream = await handle_message(user_id, user_msg, channel="telegram", stream=True, agent_name="asura-telegram")
         full_reply = ""; last_up = 0
         import time
         async for chunk in stream:
             if "[METADATA]" in chunk: continue
-            full_reply += chunk.replace("[ACTION]", "").replace("[/ACTION]", "").replace("[OBSERVATION]", "").replace("[/OBSERVATION]", "")
+            full_reply += chunk
             if time.time() - last_up > 2.0:
                 try: await status_msg.edit_text(format_message(full_reply + " █", platform="telegram"), parse_mode="HTML"); last_up = time.time()
                 except: pass

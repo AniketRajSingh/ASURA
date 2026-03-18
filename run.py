@@ -271,6 +271,7 @@ def start_system(watch: bool = True):
         snapshot = _snapshot_mtimes(SRC_DIR)
 
         # Start main.py as a subprocess
+        start_time = time.time()
         proc = subprocess.Popen(
             ["uv", "run", "python", "-u", os.path.join(SRC_DIR, "main.py")],
             cwd=BASE_DIR,
@@ -283,6 +284,7 @@ def start_system(watch: bool = True):
 
                 # Check if process died on its own
                 if proc.poll() is not None:
+                    # ... (rest of crash logic)
                     exit_code = proc.returncode
                     
                     if exit_code != 0:
@@ -330,7 +332,7 @@ def start_system(watch: bool = True):
                     break  # Break inner loop to restart
                 
                 # If we are here, ASURA is running
-                if consecutive_system_crashes > 0 and time.time() - proc.start_time > 60:
+                if consecutive_system_crashes > 0 and time.time() - start_time > 60:
                     # If it stays alive for 60s, consider it stabilized
                     consecutive_system_crashes = 0
 

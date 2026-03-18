@@ -22,23 +22,43 @@ Routes images directly to the LLM for zero overhead.
 __all__ = ["analyze_image", "ocr_image", "describe_screenshot", "take_screenshot", "debug_ui_screenshot"]
 
 def take_screenshot(output_path: str = "screenshot.png") -> str:
-    """Capture the current system screen using cross-platform pyautogui.
+    """Capture the current system screen using native OS commands or pyautogui.
     
     Returns:
         Absolute path to the captured screenshot.
     """
+    import platform, subprocess
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+    abs_path = os.path.abspath(output_path)
+    system = platform.system().lower()
+
     try:
+        # 1. Try Native OS Commands (Zero-Dependency)
+        if system == "darwin":
+            # Mac Native
+            subprocess.run(["screencapture", "-x", abs_path], check=True)
+            return abs_path
+        elif system == "windows":
+            # Windows Native via PowerShell
+            ps_cmd = f"Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait('%{{PRTSC}}'); $img = [System.Windows.Forms.Clipboard]::GetImage(); if($img) {{ $img.Save('{abs_path}', [System.Drawing.Imaging.ImageFormat]::Png) }}"
+            subprocess.run(["powershell", "-Command", ps_cmd], check=True)
+            if os.path.exists(abs_path): return abs_path
+        elif system == "linux":
+            # Linux Native (requires scrot or gnome-screenshot)
+            for cmd in ["scrot", "gnome-screenshot", "import"]:
+                try:
+                    if cmd == "import": subprocess.run([cmd, "-window", "root", abs_path], check=True)
+                    else: subprocess.run([cmd, abs_path], check=True)
+                    return abs_path
+                except: continue
+
+        # 2. Fallback to PyAutoGUI if native fails
         import pyautogui
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-        
-        # Take screenshot across all OS types
         ss = pyautogui.screenshot()
         ss.save(output_path)
-        
-        abs_path = os.path.abspath(output_path)
-        log_audit("VISION", f"Screenshot captured: {abs_path}")
+        log_audit("VISION", f"Screenshot captured via pyautogui: {abs_path}")
         return abs_path
+
     except Exception as e:
         log_audit("VISION", f"Screenshot capture failed: {e}")
         return f"Error: {e}"

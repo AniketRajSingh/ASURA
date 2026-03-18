@@ -58,9 +58,8 @@ def _get_vault_path() -> str:
 class SovereignMemory:
     """Orchestrates multi‑layer recall and storage."""
 
-    # Cache the vault contents for quick access.  Avoids evaluating
-    # Optional at import time, which can raise a NameError in some
-    # restricted execution environments.
+    # Atomic locks for thread-safety during parallel access
+    _vault_lock = asyncio.Lock()
     _vault_cache = None  # type: Dict | None
     _last_load_time: float = 0
 
@@ -74,55 +73,53 @@ class SovereignMemory:
                 json.dump({"master_identity": {}, "permanent_facts": []}, f, indent=2)
 
     @classmethod
-    def _load_vault(cls, force: bool = False) -> Dict:
-        """Load the Vault from disk with caching logic."""
-        path = _get_vault_path()
-        if not force and cls._vault_cache is not None:
-            if os.path.exists(path) and os.path.getmtime(path) <= cls._last_load_time:
-                return cls._vault_cache
+    async def _load_vault(cls, force: bool = False) -> Dict:
+        """Load the Vault from disk with caching and async locking."""
+        async with cls._vault_lock:
+            path = _get_vault_path()
+            if not force and cls._vault_cache is not None:
+                if os.path.exists(path) and os.path.getmtime(path) <= cls._last_load_time:
+                    return cls._vault_cache
 
-        cls.initialize()
-        if os.path.exists(path):
-            try:
-                with open(path, "r") as f:
-                    fcntl.flock(f, fcntl.LOCK_SH)
-                    try:
-                        cls._vault_cache = json.load(f)
-                        cls._last_load_time = os.path.getmtime(path)
-                        return cls._vault_cache
-                    finally:
-                        fcntl.flock(f, fcntl.LOCK_UN)
-            except Exception as e:
-                log_app(f"Vault load error: {e}")
-        return {"master_identity": {}, "permanent_facts": []}
+            cls.initialize()
+            if os.path.exists(path):
+                try:
+                    with open(path, "r") as f:
+                        # Non-blocking check for file lock
+                        fcntl.flock(f, fcntl.LOCK_SH)
+                        try:
+                            cls._vault_cache = json.load(f)
+                            cls._last_load_time = os.path.getmtime(path)
+                            return cls._vault_cache
+                        finally:
+                            fcntl.flock(f, fcntl.LOCK_UN)
+                except Exception as e:
+                    log_app(f"Vault load error: {e}")
+            return {"master_identity": {}, "permanent_facts": []}
 
     @classmethod
-    def _save_vault(cls, data: Dict) -> None:
-        """Persist the Vault to disk and update the in‑memory cache."""
-        path = _get_vault_path()
-        try:
-            with open(path, "w") as f:
-                fcntl.flock(f, fcntl.LOCK_EX)
-                try:
-                    json.dump(data, f, indent=2)
-                finally:
-                    fcntl.flock(f, fcntl.LOCK_UN)
-            cls._vault_cache = data
-            cls._last_load_time = datetime.now().timestamp()
-        except Exception as e:
-            log_app(f"Vault save error: {e}")
+    async def _save_vault(cls, data: Dict) -> None:
+        """Persist the Vault to disk with async locking."""
+        async with cls._vault_lock:
+            path = _get_vault_path()
+            try:
+                with open(path, "w") as f:
+                    fcntl.flock(f, fcntl.LOCK_EX)
+                    try:
+                        json.dump(data, f, indent=2)
+                    finally:
+                        fcntl.flock(f, fcntl.LOCK_UN)
+                cls._vault_cache = data
+                cls._last_load_time = datetime.now().timestamp()
+            except Exception as e:
+                log_app(f"Vault save error: {e}")
 
     @classmethod
     async def remember_fact(cls, fact: str, category: str = "permanent_facts") -> str:
         """
         Store a fact with smart update logic.
-
-        - Detect exact duplicates.
-        - Use a lightweight LLM prompt to decide between IGNORE, REPLACE,
-          MERGE, or APPEND.
-        - Append the resolved fact to the Vault and persist it.
         """
-        data = cls._load_vault()
+        data = await cls._load_vault()
         facts = data.get("permanent_facts", [])
 
         # 1. Exact match check (instant)
@@ -230,7 +227,7 @@ JSON FORMAT:
         """
         # 1. Vault search (Personal Identity)
         vault_findings: List[str] = []
-        data = cls._load_vault()
+        data = await cls._load_vault()
         query_lower = query.lower()
         
         # ... (vault search logic remains similar but optimized)

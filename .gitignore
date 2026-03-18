@@ -72,3 +72,5 @@ asura_temp_*
 daemon.pid
 llm_usage.json
 .vscode
+recovery_cache/
+@chat_gemini_claude.md

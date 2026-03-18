@@ -21,11 +21,14 @@ async def _generate_thought(task: str, context: str = "", max_steps: int = 5) ->
     prompt = f"""[INST] You are the Sovereign Engine of ASURA (Instance: {config.INSTANCE_NAME}).
 Host Master: {config.MASTER_NAME}. You control a multi-device cluster via precision tool calls.
 
+CLUSTER TOPOLOGY:
+- Core Intelligence (Ollama): {config.OLLAMA_BASE_URL}
+- Local Instance: {config.INSTANCE_NAME}
+- Peer Instances: {config.ASURA_PEERS}
+
 TASK: {task}
 
 CLUSTER CONTEXT:
-- Local Instance: {config.INSTANCE_NAME}
-- Peer Instances: {config.ASURA_PEERS}
 - Recent history: {context[:2000]}
 
 PROTOCOL:
@@ -43,7 +46,7 @@ Respond ONLY with valid JSON:
 }} [/INST]"""
 
     try:
-        raw = await call_llm(prompt)
+        raw = await call_llm(prompt, model=config.OLLAMA_MODEL_REASONING)
 
         # Parse JSON using centralized utility
         result = extract_json(raw)
@@ -94,7 +97,7 @@ Respond ONLY with JSON:
 }}"""
 
     try:
-        raw = await call_llm(prompt)
+        raw = await call_llm(prompt, model=config.OLLAMA_MODEL_REASONING)
 
         result = extract_json(raw)
         if result and "plan" in result:
@@ -122,7 +125,7 @@ SUCCESS: {success}
 Respond with a brief 1-2 sentence lesson learned. Be specific and actionable."""
 
     try:
-        lesson = await call_llm(prompt)
+        lesson = await call_llm(prompt, model=config.OLLAMA_MODEL_REASONING)
         log_audit("REASONING", f"Reflection: {lesson[:100]}")
         return lesson
     except Exception:
@@ -240,16 +243,20 @@ def think(task: str, context: str = "", max_steps: int = 5) -> dict:
     """
     import asyncio
     try:
-        # Improved loop handling
         try:
             loop = asyncio.get_running_loop()
         except RuntimeError:
             loop = None
 
         if loop and loop.is_running():
+            # If we are in an event loop, we must run this in a thread 
+            # and use a NEW event loop for the async reasoning core
             import concurrent.futures
+            def _sync_wrapper():
+                return asyncio.run(_recursive_think_async(task, max_steps, context))
+            
             with concurrent.futures.ThreadPoolExecutor() as pool:
-                result = pool.submit(lambda: asyncio.run(_recursive_think_async(task, max_steps, context))).result()
+                result = pool.submit(_sync_wrapper).result()
         else:
             result = asyncio.run(_recursive_think_async(task, max_recursion=max_steps, context=context))
     except Exception as e:

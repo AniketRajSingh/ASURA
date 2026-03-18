@@ -10,6 +10,7 @@ from .common import (
     sanitize_filename,
     is_safe_path,
     find_project_root,
+    extract_json,
 )
 
 from .retry import retry, async_retry
@@ -23,6 +24,7 @@ __all__ = [
     "sanitize_filename",
     "is_safe_path",
     "find_project_root",
+    "extract_json",
     "retry",
     "async_retry",
     "parse_duration",

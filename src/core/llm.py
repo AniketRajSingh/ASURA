@@ -176,7 +176,7 @@ async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool
     # FORCE NO PROXY for local Ollama calls
     mounts = {"all://": None}
     base_url = model_manager.get_ollama_url()
-    async with httpx.AsyncClient(mounts=mounts, timeout=300) as client:
+    async with httpx.AsyncClient(mounts=mounts, timeout=300, trust_env=False) as client:
         try:
             resp = await client.post(f"{base_url}/api/chat", json=payload)
             resp.raise_for_status()

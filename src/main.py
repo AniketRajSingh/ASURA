@@ -141,7 +141,7 @@ async def init_system():
     # Trigger Architectural Knowledge Graph Scan (Self-Discovery)
     try:
         from core.knowledge_scanner import knowledge_scanner
-        asyncio.create_task(knowledge_scanner.scan_all())
+        asyncio.create_task(asyncio.to_thread(lambda: asyncio.run(knowledge_scanner.scan_all())))
     except Exception as e:
         log_app(f"KG: Initial scan failed: {e}")
 
@@ -165,7 +165,7 @@ async def start_parallel_services():
     from core.curiosity import CuriosityEngine
     from core.observer import FileSystemObserver
     from skills.scheduler import SchedulerDaemon
-    from skills.telegram_bot.bot import get_notify_fn, set_proactive_engine, create_bot_application
+    from skills.telegram_bot.bot import get_notify_fn, set_proactive_engine, create_core_bot, create_insta_bot
 
     notify = get_notify_fn()
 
@@ -250,6 +250,28 @@ async def start_parallel_services():
             await core_app.updater.start_polling()
             await insta_app.updater.start_polling()
             log_app("🤖 Dual Bots Polling: ACTIVE")
+
+            # ─── Startup Notification ────────────
+            import platform, socket
+            from skills.telegram_bot.bot import send_ephemeral_message
+            
+            try:
+                hostname = socket.gethostname()
+                # Get local IP
+                s = socket.socket(socket.getaddrinfo('8.8.8.8', 80)[0][0], socket.SOCK_DGRAM)
+                s.connect(("8.8.8.8", 80))
+                local_ip = s.getsockname()[0]
+                s.close()
+            except: 
+                local_ip = "Unknown IP"
+                hostname = "Unknown Host"
+
+            device_info = f"💻 <b>{config.INSTANCE_NAME}</b> is ONLINE\n" \
+                          f"OS: <code>{platform.system()} {platform.release()}</code>\n" \
+                          f"Host: <code>{hostname}</code>\n" \
+                          f"IP: <code>{local_ip}</code>"
+            
+            send_ephemeral_message(f"Master I am online from {device_info}", delay=10, silent=True)
         
         # Set global flag for health checks
         os.environ["ASURA_TELEGRAM_ACTIVE"] = "true"
