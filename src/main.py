@@ -96,6 +96,11 @@ def print_live_channels(skill_count: int):
 
 async def init_system():
     log_app("Initializing system...")
+    
+    # ─── Engage Power Lock ────────────
+    from core.sovereignty import get_authority
+    get_authority().stay_awake()
+    
     init_memory()
 
     from skills.skill_registry import load_skills

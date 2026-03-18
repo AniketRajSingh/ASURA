@@ -141,10 +141,10 @@ class AgentLoader:
             from skills.logger import log_app
             log_app(f"DEBUG: Intent recognition Level 3 starting (Model: {fast_model})...")
             
-            # Force a strict timeout for intent recognition
+            # Increase timeout for complex cluster routing
             response = await asyncio.wait_for(
                 call_llm(prompt, model=fast_model, temperature=0.0),
-                timeout=5.0
+                timeout=15.0
             )
             
             selected = response.strip().lower().split()[0].replace(".", "").replace("'", "")
@@ -154,6 +154,15 @@ class AgentLoader:
                 self._learned_cache[query_norm] = selected
                 self._save_cache()
                 log_audit("INTENT", f"Learned NEW Intent: {query_norm} -> {selected}")
+                
+                # ─── Cluster Sync ────────────
+                try:
+                    from core.federation import federation
+                    # Non-blocking broadcast
+                    asyncio.create_task(federation.broadcast_intent(query_norm, selected))
+                except Exception as e:
+                    log_app(f"Intent Broadcast failed: {e}")
+                
                 return selected
         except asyncio.TimeoutError:
             log_app("DEBUG: Intent recognition timed out after 5s. Falling back.")

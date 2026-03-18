@@ -1,5 +1,5 @@
 {
-  "_comment": "ASURA Model Registry \u2014 Edit this file to add/update model capabilities",
+  "_comment": "ASURA Model Registry — Edit this file to add/update model capabilities",
   "_version": "1.0",
   "gpt-oss:20b": {
     "display_name": "GPT-OSS 20B",
@@ -18,34 +18,10 @@
     },
     "capabilities": {
       "tool_calling": true,
-      "thinking_mode": false,
+      "thinking_mode": true,
       "json_output": true,
       "code_generation": true,
       "agentic": true
-    },
-    "provider_hints": {}
-  },
-  "qwen3.5:0.8b": {
-    "display_name": "Qwen3.5 0.8B Vision Draft",
-    "architecture": "dense",
-    "total_params": "1B",
-    "active_params": null,
-    "context_window": 32768,
-    "max_output_tokens": 2048,
-    "languages": 29,
-    "multimodal": {
-      "enabled": true,
-      "image": true,
-      "video": true,
-      "audio": false,
-      "web_search": false
-    },
-    "capabilities": {
-      "tool_calling": true,
-      "thinking_mode": false,
-      "json_output": true,
-      "code_generation": false,
-      "agentic": false
     },
     "provider_hints": {}
   },
@@ -76,6 +52,30 @@
         "served_model_name": "qwen3.5:35b"
       }
     }
+  },
+  "qwen3.5:0.8b": {
+    "display_name": "Qwen3.5 0.8B Vision Draft",
+    "architecture": "dense",
+    "total_params": "1B",
+    "active_params": null,
+    "context_window": 32768,
+    "max_output_tokens": 2048,
+    "languages": 29,
+    "multimodal": {
+      "enabled": true,
+      "image": true,
+      "video": true,
+      "audio": false,
+      "web_search": false
+    },
+    "capabilities": {
+      "tool_calling": true,
+      "thinking_mode": false,
+      "json_output": true,
+      "code_generation": false,
+      "agentic": false
+    },
+    "provider_hints": {}
   },
   "qwen3-32b": {
     "display_name": "Qwen3 32B",

@@ -6,12 +6,13 @@
 
 ## 1. Core Philosophy: Agentic Sovereignty
 
-ASURA is built on four non-negotiable technical pillars:
+ASURA is built on five non-negotiable technical pillars:
 
 1.  **Local Sovereignty**: All reasoning, semantic memory (FAISS), and logic remain on hardware owned by the Master. No third-party cloud dependency for core intelligence.
-2.  **Asynchronous Resilience**: A non-blocking architecture using `AsyncGateway` to handle parallel inputs from TUI, Web, and Telegram.
-3.  **Tiered Intelligence**: Dynamic model routing using a "Draft-and-Verify" pattern (0.8B Fast Model for routing, 35B Heavy Model for reasoning).
-4.  **Structural Self-Awareness**: A live, AST-scanned Knowledge Graph that allows the AI to understand its own codebase.
+2.  **Asynchronous Resilience**: A non-blocking architecture using `AsyncGateway` and **Parallel-Turbo** preparation to handle parallel inputs from TUI, Web, and Telegram with zero latency.
+3.  **Tiered Intelligence**: Dynamic model routing using a "Draft-and-Verify" pattern (0.8B Fast Model for routing, **GPT-OSS 20B** Heavy Model for reasoning).
+4.  **Structural Self-Awareness**: A live, incremental AST-scanned Knowledge Graph that allows the AI to understand its own codebase in near-real-time.
+5.  **Persistent Sovereignty**: Automatic cross-platform wake-locking (**Sovereign Power Lock**) to ensure cluster nodes (Mac/Windows) remain responsive.
 
 ---
 
@@ -21,13 +22,24 @@ ASURA operates via an iterative **ReAct (Reason + Act)** loop, implemented in `s
 
 ### Two-Tier Model Routing
 - **Fast Tier (0.8B)**: Handles intent classification, JSON schema extraction, and simple queries.
-- **Heavy Tier (35B)**: Handles complex multi-step planning, coding, and architectural debugging.
+- **Heavy Tier (GPT-OSS 20B)**: Handles complex multi-step planning, coding, and architectural debugging.
 
 ### The Reasoning Protocol (ASURA-Zero)
+```mermaid
+graph TD
+    PROMPT[User Message] --> THINK[Thought: Analyze Intent]
+    THINK --> PLAN[Plan: Sequence of Tools]
+    PLAN --> ACT[Action: Call MCP Tool]
+    ACT --> EXEC{Execute Async}
+    EXEC --> OBS[Observation: Tool Output]
+    OBS --> REFLECT[Reflect: Is goal met?]
+    REFLECT -- No --> THINK
+    REFLECT -- Yes --> FINAL[Generate Final Answer]
+```
 1.  **Thought**: Analyze user intent and inventory available tools (via AST signatures).
 2.  **Plan**: Construct a sequence of tool calls.
 3.  **Act**: Execute tools via the MCP-Lite `tool_protocol.py`.
-4.  **Observe**: Capture tool output (STDOUT, File data, etc.).
+4.  **Observe**: Capture tool output (STDOUT, File data, etc.) with automatic context truncation to prevent window explosion.
 5.  **Reflect**: Use the Heavy model to evaluate if the objective was met.
 
 ---
@@ -84,42 +96,21 @@ ASURA operates via an iterative **ReAct (Reason + Act)** loop, implemented in `s
 ASURA solves "Context Starvation" via a tiered storage architecture:
 
 *   **Level 1 (Short-Term)**: Rolling 50-turn context window managed in `context_manager.py`.
-*   **Level 2 (Intermediate)**: Semantic RAG. Uses `nomic-embed-text` to index episode summaries into a FAISS vector store.
-*   **Level 3 (Sovereign Vault)**: Immutable facts and high-priority user preferences injected into every prompt.
-*   **Agent Vaults**: Isolated JSON scratchpads for declarative sub-agents to prevent context pollution.
+*   **Level 2 (Intermediate)**: Semantic RAG. Uses `nomic-embed-text` to index episode summaries.
+*   **Level 3 (Relational)**: Architectural Knowledge Graph. Maps code dependencies via AST.
+*   **Level 4 (Sovereign Vault)**: Immutable facts and high-priority user preferences.
 
 ---
 
 ## 5. Safety & Process Isolation
 
-### The 4-Layer Validation Sandbox
-ASURA never writes to `src/` without passing the following checks:
+### The 5-Layer Validation Sandbox
+ASURA never writes to `src/` without passing:
 1.  **Syntax Validation**: `ast.parse` ensures code is valid Python.
-2.  **Import Tracing**: Subprocess dry-runs ensure all dependencies are met (auto-installs if needed).
-3.  **Phantom Isolation**: Mutations are applied to a temporary Git branch. Merging to `main` only occurs if all tests pass.
-4.  **Surgical VCS**: Every change is logged as a patch. If logic fails, ASURA can surgically invert the specific diff.
-
-### Resource Throttling
-- **Warning (>75%)**: Throttles non-essential background daemons (Curiosity, Documentation).
-- **Critical (>90%)**: Enters Safe Mode, suspends all outbound mutations, and triggers self-healing.
+2.  **Import Tracing**: Subprocess dry-runs ensure all dependencies are met.
+3.  **Phantom Isolation**: Mutations are applied to temporary Git branches.
+4.  **Ghost Repair**: If a core file is corrupted, the system restores it from a **Golden Snapshot**.
+5.  **Surgical VCS**: Every change is logged as an invertible patch.
 
 ---
-
-## 6. System Structure
-
-```
-ASURA/
-├── src/
-│   ├── agents/         # Markdown-defined specialist personas
-│   ├── cli/            # Unified TUI and CLI implementation
-│   ├── core/           # The Sovereign Engine (Logic, Reasoning, Memory)
-│   └── skills/         # 50+ Functional capabilities (Tools)
-├── data/
-│   ├── memory_store/   # FAISS Vector Index
-│   ├── logs/           # Unified audit and app logs
-│   └── surgery/        # Temporary sandboxes for evolution
-└── docs/               # Technical documentation
-```
-
----
-*Last Updated: 2026-03-15 (Phase S - Unified Architecture Edition)*
+*Last Updated: 2026-03-18 (Phase S.2 - Absolute Integrity Edition)*

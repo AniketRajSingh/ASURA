@@ -570,7 +570,7 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
                 # Default Ollama - Use FAST model for stream responsiveness if not specified
                 active_model = config.OLLAMA_MODEL_FAST if not agent_name else config.OLLAMA_MODEL
                 log_app(f"DEBUG: Initiating Ollama stream (Model: {active_model})")
-                async with httpx.AsyncClient(timeout=180, trust_env=False) as client:
+                async with httpx.AsyncClient(timeout=300, trust_env=False) as client:
                     async with client.stream(
                         "POST", f"{config.OLLAMA_BASE_URL}/api/chat",
                         json={"model": active_model, "messages": messages, "stream": True},

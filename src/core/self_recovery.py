@@ -89,9 +89,8 @@ class SelfRecovery:
         except Exception as e:
             log_app(f"❌ Ghost launch failed: {e}")
             return False
-        finally:
-            # Cleanup
-            shutil.rmtree(self.recovery_root)
+        # Persistence: We no longer rmtree the recovery root here 
+        # so the SelfHealingDaemon can use it for Ghost Restores.
 
 def trigger_deep_recovery(error_msg: str):
     """Entry point for Meta-Healing."""

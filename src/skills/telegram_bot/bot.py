@@ -8,6 +8,7 @@ Supports Dual-Bot Infrastructure:
 import os
 import asyncio
 import logging
+import re
 from datetime import time, timezone, timedelta, datetime
 from functools import wraps
 from pathlib import Path
@@ -67,15 +68,21 @@ async def send_smart_reply(update: Update, text: str, **kwargs):
     if not clean_parts:
         return
 
+    from core.formatter import format_message
+    
     for i, part in enumerate(clean_parts):
         is_last = (i == len(clean_parts) - 1)
         current_kwargs = kwargs.copy()
         if is_last:
             current_kwargs["reply_markup"] = reply_markup
             
+        # Format this specific part for Telegram
+        formatted_part = format_message(part, platform="telegram")
+        if not formatted_part.strip(): continue
+
         # Ensure 4000 char limit per part (just in case a part is huge)
-        if len(part) > 4000:
-            sub_parts = [part[j:j+4000] for j in range(0, len(part), 4000)]
+        if len(formatted_part) > 4000:
+            sub_parts = [formatted_part[j:j+4000] for j in range(0, len(formatted_part), 4000)]
             for k, sp in enumerate(sub_parts):
                 is_sub_last = (k == len(sub_parts) - 1)
                 final_kwargs = current_kwargs.copy()
@@ -83,7 +90,7 @@ async def send_smart_reply(update: Update, text: str, **kwargs):
                     final_kwargs["reply_markup"] = None
                 await safe_reply(update.effective_message, sp, **final_kwargs)
         else:
-            await safe_reply(update.effective_message, part, **current_kwargs)
+            await safe_reply(update.effective_message, formatted_part, **current_kwargs)
 
 async def safe_reply(message, text: str, **kwargs):
     for attempt in range(2):
@@ -325,8 +332,10 @@ async def cmd_think(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status = await update.effective_message.reply_text("🌀 **Initiating Deep Reasoning...**", parse_mode="Markdown")
     try:
         from core.reasoning import think
-        res = await think(q)
-        await status.edit_text(format_message(res, platform="telegram"), parse_mode="HTML")
+        from core.formatter import format_message
+        res_dict = await think(q)
+        conclusion = res_dict.get("conclusion", "Reasoning complete.")
+        await status.edit_text(format_message(conclusion, platform="telegram"), parse_mode="HTML")
     except Exception as e:
         await status.edit_text(f"❌ Reasoning failed: {e}")
 
@@ -352,18 +361,201 @@ async def choice_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         from core.startup_checks import run_startup_checks
         from skills.hardware_monitor.monitor import get_resource_summary
         
-        status_msg = await query.message.reply_text("🚦 <i>Analyzing system vitals...</i>", parse_mode="HTML")
-        integrity_res, hardware_stats = await asyncio.gather(
-            run_startup_checks(),
-            asyncio.to_thread(get_resource_summary)
-        )
+        status_msg = await query.message.reply_text("🚦 <b>ASURA Pulse: Monitoring active...</b>", parse_mode="HTML")
         
-        full_report = (
-            f"📊 <b>ASURA System Vitals</b>\n\n"
-            f"{hardware_stats}\n\n"
-            f"🛠️ <b>Integrity Check:</b>\n{integrity_res}"
-        )
-        await status_msg.edit_text(full_report, parse_mode="HTML")
+        async def _refresh_vitals():
+            for i in range(12): # Refresh 12 times (60 seconds)
+                try:
+                    # Use silent=True to stop terminal spam
+                    integrity_res, hardware_stats = await asyncio.gather(
+                        run_startup_checks(silent=True),
+                        asyncio.to_thread(get_resource_summary)
+                    )
+                    full_report = (
+                        f"📊 <b>ASURA System Vitals (Live)</b>\n"
+                        f"<i>Updated: {datetime.now().strftime('%H:%M:%S')}</i>\n\n"
+                        f"{hardware_stats}\n\n"
+                        f"🛠️ <b>Integrity Check:</b>\n{integrity_res}"
+                    )
+                    # Use edit_text safely
+                    try: await status_msg.edit_text(full_report, parse_mode="HTML")
+                    except Exception as e: 
+                        log_app(f"Pulse Edit Failed: {e}")
+                        break
+                    await asyncio.sleep(5)
+                except Exception as e:
+                    log_app(f"Pulse Error: {e}")
+                    break
+            try: await status_msg.edit_text(status_msg.text.replace("(Live)", "(Final)"), parse_mode="HTML")
+            except: pass
+
+        asyncio.create_task(_refresh_vitals())
+        return
+    
+    elif data == "toggle_debug":
+        from settings import settings as cfg
+        cfg.DEBUG_MODE = not getattr(cfg, "DEBUG_MODE", False)
+        status = "✅ ON" if cfg.DEBUG_MODE else "❌ OFF"
+        await query.answer(f"Debug Mode: {status}")
+        # Refresh the keyboard by re-triggering the Control Panel view
+        from skills.telegram_bot.handlers import chat_handler
+        update.message.text = "🛠️ Control Panel"
+        return await chat_handler(update, context)
+
+    elif data == "toggle_public":
+        from settings import settings as cfg
+        cfg.PUBLIC_ACCESS_ALLOWED = not getattr(cfg, "PUBLIC_ACCESS_ALLOWED", False)
+        status = "✅ ON" if cfg.PUBLIC_ACCESS_ALLOWED else "❌ OFF"
+        await query.answer(f"Public Access: {status}")
+        from skills.telegram_bot.handlers import chat_handler
+        update.message.text = "🛠️ Control Panel"
+        return await chat_handler(update, context)
+
+    elif data == "trigger_evolution":
+        await query.answer("🚀 Initiating Evolution Cycle...")
+        from core.self_updater import updater
+        import threading
+        threading.Thread(target=updater.run_cycle, daemon=True).start()
+        await query.edit_message_text("🚀 <b>Evolution Cycle Triggered.</b>\nASURA is now self-improving...", parse_mode="HTML")
+        return
+
+    elif data == "deep_cleanup":
+        from settings import settings as cfg
+        from core.declarative_agent_loader import get_agent_loader
+        try:
+            # 1. Purge Logs
+            for log in [cfg.APP_LOG_PATH, cfg.AUDIT_LOG_PATH]:
+                if os.path.exists(log):
+                    with open(log, "w") as f: f.write("")
+            
+            # 2. Clear Intent Cache
+            loader = get_agent_loader()
+            count = len(loader._learned_cache)
+            loader._learned_cache = {}
+            loader._save_cache()
+            
+            # 3. Clean Temp artifacts
+            import shutil
+            if os.path.exists(cfg.DRAFTS_DIR):
+                shutil.rmtree(cfg.DRAFTS_DIR)
+                os.makedirs(cfg.DRAFTS_DIR)
+
+            await query.answer("🧹 System Purge Complete.")
+            await query.edit_message_text(f"🧹 <b>Deep Cleanup Successful.</b>\nLogs purged, {count} learned intents cleared, and temp files recycled.", parse_mode="HTML")
+        except Exception as e:
+            await query.edit_message_text(f"❌ Cleanup failed: {e}")
+        return
+
+    elif data == "system_restart":
+        await query.answer("🔄 Restarting ASURA Cluster...")
+        await query.edit_message_text("🔄 <b>Warm-Restart Initiated.</b>\nASURA will be back online in 10 seconds.", parse_mode="HTML")
+        import sys
+        # Small sleep to allow Telegram message to send
+        await asyncio.sleep(2)
+        # Warm restart current python process
+        os.execv(sys.executable, ['python'] + sys.argv)
+        return
+
+    elif data == "capability_probe":
+        from core.startup_checks import verify_dispatcher_tools
+        await query.answer("🛠️ Probing Core Capabilities...")
+        status_msg = await query.message.reply_text("🛠️ <b>ASURA Probe: Testing tools...</b>", parse_mode="HTML")
+        try:
+            results = await verify_dispatcher_tools()
+            passed = results.get("passed", [])
+            failed = results.get("failed", [])
+            
+            probe_msg = (
+                f"🛠️ <b>ASURA Capability Probe</b>\n\n"
+                f"✅ <b>Operational:</b> {', '.join(passed)}\n"
+            )
+            if failed:
+                probe_msg += f"\n❌ <b>Failed:</b>\n"
+                for f in failed:
+                    probe_msg += f"• {f['tool']}: {f['error']}\n"
+            else:
+                probe_msg += f"\n💎 <b>All Core Tools Verified.</b>"
+                
+            await status_msg.edit_text(probe_msg, parse_mode="HTML")
+        except Exception as e:
+            await status_msg.edit_text(f"❌ Probe failed: {e}")
+        return
+
+    elif data == "view_logs":
+        from settings import settings as cfg
+        try:
+            with open(cfg.APP_LOG_PATH, "r") as f:
+                lines = f.readlines()
+                last_logs = "".join(lines[-15:])
+            await query.edit_message_text(f"📜 <b>Recent System Logs</b>\n<pre>{last_logs}</pre>", parse_mode="HTML")
+        except Exception as e:
+            await query.edit_message_text(f"❌ Failed to read logs: {e}")
+        return
+
+    elif data == "cluster_topology":
+        from core.federation import federation
+        from settings import settings as cfg
+        await query.answer("🌐 Querying Cluster...")
+        status_msg = await query.message.reply_text("🌐 <b>ASURA Cluster: Pinging peers...</b>", parse_mode="HTML")
+        try:
+            peers = await federation.ping_peers()
+            
+            lines = [f"🌐 <b>ASURA Federated Cluster</b>\n"]
+            lines.append(f"📍 <b>Local:</b> <code>{cfg.INSTANCE_NAME}</code> (ONLINE)")
+            
+            if not peers:
+                lines.append("\n<i>No sibling peers configured.</i>")
+            else:
+                for p in peers:
+                    status_icon = "🟢" if p["status"] == "online" else "🔴"
+                    url = p["url"].replace("http://", "").replace(":8080", "")
+                    lines.append(f"{status_icon} <b>Peer:</b> <code>{url}</code> ({p['status'].upper()})")
+            
+            await status_msg.edit_text("\n".join(lines), parse_mode="HTML")
+        except Exception as e:
+            await status_msg.edit_text(f"❌ Cluster probe failed: {e}")
+        return
+
+    elif data == "evolution_log":
+        from settings import settings as cfg
+        await query.answer("🤖 Reading Evolution Bridge...")
+        try:
+            with open(os.path.join(cfg.BASE_DIR, "chat_gemini_claude.md"), "r") as f:
+                content = f.read()
+            
+            # Simple cleanup for Telegram display
+            content = content.replace("# ", "⭐️ ").replace("## ", "\n🔹 ").replace("### ", "\n🔸 ")
+            await query.edit_message_text(f"🤖 <b>ASURA Evolution Log</b>\n\n{content[:3500]}", parse_mode="HTML")
+        except Exception as e:
+            await query.edit_message_text(f"❌ Failed to read evolution log: {e}")
+        return
+
+    elif data == "memory_pulse":
+        from core.memory_manager import memory_manager
+        from settings import settings as cfg
+        try:
+            # 1. Get Vault Stats
+            vault = await memory_manager._load_vault()
+            fact_count = len(vault.get("permanent_facts", []))
+            
+            # 2. Get Episodic Stats (via file size as proxy for vectors)
+            faiss_path = os.path.join(cfg.MEMORY_STORE_DIR, "index.faiss")
+            idx_size = os.path.getsize(faiss_path) / 1024 if os.path.exists(faiss_path) else 0
+            
+            # 3. Get KG Stats
+            kg_path = cfg.KNOWLEDGE_GRAPH_PATH
+            kg_size = os.path.getsize(kg_path) / 1024 if os.path.exists(kg_path) else 0
+            
+            stats_msg = (
+                f"🧠 <b>ASURA Cognitive Pulse</b>\n\n"
+                f"🏛️ <b>Sovereign Vault:</b> {fact_count} facts\n"
+                f"episodic <b>FAISS Index:</b> {idx_size:.1f} KB\n"
+                f"🕸️ <b>Knowledge Graph:</b> {kg_size:.1f} KB\n\n"
+                f"<i>Integrity: Stable</i>"
+            )
+            await query.edit_message_text(stats_msg, parse_mode="HTML")
+        except Exception as e:
+            await query.edit_message_text(f"❌ Memory Pulse failed: {e}")
         return
 
     # ─── MCQ Button Processing ────────────

@@ -91,7 +91,7 @@ class ASURASettings(BaseSettings):
     OPENROUTER_API_KEY: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"))
     
     # Models
-    OLLAMA_MODEL: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL", "OLLAMA_MODEL"))
+    OLLAMA_MODEL: str = Field(default="gpt-oss:20b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL", "OLLAMA_MODEL"))
     OLLAMA_MODEL_FAST: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_FAST", "OLLAMA_MODEL_FAST"))
     GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias=AliasChoices("ASURA_GROQ_MODEL", "GROQ_MODEL"))
     OPENROUTER_MODEL_FREE: str = Field(default="google/gemini-2.0-flash-exp:free", validation_alias=AliasChoices("ASURA_OPENROUTER_MODEL_FREE", "OPENROUTER_MODEL_FREE"))
@@ -99,12 +99,12 @@ class ASURASettings(BaseSettings):
     GROQ_MODEL_FAST: str = Field(default="llama-3.3-70b-specdec", validation_alias=AliasChoices("ASURA_GROQ_MODEL_FAST", "GROQ_MODEL_FAST"))
     
     # Role-based models
-    OLLAMA_MODEL_REASONING: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REASONING", "OLLAMA_MODEL_REASONING"))
+    OLLAMA_MODEL_REASONING: str = Field(default="gpt-oss:20b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REASONING", "OLLAMA_MODEL_REASONING"))
     OLLAMA_MODEL_VISION: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_VISION", "OLLAMA_MODEL_VISION"))
     OLLAMA_MODEL_CAPTION: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_CAPTION", "OLLAMA_MODEL_CAPTION"))
     OLLAMA_MODEL_SUMMARY: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_SUMMARY", "OLLAMA_MODEL_SUMMARY"))
-    OLLAMA_MODEL_CODE: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_CODE", "OLLAMA_MODEL_CODE"))
-    OLLAMA_MODEL_REVIEWER: str = Field(default="qwen3.5:35b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REVIEWER", "OLLAMA_MODEL_REVIEWER"))
+    OLLAMA_MODEL_CODE: str = Field(default="gpt-oss:20b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_CODE", "OLLAMA_MODEL_CODE"))
+    OLLAMA_MODEL_REVIEWER: str = Field(default="gpt-oss:20b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REVIEWER", "OLLAMA_MODEL_REVIEWER"))
     OLLAMA_MODEL_INTENT: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_INTENT", "OLLAMA_MODEL_INTENT"))
 
     # ─── Voice & Audio ────────────────────────────────────

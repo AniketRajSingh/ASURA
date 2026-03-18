@@ -60,9 +60,9 @@ async def verify_dispatcher_tools() -> dict:
     return results
 
 
-async def run_startup_checks() -> str:
+async def run_startup_checks(silent: bool = False) -> str:
     """Run all startup checks. Returns a summary string."""
-    log_app("Running startup self-check...")
+    if not silent: log_app("Running startup self-check...")
     
     # 1. Verify skill imports
     skill_results = verify_all_skills()
@@ -80,7 +80,7 @@ async def run_startup_checks() -> str:
     
     if total_fail == 0:
         summary = f"Self-check PASSED: {skill_pass} skills, {tool_pass} tools operational"
-        log_audit("SELF_CHECK", summary)
+        if not silent: log_audit("SELF_CHECK", summary)
     else:
         lines = [f"Self-check: {total_fail} issues found"]
         for f in skill_results["failed"]:
@@ -88,8 +88,9 @@ async def run_startup_checks() -> str:
         for f in tool_results["failed"]:
             lines.append(f"  Tool '{f['tool']}': {f['error']}")
         summary = "\n".join(lines)
-        log_audit("SELF_CHECK_FAIL", summary)
-        log_app(summary)
+        if not silent:
+            log_audit("SELF_CHECK_FAIL", summary)
+            log_app(summary)
     
-    log_app(summary)
+    if not silent: log_app(summary)
     return summary

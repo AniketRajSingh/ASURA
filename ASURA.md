@@ -10,7 +10,8 @@
 
 ## Model Configuration
 - **FAST**: `Qwen3.5:0.8b` - Routing, JSON parsing, simple queries
-- **HEAVY**: `Qwen3.5:35b` - Complex reasoning, code generation, architecture design
+- **HEAVY**: `gpt-oss:20b` - Complex reasoning, code generation, architecture design
+- **VISION**: `Qwen3.5:0.8b` (Fast) or `gpt-oss:20b` (Heavy)
 
 ## Coding Style
 - Use Python 3.12+ features
@@ -21,32 +22,31 @@
 
 ## Architecture Rules
 - **Async First**: Core logic MUST be asynchronous (`async def`). Avoid blocking I/O; use `httpx` or `asyncio.to_thread`.
-- **Multitasking**: Long-running shell commands MUST use the `spawn_job` tool via the `JobManager`.
+- **Parallel-Turbo**: Preparation tasks (agent selection, context loading) SHOULD execute concurrently using `asyncio.gather`.
 - **Sovereign Auth**: All new API/Dashboard routes MUST enforce JWT or `X-ASURA-Key` verification.
-- **Internal VCS**: Every code application by the AI MUST be preceded by a VCS commit via `get_vcs().commit()`.
-- **Tiered Intelligence**: Use `Qwen3.5:0.8b` for routing/JSON, `Qwen3.5:35b` for reasoning and complex tasks.
+- **Master Bypass**: Telegram RBAC MUST allow `config.TELEGRAM_ADMIN_CHAT_ID` to bypass registration for immediate command.
+- **Ghost Repair**: Core components MUST be backed up in `data/recovery_cache/` for autonomous restoration by the Guardian Drive.
+- **Sovereign Power Lock**: `SovereignAuthority` MUST be engaged at startup to prevent node sleep.
+- **Proxy Bypass**: All internal LLM/Ollama clients MUST use `trust_env=False` to bypass system-level proxies.
 - All new tools MUST register via `core/tool_protocol.py`.
 - All path handling MUST be OS-independent (use `os.path.join` or `pathlib.Path`).
-- All logging via `skills.logger`.
-- **Surgical Mutation**: Use the `surgical_edit` tool for ALL Python code modifications instead of `edit_file` or `write_file`. The AST Surgeon runs your code in an isolated Minimal Run Environment (Sovereign OT) to verify it works before saving. Avoid full-file rewrites.
+- **Incremental Scanning**: Knowledge Graph updates SHOULD use AST caching and directory-mtime skipping for performance.
 - **Permanent Facts**: Use the `remember_fact` tool for all identity or high-priority user preferences.
 - **Environment Guard**: `run.py` is the strictly enforced isolated entry point. Do not bypass venv checks.
 
-## Phase 2: Declarative Agents & Security Interceptors
+## Phase S.2: Absolute Integrity & Cluster Synergy
 
 ### Specialized Agents (src/agents/)
 Load agent definitions from `.md` files with YAML frontmatter:
-- `archistar` - Architecture design and system planning
+- `asura_spawner` - Core system architect and agent manager
 - `explorer` - Codebase navigation and pattern discovery
 - `reviewer` - Security and quality auditing
-- `validator` - Configuration and structure verification
-- `simplifier` - Code refactoring and clarity improvement
+- `telegram_specialist` - Mobile-optimized interaction hub
 
-### Security Interceptors (src/core/interceptors.py)
-Pre-execution validation hooks:
-- Blocks dangerous commands (`rm -rf`, `dd`, etc.)
-- Detects hardcoded secrets and credentials
-- Flags production environment operations requiring confirmation
+### Security & UX
+- **Administrative Suite**: Telegram Control Panel for vitals, logs, and restarts.
+- **Visual Thinking**: Animated processing indicators for real-time status feedback.
+- **Split Messaging**: Responses must separate text from code blocks for clean rendering.
 
 ## Forbidden Patterns
 - No os.system() — use subprocess
@@ -64,5 +64,5 @@ Pre-execution validation hooks:
 ## Deployment
 - Platform: Universal (macOS, Windows, Linux)
 - Interface: Telegram bot + Dashboard (SCC 2.0)
-- Model: Tiered (20B Heavy/Review + 1.5B Fast)
-- Execution: Non-blocking Async Runtime
+- Model: Tiered (GPT-OSS 20B Heavy / 0.8B Fast)
+- Execution: Non-blocking Parallel-Async Runtime

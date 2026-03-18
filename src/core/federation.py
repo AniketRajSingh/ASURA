@@ -138,6 +138,15 @@ class SovereignFederation:
             except Exception as e:
                 log_app(f"Failed to sync fact to {url}: {e}")
 
+    async def broadcast_intent(self, query: str, agent: str):
+        """Share a learned intent mapping with all siblings."""
+        log_audit("FEDERATION", f"Broadcasting intent mapping to {len(self.peers)} peers")
+        for url in self.peers:
+            try:
+                await self.client.post(f"{url}/intent/learn", json={"query": query, "agent": agent})
+            except Exception as e:
+                pass # Silently fail for peers that are offline
+
     async def should_start_bot(self) -> bool:
         """
         Deteremine if this instance should be the 'Leader' (Telegram active).

@@ -5,6 +5,7 @@ Telegram Bot handlers for the Self‑Updating AI system owned by Aniket Raj Sing
 
 import html as html_mod
 import os
+import asyncio
 from typing import List
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import ContextTypes, ConversationHandler
@@ -159,7 +160,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # Persistent Bottom Keyboard
     reply_kb = ReplyKeyboardMarkup([
         ["🖥️ Dashboard", "🧩 Skills"],
-        ["🚦 Health", "📸 Screenshot", "🔍 Think"]
+        ["🚦 Health", "📸 Screenshot"],
+        ["🔍 Think", "🛠️ Control Panel"]
     ], resize_keyboard=True)
 
     # Inline Action Buttons
@@ -317,20 +319,29 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         from core.startup_checks import run_startup_checks
         from skills.hardware_monitor.monitor import get_resource_summary
         
-        status_msg = await update.message.reply_text("🚦 <i>Analyzing system vitals...</i>", parse_mode="HTML")
+        status_msg = await update.message.reply_text("🚦 <b>ASURA Pulse: Monitoring active...</b>", parse_mode="HTML")
         
-        # Concurrently get hardware stats and run health probes
-        integrity_res, hardware_stats = await asyncio.gather(
-            run_startup_checks(),
-            asyncio.to_thread(get_resource_summary)
-        )
-        
-        full_report = (
-            f"📊 <b>ASURA System Vitals</b>\n\n"
-            f"{hardware_stats}\n\n"
-            f"🛠️ <b>Integrity Check:</b>\n{integrity_res}"
-        )
-        await status_msg.edit_text(full_report, parse_mode="HTML")
+        async def _refresh_vitals():
+            for i in range(12): # Refresh 12 times (60 seconds)
+                try:
+                    integrity_res, hardware_stats = await asyncio.gather(
+                        run_startup_checks(silent=True),
+                        asyncio.to_thread(get_resource_summary)
+                    )
+                    full_report = (
+                        f"📊 <b>ASURA System Vitals (Live)</b>\n"
+                        f"<i>Updated: {datetime.now().strftime('%H:%M:%S')}</i>\n\n"
+                        f"{hardware_stats}\n\n"
+                        f"🛠️ <b>Integrity Check:</b>\n{integrity_res}"
+                    )
+                    try: await status_msg.edit_text(full_report, parse_mode="HTML")
+                    except: break
+                    await asyncio.sleep(5)
+                except: break
+            try: await status_msg.edit_text(status_msg.text.replace("(Live)", "(Final)"), parse_mode="HTML")
+            except: pass
+
+        asyncio.create_task(_refresh_vitals())
         return
     elif user_msg == "📸 Screenshot":
         return await cmd_screenshot(update, context)
@@ -339,6 +350,29 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return await update.message.reply_text(
             "🧠 <b>Deep Reasoning Mode</b>\nWhat should I reason about?", 
             reply_markup=ForceReply(selective=True),
+            parse_mode="HTML"
+        )
+
+    elif user_msg == "🛠️ Control Panel":
+        from settings import settings as config
+        debug_status = "✅ ON" if getattr(config, "DEBUG_MODE", False) else "❌ OFF"
+        public_status = "✅ ON" if getattr(config, "PUBLIC_ACCESS_ALLOWED", False) else "❌ OFF"
+        
+        kb = [
+            [InlineKeyboardButton(f"🪲 Debug Mode: {debug_status}", callback_data="toggle_debug")],
+            [InlineKeyboardButton(f"🌍 Public Access: {public_status}", callback_data="toggle_public")],
+            [InlineKeyboardButton("📜 System Logs", callback_data="view_logs")],
+            [InlineKeyboardButton("🧠 Memory Pulse", callback_data="memory_pulse")],
+            [InlineKeyboardButton("🌐 Cluster Topology", callback_data="cluster_topology")],
+            [InlineKeyboardButton("🤖 Evolution Log", callback_data="evolution_log")],
+            [InlineKeyboardButton("🚀 Trigger Evolution", callback_data="trigger_evolution")],
+            [InlineKeyboardButton("🧹 Deep Cleanup", callback_data="deep_cleanup")],
+            [InlineKeyboardButton("🔄 System Restart", callback_data="system_restart")],
+            [InlineKeyboardButton("🛠️ Capability Probe", callback_data="capability_probe")]
+        ]
+        return await update.message.reply_text(
+            "🛠️ <b>ASURA Sovereign Control Panel</b>\nManage core system state and evolution cycles.",
+            reply_markup=InlineKeyboardMarkup(kb),
             parse_mode="HTML"
         )
 
@@ -377,11 +411,18 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     # ──────────────────────────────────────────
 
-    status_msg = await update.message.reply_text("🧠 <i>ASURA is thinking...</i>", parse_mode="HTML")
+    # ─── Visual Thinking Indicator ───────────
+    thinking_gif = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHB0eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bu3XilJ5BOiSGic/giphy.gif"
+    gif_msg = None
+    try:
+        gif_msg = await update.message.reply_animation(animation=thinking_gif)
+    except: pass
+    
+    status_msg = await update.message.reply_text("🧠 <i>ASURA is processing...</i>", parse_mode="HTML")
+    
     try:
         from core.gateway import handle_message
         from skills.telegram_bot.bot import send_smart_reply
-        from telegram import InlineKeyboardMarkup, InlineKeyboardButton
         
         # Use Fast model for general chat responsiveness
         stream = await handle_message(user_id, user_msg, channel="telegram", stream=True, agent_name="asura-telegram")
@@ -390,10 +431,17 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         async for chunk in stream:
             if "[METADATA]" in chunk: continue
             full_reply += chunk
-            if time.time() - last_up > 2.0:
+            if time.time() - last_up > 2.5: # Increased interval for stability
                 try: await status_msg.edit_text(format_message(full_reply + " █", platform="telegram"), parse_mode="HTML"); last_up = time.time()
                 except: pass
-        await status_msg.delete()
+        
+        # Safe cleanup
+        try: await status_msg.delete()
+        except: pass
+        if gif_msg:
+            try: await gif_msg.delete()
+            except: pass
+
         from skills.telegram_bot.bot import get_or_create_session
         session = get_or_create_session(user_id, "telegram"); choices = session.metadata.pop("pending_choices", None)
         markup = None
@@ -411,8 +459,14 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             # Remove raw checklist from text
             full_reply = re.sub(r'[☐☑]\s*.*', '', full_reply).strip()
             full_reply += "\n\n📋 <b>Interactive Checklist:</b>"
-        await send_smart_reply(update, format_message(full_reply, platform="telegram"), parse_mode="HTML", reply_markup=markup)
-    except Exception as e: await status_msg.edit_text(f"❌ <b>Error:</b> {e}", parse_mode="HTML")
+        full_reply = full_reply.strip()
+        if full_reply:
+            await send_smart_reply(update, full_reply, parse_mode="HTML", reply_markup=markup)
+    except Exception as e:
+        log_app(f"Chat Handler Error: {e}")
+        try:
+            await update.message.reply_text(f"❌ <b>Error:</b> {e}", parse_mode="HTML")
+        except: pass
 
 async def checklist_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle interactive checklist toggles."""

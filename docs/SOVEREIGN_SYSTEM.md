@@ -10,74 +10,112 @@ ASURA is designed as a **Multi-Layered Sovereign Engine** that separates high-le
 
 ### The Reasoning Loop (ASURA-Zero)
 Implemented in `src/core/reasoning.py`, the loop follows a **Think -> Plan -> Act -> Observe -> Reflect** cycle.
-*   **Dual-Tier Intelligence**: Intent recognition is handled by a fast 0.8B model, while complex engineering is executed by a 35B Heavy model.
+*   **Dual-Tier Intelligence**: Intent recognition is handled by a fast 0.8B model, while complex engineering is executed by a **GPT-OSS 20B** Heavy model.
 *   **Architect Protocol**: Every plan is verified by a metacognitive pass before execution to ensure architectural alignment.
-
-### Memory Hierarchy
-*   **Level 1 (Context)**: Managed in `src/core/context_manager.py`. Rolling session memory.
-*   **Level 2 (Relational)**: Managed in `src/core/knowledge_graph.py`. A live, AST-scanned map of every file, function, and dependency.
-*   **Level 3 (Semantic)**: Managed in `src/skills/memory/store.py`. FAISS vector store for episodic and procedural retrieval.
-*   **Level 4 (Vault)**: Immutable facts and project-specific rules stored in the Sovereign Vault.
 
 ---
 
-## 🛠️ 2. Core Modules (The Engine)
+## 📱 2. Master Interaction (Administrative Suite)
 
-| File | Purpose | Logic |
-|:---|:---|:---|
-| `run.py` | **Sovereign Bootloader** | Process-level supervisor with Recursive Self-Repair (Ghost Recovery). |
-| `src/main.py` | **Orchestrator** | Initializer for all background daemons and gateway handlers. |
-| `src/settings.py` | **Config Master** | Type-safe Pydantic configuration replacing legacy `config.py`. |
-| `src/core/gateway.py` | **Channel Router** | Unified entry point for TUI, Web, and Telegram traffic. |
-| `src/core/tool_protocol.py` | **MCP-Lite** | Dynamic tool registry with AST-enriched technical signatures. |
-| `src/core/ast_surgeon.py` | **Precision Mutation** | Modifies code via Abstract Syntax Trees rather than text replacement. |
-| `src/core/self_healing.py` | **Guardian Drive** | Monitors audit logs for tracebacks and autonomously initiates repair. |
-| `src/core/self_recovery.py` | **Recursive Repair** | Spawns isolated stable ASURA instances from backups to fix the core. |
-| `src/core/resource_governor.py` | **Telemetry** | Throttles AI power based on real-time CPU/RAM/VRAM metrics. |
-| `src/core/anesthesia.py` | **Surgical Lock** | Pauses background daemons during active codebase modifications. |
+ASURA features a mobile-first interaction hub on Telegram, providing absolute sovereign control from anywhere.
+
+### 🛠️ Sovereign Control Panel
+The Control Panel provides a central interface for managing the cluster's state, evolution, and health.
+
+![Control Panel](img/control_panel.png)
+*Figure 1: The interactive Control Panel featuring Evolution Logs, Topology, and Maintenance tools.*
+
+### 🚦 ASURA Pulse (Live Vitals)
+High-fidelity system diagnostics are delivered directly to Telegram, allowing for instant monitoring of node health.
+
+![ASURA Pulse](img/asura_pulse.png)
+*Figure 2: Real-time system vitals and operational integrity report.*
 
 ---
 
 ## 🧩 3. Functional Skills (Capabilities)
 
-ASURA possesses 49+ modular skills. Key production groups include:
+ASURA possesses 49+ modular skills. Key functional groups include:
 
-### 👁️ Visual & Vision
-*   `src/skills/visual/vision.py`: Screenshot analysis and surgical UI debugging using 35B vision models.
-*   `src/skills/browser/agent.py`: High-level web automation and interactive navigation.
+### 👁️ Visual Intelligence & Vision
+*   **screenshot**: Capture system screen using native macOS/Windows fallbacks.
+*   **analyze_image**: Multi-purpose visual understanding and UI debugging.
+*   **ocr_image**: Fast text extraction from any visual source.
+*   **describe_screenshot**: Detailed mapping of UI elements and active applications.
 
-### 🎙️ Voice & Audio
-*   `src/skills/voice/interface.py`: Hybrid STT/TTS routing to local or remote Qwen servers.
-*   `src/daemon/qwen_tts_server.py`: Background service for high-speed voice-to-voice streaming.
+### 🎙️ Audio & Voice Stack
+*   **voice_chat**: Direct voice-to-voice interaction using local Whisper and remote Qwen-TTS.
+*   **audio_say**: Local system-level text-to-speech for alerts and notifications.
+*   **audio_generator**: Pure tone generation and gTTS-based audio file creation.
 
-### 🧪 Validation & Self-Audit
-*   `src/skills/auto_tester/tester.py`: Autonomous execution of Pytest and syntax verification.
-*   `src/skills/skill_registry.py`: Deep AST indexing of all functional capabilities.
+### 🧪 Validation, Audit & Integrity
+*   **auto_tester**: Autonomous execution of Pytest and structural syntax verification.
+*   **skill_registry**: Deep AST-indexing of every functional capability in the ecosystem.
+*   **system_health**: High-level telemetry monitoring and resource-aware throttling.
+*   **smart_deps**: Automated detection and upgrading of outdated project dependencies.
 
-### 📦 OS & Infrastructure
-*   `src/skills/shell_executor/executor.py`: PTY-based shell command execution with safety gates.
-*   `src/skills/backup_manager/manager.py`: Snapshot and restoration engine for system safety.
+### 📦 OS, Files & Infrastructure
+*   **shell_executor**: PTY-based sandboxed shell execution with safety interceptors.
+*   **backup_manager**: System-level snapshotting and restoration.
+*   **file_organizer**: Autonomous directory hygiene, dead code detection, and statistics.
+*   **cloud_sync**: Rclone-based synchronization to S3, GDrive, and local backups.
+*   **git_manager**: Version control integration with auto-commits and branch logic.
+
+### 🧠 Intelligence & Search
+*   **web_intelligence**: Multi-engine web search and clean content scraping.
+*   **doc_summarizer**: Recursive summarization of local files and URLs.
+*   **codebase_investigator**: Deep static analysis, symbol finding, and import tracing.
+*   **knowledge_graph**: Management of the relational architectural map.
+*   **memory**: Semantic (FAISS), Episodic (JSONL), and Procedural storage layers.
+
+### 🛠️ Productivity & Personal
+*   **calendar_manager**: Schedule management and reminder synchronization.
+*   **email_manager**: Full SMTP/IMAP lifecycle for reports and remote commands.
+*   **todo_manager**: Priority-based task tracking for Master and AI evolution.
+*   **time_tracker**: Session-based duration monitoring and reporting.
 
 ---
 
-## 📂 4. Production Directory Structure
+## 🌐 4. Federated Cluster Synergy
+
+ASURA instances collaborate across your network using the **Sovereign Federation** protocol.
+
+*   **Live Intent Sharing**: When one node learns a new intent mapping, it is instantly broadcast to all peers.
+*   **Power Persistence**: Automatic wake-locking ensures cluster nodes remain responsive.
+*   **Distributed Reasoning**: Specialists can be offloaded to peer nodes during high-load scenarios.
+
+---
+
+## 🖥️ 5. Sovereign Command Center (Web)
+
+For deep architectural work, the Web Dashboard provides absolute visibility into ASURA's internal "Self."
+
+![Command Center](img/command_center_web.png)
+*Figure 3: The System Intelligence Monitor and active operation stack.*
+
+### 🕸️ Architectural Knowledge Graph
+ASURA's self-awareness is powered by a live D3.js visualization of its entire source code.
+
+![Knowledge Graph](img/knowledge_graph.png)
+*Figure 4: Relational map of all files, functions, and dependencies.*
+
+---
+
+## 📂 6. Directory Structure
 
 ```
 ASURA/
 ├── src/
 │   ├── core/           # Engine: Logic, Reasoning, Recovery
-│   │   └── utils/      # Shared utilities (JSON, retry, time)
-│   ├── skills/         # Capabilities: 50+ modular tools
-│   ├── cli/            # Interface: TUI and CLI entry points
-│   ├── agents/         # Personas: Markdown-defined specialists
-│   └── daemon/         # Background: Persistent servers (Voice, Gateway)
-├── tests/              # Verification: Benchmarks, audits, and unit tests
+│   ├── skills/         # 50+ Functional Capabilities
+│   ├── cli/            # TUI and CLI Interfaces
+│   └── agents/         # Specialist Personas
 ├── data/
-│   ├── memory_store/   # FAISS Index
-│   ├── backups/        # Stable system snapshots
-│   └── logs/           # Unified audit and application traces
-└── docs/               # Sovereignty: Master Documentation
+│   ├── recovery_cache/ # Persistent Golden Snapshots
+│   ├── scan_cache.json # Incremental Knowledge Graph cache
+│   └── logs/           # Unified audit traces
+└── docs/               # Technical Documentation
 ```
 
 ---
-*Last Verified: 2026-03-15 (Phase S - Absolute Restructuring Edition)*
+*Last Verified: 2026-03-18 (Phase S.2 - Absolute Integrity Edition)*

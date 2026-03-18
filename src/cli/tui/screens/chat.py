@@ -99,10 +99,11 @@ class ChatScreen(Static):
         self.app.notify("Reverse-search history coming soon", severity="information")
 
     def compose(self) -> ComposeResult:
+        from settings import settings as config
         with Vertical(id="chat-container"):
             yield Vertical(id="message-list")
             with Horizontal(id="input-area"):
-                yield Label("🧠 You: ", id="prompt-label")
+                yield Label(f"👤 {config.MASTER_NAME}: ", id="prompt-label")
                 yield Input(
                     placeholder="Type your message here...", 
                     id="chat-input",
@@ -266,9 +267,10 @@ class ChatScreen(Static):
             
         content = str(content) # Ensure it's a string
         
+        from settings import settings as config
         message_list = self.query_one("#message-list")
         if role == "user":
-            message_list.mount(Label(f"🧠 You: {content}", classes="user-message"))
+            message_list.mount(Label(f"👤 {config.MASTER_NAME}: {content}", classes="user-message"))
         else:
             # Check for diffs in the content
             if "```diff" in content:

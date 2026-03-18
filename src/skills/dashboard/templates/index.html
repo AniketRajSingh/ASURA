@@ -149,7 +149,7 @@
                     <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">System Active</span>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Operator:</span>
+                    <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Master:</span>
                     <span class="text-xs font-bold text-black">{{ master_name }}</span>
                 </div>
             </div>
@@ -318,14 +318,14 @@
             // User Message
             msgs.innerHTML += `
                 <div class="chat-message user animate-slide-in">
-                    <div class="message-meta">Operator</div>
+                    <div class="message-meta">{{ master_name }}</div>
                     <div class="message-bubble">${safeMsg}</div>
                 </div>
             `;
             
             // Loading State
             msgs.innerHTML += `
-                <div id="${turnId}" class="chat-message system animate-slide-in">
+                <div id="${turnId}" class="chat-message asura animate-slide-in">
                     <div class="message-meta">ASURA</div>
                     <div class="message-bubble loading">
                         <span>Processing</span>
@@ -641,7 +641,7 @@
                         </header>
                         <div class="group-content">
                             <div class="input-container">
-                                <label>Operator Name</label>
+                                <label>Master Name</label>
                                 <input type="text" class="input-field" id="set-MASTER_NAME" value="${data.MASTER_NAME || ''}">
                             </div>
                             <div class="input-container">

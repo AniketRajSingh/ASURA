@@ -21,10 +21,26 @@ KNOWN_LIBS = {
 class KnowledgeScanner:
     """
     God-Mode ASURA Knowledge Scanner.
-    Provides 100% accurate architectural mapping.
+    Optimized with AST caching for near-instant awareness.
     """
     def __init__(self, root_dir: str = None):
         self.root_dir = root_dir or config.SRC_DIR
+        self.cache_path = os.path.join(config.DATA_DIR, "scan_cache.json")
+        self.cache = self._load_cache()
+
+    def _load_cache(self) -> dict:
+        if os.path.exists(self.cache_path):
+            try:
+                with open(self.cache_path, 'r') as f:
+                    return json.load(f)
+            except: return {}
+        return {}
+
+    def _save_cache(self):
+        try:
+            with open(self.cache_path, 'w') as f:
+                json.dump(self.cache, f, indent=2)
+        except: pass
 
     async def scan_all(self):
         """Perform a full system scan and health probe."""
@@ -47,6 +63,7 @@ class KnowledgeScanner:
         await self.run_health_probes()
         
         knowledge_graph.save()
+        self._save_cache()
         log_app("KG: Architectural alignment complete. System is fully self-aware.")
 
     def _init_hierarchy(self):
@@ -86,7 +103,22 @@ class KnowledgeScanner:
         return name.replace('_', ' ').title()
 
     def _scan_directory(self, directory: str):
-        for root, _, files in os.walk(directory):
+        """Walk directory with mtime-aware skipping for optimized speed."""
+        try:
+            # Check directory itself first
+            dir_mtime = os.path.getmtime(directory)
+            dir_cache_key = f"dir:{directory}"
+            cached_dir = self.cache.get(dir_cache_key)
+            
+            # If directory mtime is unchanged, we still need to process its files
+            # but we can trust the cache for the deeper AST parts.
+            # (Note: on most OS, dir mtime changes if files are added/removed)
+        except: pass
+
+        for root, dirs, files in os.walk(directory):
+            # Optimization: Filter out ignored directories immediately
+            dirs[:] = [d for d in dirs if not d.startswith((".", "__"))]
+            
             for file in files:
                 if file.endswith((".py", ".md")):
                     file_path = os.path.join(root, file)
@@ -110,8 +142,6 @@ class KnowledgeScanner:
                             skill_name = parts[0]
                             knowledge_graph.add_edge(f"skill:{skill_name}", rel_path, "implemented_by" if node_type == "file" else "documented_by")
                         else:
-                            # Standalone file in src/skills/ (like skill_registry.py)
-                            # Link it directly to the Skill Category
                             knowledge_graph.add_edge("sys_skills", rel_path, "contains")
 
                     if node_type == "file":
@@ -119,23 +149,50 @@ class KnowledgeScanner:
 
     def _parse_file_ast(self, file_path: str, node_id: str, category: str):
         try:
+            mtime = os.path.getmtime(file_path)
+            cached = self.cache.get(node_id)
+            
+            if cached and cached.get("mtime") == mtime:
+                # Use cached findings
+                for imp in cached.get("imports", []):
+                    self._add_resolved_edge(node_id, imp)
+                for func in cached.get("functions", []):
+                    func_id = f"{node_id}:{func}"
+                    knowledge_graph.add_node(func_id, "function", {"label": self._format_label(func), "parent_id": node_id})
+                    knowledge_graph.add_edge(node_id, func_id, "contains")
+                return
+
+            # Parse needed
             with open(file_path, "r", encoding="utf-8") as f:
                 tree = ast.parse(f.read())
 
+            imports = []
+            functions = []
+            
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
+                        imports.append(alias.name)
                         self._add_resolved_edge(node_id, alias.name)
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
+                        imports.append(node.module)
                         self._add_resolved_edge(node_id, node.module)
                 
                 # Definitions
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     if node.name.startswith("_"): continue
+                    functions.append(node.name)
                     func_id = f"{node_id}:{node.name}"
                     knowledge_graph.add_node(func_id, "function", {"label": self._format_label(node.name), "parent_id": node_id})
                     knowledge_graph.add_edge(node_id, func_id, "contains")
+            
+            # Update cache
+            self.cache[node_id] = {
+                "mtime": mtime,
+                "imports": list(set(imports)),
+                "functions": list(set(functions))
+            }
         except Exception: pass
 
     def _add_resolved_edge(self, source_id: str, target: str):
@@ -156,7 +213,8 @@ class KnowledgeScanner:
         
         if resolved_path:
             # Check if it's a package or a file
-            if not os.path.exists(os.path.join(config.BASE_DIR, resolved_path)):
+            full_p = os.path.join(config.BASE_DIR, resolved_path)
+            if not os.path.exists(full_p):
                 pkg_path = resolved_path.replace(".py", "/__init__.py")
                 if os.path.exists(os.path.join(config.BASE_DIR, pkg_path)):
                     resolved_path = pkg_path

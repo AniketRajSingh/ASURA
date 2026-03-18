@@ -1,0 +1,3092 @@
+{
+  "src/config.py": {
+    "mtime": 1773792548.0627315,
+    "imports": [
+      "settings",
+      "os"
+    ],
+    "functions": []
+  },
+  "src/__init__.py": {
+    "mtime": 1773504235.7436602,
+    "imports": [],
+    "functions": []
+  },
+  "src/settings.py": {
+    "mtime": 1773806487.600275,
+    "imports": [
+      "dotenv",
+      "pydantic_settings",
+      "pydantic",
+      "typing",
+      "os",
+      "__future__"
+    ],
+    "functions": [
+      "validate_bot_token",
+      "validate_provider",
+      "OLLAMA_MODELS",
+      "validate_ollama_url"
+    ]
+  },
+  "src/main.py": {
+    "mtime": 1773803081.6718893,
+    "imports": [
+      "socket",
+      "skills.health_alerter",
+      "core.startup_checks",
+      "skills.git_manager",
+      "os",
+      "core.observer",
+      "asyncio",
+      "skills.graceful_mode.offline",
+      "traceback",
+      "settings",
+      "core.doc_updater",
+      "argparse",
+      "skills.api_server",
+      "core.proactive",
+      "skills.dashboard",
+      "skills.logger",
+      "core.sovereignty",
+      "sys",
+      "cli.main_entry",
+      "skills.memory",
+      "skills.skill_registry",
+      "core.task_queue",
+      "skills.scheduler",
+      "platform",
+      "core.federation",
+      "core.curiosity",
+      "core.self_updater",
+      "skills.telegram_bot.bot",
+      "core.resource_governor",
+      "core.self_healing",
+      "skills.feature_tracker",
+      "requests",
+      "core.knowledge_scanner"
+    ],
+    "functions": [
+      "graceful_mode_daemon",
+      "print_live_channels",
+      "init_system",
+      "startup_banner",
+      "get_bot_username",
+      "start_parallel_services",
+      "async_main",
+      "parse_args",
+      "run_cli_entry"
+    ]
+  },
+  "src/core/observer.py": {
+    "mtime": 1773525148.9007068,
+    "imports": [
+      "asyncio",
+      "core.self_healing",
+      "threading",
+      "watchdog.events",
+      "time",
+      "watchdog.observers",
+      "config",
+      "os",
+      "core.knowledge_scanner",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "start",
+      "on_modified"
+    ]
+  },
+  "src/core/auth.py": {
+    "mtime": 1773526815.9723082,
+    "imports": [
+      "jwt",
+      "core.state_manager",
+      "secrets",
+      "typing",
+      "settings",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "validate_api_key",
+      "verify_token",
+      "generate_api_key",
+      "create_access_token"
+    ]
+  },
+  "src/core/state_manager.py": {
+    "mtime": 1773526848.336091,
+    "imports": [
+      "logging",
+      "os",
+      "typing",
+      "settings",
+      "config",
+      "json"
+    ],
+    "functions": [
+      "get_section",
+      "get_state_manager",
+      "update_env",
+      "save",
+      "update_section",
+      "load"
+    ]
+  },
+  "src/core/hooks.py": {
+    "mtime": 1773526815.9900403,
+    "imports": [
+      "shutil",
+      "os",
+      "settings",
+      "sys",
+      "json",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "run_pre_hooks",
+      "register_hook",
+      "run_post_hooks",
+      "execute_external_hooks"
+    ]
+  },
+  "src/core/gateway.py": {
+    "mtime": 1773545361.021282,
+    "imports": [
+      "core.reasoning",
+      "threading",
+      "core.declarative_agent_loader",
+      "config",
+      "os",
+      "datetime",
+      "skills.swarm_review",
+      "asyncio",
+      "pathlib",
+      "skills.ai_content.generator",
+      "skills.git_manager.git",
+      "core.observability",
+      "skills.logger",
+      "core.workflow_engine",
+      "re",
+      "skills.skill_registry",
+      "core.self_updater",
+      "skills.telegram_bot.bot",
+      "skills.shell_executor.executor",
+      "core.context_manager",
+      "core.memory_manager",
+      "skills.calendar_manager.calendar",
+      "time",
+      "typing",
+      "json",
+      "subprocess"
+    ],
+    "functions": [
+      "to_dict",
+      "handle_command",
+      "list_all_session_files",
+      "from_dict",
+      "list_sessions",
+      "get_or_create_session",
+      "save",
+      "handle_message",
+      "get_session_count",
+      "load"
+    ]
+  },
+  "src/core/formatter.py": {
+    "mtime": 1773795944.7764003,
+    "imports": [
+      "re",
+      "rich.markdown"
+    ],
+    "functions": [
+      "markdown_to_ascii_table",
+      "wrap_table",
+      "format_message"
+    ]
+  },
+  "src/core/context_manager.py": {
+    "mtime": 1773526815.9752872,
+    "imports": [
+      "settings",
+      "skills.logger",
+      "asyncio",
+      "core.llm"
+    ],
+    "functions": [
+      "estimate_tokens",
+      "compact_history"
+    ]
+  },
+  "src/core/task_queue.py": {
+    "mtime": 1773525995.4667597,
+    "imports": [
+      "core.sovereignty",
+      "core.resource_governor",
+      "threading",
+      "time",
+      "queue",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "submit",
+      "get_status",
+      "add_sub_tasks",
+      "is_empty",
+      "start",
+      "get_task_queue"
+    ]
+  },
+  "src/core/memory_manager.py": {
+    "mtime": 1773794314.7823567,
+    "imports": [
+      "skills.memory.store",
+      "asyncio",
+      "fcntl",
+      "core.knowledge_graph",
+      "os",
+      "typing",
+      "settings",
+      "core.llm",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "recall",
+      "recall_observations",
+      "remember_fact",
+      "initialize"
+    ]
+  },
+  "src/core/anesthesia.py": {
+    "mtime": 1773526815.9693842,
+    "imports": [
+      "time",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "is_under_anesthesia",
+      "wait_for_consciousness"
+    ]
+  },
+  "src/core/habits.py": {
+    "mtime": 1773526815.983642,
+    "imports": [
+      "time",
+      "core.startup_checks",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "scout_for_knowledge",
+      "verify_self_integrity",
+      "perform_reflection"
+    ]
+  },
+  "src/core/declarative_agent_loader.py": {
+    "mtime": 1773811867.347931,
+    "imports": [
+      "os",
+      "core.model_manager",
+      "core.llm",
+      "core.federation",
+      "settings",
+      "re",
+      "json",
+      "yaml",
+      "asyncio",
+      "typing",
+      "pathlib",
+      "skills.logger"
+    ],
+    "functions": [
+      "load_all",
+      "get_all_agents_info",
+      "get_agent_loader",
+      "get_description",
+      "find_agent_for_query_async",
+      "init_declarative_agents",
+      "get_agent",
+      "should_trigger"
+    ]
+  },
+  "src/core/resource_governor.py": {
+    "mtime": 1773526816.0173745,
+    "imports": [
+      "psutil",
+      "functools",
+      "threading",
+      "time",
+      "json",
+      "settings",
+      "requests",
+      "signal",
+      "tempfile",
+      "sys",
+      "os",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "remediate_stress",
+      "get_governor",
+      "format_status_minimal",
+      "is_exhausted",
+      "can_proceed",
+      "is_under_stress",
+      "acquire_llm",
+      "record_usage",
+      "apply_backoff",
+      "format_status",
+      "governed_llm_call",
+      "check_health",
+      "release_llm",
+      "wrapper",
+      "reset_backoff"
+    ]
+  },
+  "src/core/ast_surgeon.py": {
+    "mtime": 1772737992.1524985,
+    "imports": [
+      "py_compile",
+      "ast",
+      "typing",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "verify_suture",
+      "suture_code",
+      "surgical_replace",
+      "get_symbol_range"
+    ]
+  },
+  "src/core/workflow_engine.py": {
+    "mtime": 1773526816.039559,
+    "imports": [
+      "core.tool_protocol",
+      "yaml",
+      "os",
+      "typing",
+      "time",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "run_workflow",
+      "list_workflows"
+    ]
+  },
+  "src/core/handoff.py": {
+    "mtime": 1773581263.7476997,
+    "imports": [
+      "re",
+      "os",
+      "typing",
+      "skills.ai_content.generator",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "perform_handoff",
+      "detect_handoff_need",
+      "create_handoff"
+    ]
+  },
+  "src/core/tool_protocol.py": {
+    "mtime": 1773545656.704654,
+    "imports": [
+      "core.permissions",
+      "skills.sub_agent_manager.manager",
+      "core.state_manager",
+      "core.knowledge_graph",
+      "core.surgeon",
+      "httpx",
+      "os",
+      "asyncio",
+      "skills.web_intelligence",
+      "skills.visual.vision",
+      "core.vcs",
+      "traceback",
+      "pathlib",
+      "core.hooks",
+      "settings",
+      "core.observability",
+      "skills.browser.automation",
+      "skills.logger",
+      "sys",
+      "core.utils",
+      "skills.codebase_investigator.investigator",
+      "py_compile",
+      "core.workflow_engine",
+      "core.utils.retry",
+      "core.interceptors",
+      "skills.skill_registry",
+      "core.anesthesia",
+      "core.auth",
+      "skills.hardware_monitor.monitor",
+      "skills.shell_executor.executor",
+      "core.memory_manager",
+      "skills.memory.procedural",
+      "core.job_manager",
+      "ast",
+      "typing",
+      "requests",
+      "json",
+      "subprocess",
+      "core.knowledge_scanner"
+    ],
+    "functions": [
+      "get_tool_count",
+      "register_tool",
+      "dispatch",
+      "list_tools",
+      "get_tools_schema"
+    ]
+  },
+  "src/core/knowledge_graph.py": {
+    "mtime": 1773545549.1763904,
+    "imports": [
+      "asyncio",
+      "os",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "query_nodes",
+      "clear",
+      "add_node",
+      "update_health",
+      "add_edge",
+      "save",
+      "get_neighbors",
+      "load"
+    ]
+  },
+  "src/core/proactive.py": {
+    "mtime": 1773526816.010398,
+    "imports": [
+      "asyncio",
+      "skills.conversation.history",
+      "threading",
+      "skills.todo_manager",
+      "time",
+      "settings",
+      "core.anesthesia",
+      "skills.hardware_monitor",
+      "core.llm",
+      "datetime",
+      "random",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "start",
+      "mark_interaction"
+    ]
+  },
+  "src/core/interceptors.py": {
+    "mtime": 1772904130.7014894,
+    "imports": [
+      "typing",
+      "dataclasses",
+      "re"
+    ],
+    "functions": [
+      "requires_confirmation",
+      "intercept",
+      "check",
+      "add_custom_rule",
+      "check_path",
+      "check_tool_call",
+      "check_content",
+      "get_interceptor",
+      "check_command",
+      "add_dangerous_command_rule"
+    ]
+  },
+  "src/core/rbac.py": {
+    "mtime": 1773526816.0127084,
+    "imports": [
+      "core.state_manager",
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "list_users",
+      "is_owner",
+      "get_role",
+      "remove_user",
+      "has_permission",
+      "register_owner",
+      "add_user",
+      "format_users",
+      "get_owner_id"
+    ]
+  },
+  "src/core/__init__.py": {
+    "mtime": 1772737992.154406,
+    "imports": [],
+    "functions": []
+  },
+  "src/core/llm.py": {
+    "mtime": 1773793959.8152378,
+    "imports": [
+      "core.resource_governor",
+      "asyncio",
+      "core.utils.retry",
+      "settings",
+      "httpx",
+      "core.model_manager",
+      "json",
+      "skills.logger"
+    ],
+    "functions": [
+      "list_models",
+      "call_llm"
+    ]
+  },
+  "src/core/observability.py": {
+    "mtime": 1772737992.1550417,
+    "imports": [
+      "threading",
+      "time",
+      "typing",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_recent_traces",
+      "get_session_stats",
+      "format_stats",
+      "record_metric"
+    ]
+  },
+  "src/core/rule_engine.py": {
+    "mtime": 1773526816.0196643,
+    "imports": [
+      "threading",
+      "yaml",
+      "time",
+      "json",
+      "typing",
+      "settings",
+      "os",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_rules_summary",
+      "evaluate_metric_rules",
+      "evaluate_event_rules",
+      "load_rules"
+    ]
+  },
+  "src/core/model_manager.py": {
+    "mtime": 1773807090.765567,
+    "imports": [
+      "os",
+      "__future__",
+      "skills.logger",
+      "json",
+      "dataclasses",
+      "core.llm",
+      "settings",
+      "typing"
+    ],
+    "functions": [
+      "format_registry_summary",
+      "get_sglang_url",
+      "route_by_complexity",
+      "get_ollama_url",
+      "can_see_video",
+      "get_llm_url",
+      "reload_registry",
+      "get_embed_url",
+      "get_max_output_tokens",
+      "get_capabilities",
+      "list_models",
+      "get_context_window",
+      "supports_thinking",
+      "can_handle_images",
+      "get_model_info",
+      "supports_tool_calling",
+      "is_multimodal",
+      "get_model_for_task",
+      "can_web_search",
+      "get_embed_model",
+      "can_see_images",
+      "get_active_model"
+    ]
+  },
+  "src/core/job_manager.py": {
+    "mtime": 1773526815.9928286,
+    "imports": [
+      "threading",
+      "time",
+      "json",
+      "typing",
+      "settings",
+      "uuid",
+      "os",
+      "datetime",
+      "subprocess",
+      "skills.shell_executor.executor",
+      "skills.logger"
+    ],
+    "functions": [
+      "spawn_job",
+      "to_dict",
+      "kill_job",
+      "get_job",
+      "list_jobs"
+    ]
+  },
+  "src/core/knowledge_scanner.py": {
+    "mtime": 1773803304.65574,
+    "imports": [
+      "skills.logger",
+      "ast",
+      "os",
+      "typing",
+      "core.knowledge_graph",
+      "core.declarative_agent_loader",
+      "settings",
+      "json",
+      "sys"
+    ],
+    "functions": [
+      "run_health_probes",
+      "scan_all"
+    ]
+  },
+  "src/core/startup_checks.py": {
+    "mtime": 1773810769.9298606,
+    "imports": [
+      "importlib",
+      "settings",
+      "skills.logger",
+      "os",
+      "sys",
+      "core.tool_protocol",
+      "json"
+    ],
+    "functions": [
+      "verify_dispatcher_tools",
+      "run_startup_checks",
+      "verify_all_skills"
+    ]
+  },
+  "src/core/sovereignty.py": {
+    "mtime": 1773731738.1389093,
+    "imports": [
+      "shutil",
+      "skills.logger",
+      "ctypes",
+      "threading",
+      "time",
+      "settings",
+      "platform",
+      "pyautogui",
+      "os",
+      "subprocess",
+      "sys"
+    ],
+    "functions": [
+      "stay_awake",
+      "hibernate",
+      "purge_memory",
+      "release_lock",
+      "get_authority"
+    ]
+  },
+  "src/core/mcp.py": {
+    "mtime": 1772737992.1576192,
+    "imports": [
+      "skills.logger",
+      "core.tool_protocol",
+      "threading",
+      "os",
+      "time",
+      "typing",
+      "uuid",
+      "json",
+      "subprocess",
+      "sys"
+    ],
+    "functions": [
+      "stop",
+      "read_resource",
+      "make_handler",
+      "list_servers",
+      "serve",
+      "connect_server",
+      "list_resources",
+      "handler",
+      "start",
+      "call_tool",
+      "list_tools",
+      "disconnect_server"
+    ]
+  },
+  "src/core/surgeon.py": {
+    "mtime": 1773526816.0296125,
+    "imports": [
+      "shutil",
+      "skills.logger",
+      "traceback",
+      "time",
+      "typing",
+      "settings",
+      "core.ast_surgeon",
+      "os",
+      "subprocess",
+      "sys"
+    ],
+    "functions": [
+      "internal_commit",
+      "simulate_execution",
+      "perform_surgery",
+      "add_target"
+    ]
+  },
+  "src/core/vcs.py": {
+    "mtime": 1773526816.0374465,
+    "imports": [
+      "difflib",
+      "os",
+      "time",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "list_history",
+      "get_patch",
+      "get_vcs",
+      "rollback",
+      "commit"
+    ]
+  },
+  "src/core/permissions.py": {
+    "mtime": 1773526816.0082457,
+    "imports": [
+      "re",
+      "fnmatch",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "check_permission",
+      "get_rules_summary",
+      "add_rule"
+    ]
+  },
+  "src/core/reasoning.py": {
+    "mtime": 1773811140.2431653,
+    "imports": [
+      "core.llm",
+      "core.utils",
+      "core.tool_protocol",
+      "settings",
+      "core.declarative_agent_loader",
+      "json",
+      "skills.logger"
+    ],
+    "functions": [
+      "reflect",
+      "plan_task",
+      "think",
+      "recursive_think"
+    ]
+  },
+  "src/core/sub_agent_memory.py": {
+    "mtime": 1773526816.0273938,
+    "imports": [
+      "os",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "delete_vault",
+      "add_fact",
+      "add_history",
+      "initialize_vault",
+      "list_vaults",
+      "get_vault"
+    ]
+  },
+  "src/core/self_updater.py": {
+    "mtime": 1773582553.9191601,
+    "imports": [
+      "threading",
+      "skills.backup_manager",
+      "skills.todo_manager",
+      "core.startup_checks",
+      "skills.file_organizer.code_nav_skill",
+      "core.surgeon",
+      "core.llm",
+      "skills.web_intelligence.intelligence",
+      "core.model_manager",
+      "os",
+      "datetime",
+      "skills.dashboard.progress_socket",
+      "asyncio",
+      "core.vcs",
+      "traceback",
+      "settings",
+      "concurrent.futures",
+      "skills.logger",
+      "sys",
+      "shutil",
+      "py_compile",
+      "re",
+      "skills.memory",
+      "skills.skill_registry",
+      "json",
+      "core.anesthesia",
+      "core.resource_governor",
+      "time",
+      "requests",
+      "skills.hardware_monitor",
+      "core.ast_surgeon",
+      "ast",
+      "subprocess",
+      "skills.auto_tester.tester"
+    ],
+    "functions": [
+      "stop",
+      "verify_logic",
+      "run_parallel",
+      "apply",
+      "rollback",
+      "run_async",
+      "test",
+      "validate",
+      "ideate",
+      "start",
+      "evolve",
+      "health_check",
+      "generate",
+      "analyze",
+      "self_audit"
+    ]
+  },
+  "src/core/self_healing.py": {
+    "mtime": 1773796666.5794287,
+    "imports": [
+      "psutil",
+      "html",
+      "core.resource_governor",
+      "core.handoff",
+      "shutil",
+      "re",
+      "asyncio",
+      "traceback",
+      "threading",
+      "time",
+      "settings",
+      "core.anesthesia",
+      "core.llm",
+      "os",
+      "core.self_updater",
+      "skills.logger"
+    ],
+    "functions": [
+      "pre_start_check",
+      "stop",
+      "start"
+    ]
+  },
+  "src/core/curiosity.py": {
+    "mtime": 1773529743.6353285,
+    "imports": [
+      "skills.graceful_mode",
+      "threading",
+      "core.llm",
+      "skills.web_intelligence.intelligence",
+      "core.tool_protocol",
+      "asyncio",
+      "skills.telegram_comm",
+      "skills.conversation.history",
+      "settings",
+      "skills.logger",
+      "re",
+      "skills.skill_registry",
+      "core.task_queue",
+      "core.anesthesia",
+      "core.self_updater",
+      "core.resource_governor",
+      "skills.feature_tracker",
+      "time",
+      "json"
+    ],
+    "functions": [
+      "stop",
+      "start"
+    ]
+  },
+  "src/core/federation.py": {
+    "mtime": 1773803188.8363893,
+    "imports": [
+      "asyncio",
+      "core.task_queue",
+      "threading",
+      "os",
+      "typing",
+      "time",
+      "settings",
+      "skills.git_manager",
+      "httpx",
+      "json",
+      "random",
+      "skills.logger"
+    ],
+    "functions": [
+      "should_start_bot",
+      "ping_peers",
+      "sync_code",
+      "broadcast_intent",
+      "push_evolution",
+      "start_sync_daemon",
+      "broadcast_memory"
+    ]
+  },
+  "src/core/doc_updater.py": {
+    "mtime": 1773530493.4268715,
+    "imports": [
+      "re",
+      "skills.skill_registry",
+      "threading",
+      "time",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "start",
+      "update_all"
+    ]
+  },
+  "src/core/self_recovery.py": {
+    "mtime": 1773797246.3846638,
+    "imports": [
+      "shutil",
+      "zipfile",
+      "time",
+      "typing",
+      "settings",
+      "os",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "find_golden_snapshot",
+      "launch_ghost_repair",
+      "trigger_deep_recovery",
+      "prepare_ghost_environment"
+    ]
+  },
+  "src/core/utils/update_behavior.py": {
+    "mtime": 1773526915.3759518,
+    "imports": [
+      "settings",
+      "os",
+      "skills.memory",
+      "sys"
+    ],
+    "functions": [
+      "extend_behavior"
+    ]
+  },
+  "src/core/utils/__init__.py": {
+    "mtime": 1773786578.5408957,
+    "imports": [
+      "retry",
+      "time_parser",
+      "common"
+    ],
+    "functions": []
+  },
+  "src/core/utils/time_parser.py": {
+    "mtime": 1773526841.3073854,
+    "imports": [
+      "re",
+      "logging",
+      "settings",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "parse_duration",
+      "parse_duration_to_timedelta"
+    ]
+  },
+  "src/core/utils/retry.py": {
+    "mtime": 1773526816.0353265,
+    "imports": [
+      "asyncio",
+      "functools",
+      "traceback",
+      "time",
+      "typing",
+      "settings",
+      "skills.logger"
+    ],
+    "functions": [
+      "async_retry",
+      "retry",
+      "wrapper",
+      "decorator"
+    ]
+  },
+  "src/core/utils/common.py": {
+    "mtime": 1773529453.7952154,
+    "imports": [
+      "re",
+      "logging",
+      "os",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "generate_filename",
+      "log_app",
+      "find_project_root",
+      "extract_json",
+      "sanitize_filename",
+      "log_audit",
+      "get_current_timestamp",
+      "is_safe_path",
+      "generate_backup_filename",
+      "format_timestamp"
+    ]
+  },
+  "src/core/utils/visual_tables.py": {
+    "mtime": 1773545105.6579454,
+    "imports": [
+      "settings",
+      "os",
+      "skills.logger",
+      "html2image"
+    ],
+    "functions": [
+      "render_table_to_image"
+    ]
+  },
+  "src/core/utils/teach_asura.py": {
+    "mtime": 1773526915.375107,
+    "imports": [
+      "settings",
+      "os",
+      "skills.memory",
+      "sys"
+    ],
+    "functions": [
+      "teach_tf"
+    ]
+  },
+  "src/cli/bootstrap.py": {
+    "mtime": 1773189725.182573,
+    "imports": [
+      "pathlib",
+      "platform",
+      "os",
+      "subprocess",
+      "sys"
+    ],
+    "functions": [
+      "get_clean_env",
+      "install_deps",
+      "is_venv_ready",
+      "setup_venv"
+    ]
+  },
+  "src/cli/agent_selector.py": {
+    "mtime": 1772949164.5286756,
+    "imports": [
+      "json",
+      "os"
+    ],
+    "functions": [
+      "agent_for_task",
+      "format_selection_text",
+      "select_agent",
+      "get_agent_selector",
+      "get_agent_info",
+      "get_available_agents",
+      "print_agent_options"
+    ]
+  },
+  "src/cli/__init__.py": {
+    "mtime": 1773192701.8957038,
+    "imports": [
+      "main_entry"
+    ],
+    "functions": []
+  },
+  "src/cli/routing_simulator.py": {
+    "mtime": 1772919285.9775364,
+    "imports": [
+      "re",
+      "dataclasses",
+      "pathlib",
+      "yaml",
+      "typing",
+      "capability_manager"
+    ],
+    "functions": [
+      "load_agents",
+      "get_best_match",
+      "simulate_routing",
+      "get_routing_simulator",
+      "format_score",
+      "suggest_agent_for_query"
+    ]
+  },
+  "src/cli/main_entry.py": {
+    "mtime": 1773650482.0082507,
+    "imports": [
+      "rich.prompt",
+      "rich.live",
+      "rich.markup",
+      "rich.text",
+      "rich.console",
+      "os",
+      "asyncio",
+      "pathlib",
+      "core.gateway",
+      "settings",
+      "argparse",
+      "rich.panel",
+      "core.formatter",
+      "skills.logger",
+      "sys",
+      "re",
+      "cli.tui.app",
+      "cli.agent_selector",
+      "rich.table",
+      "rich.status",
+      "time",
+      "rich.markdown"
+    ],
+    "functions": [
+      "print_asura_banner",
+      "run_standalone_task",
+      "run_interactive_cli"
+    ]
+  },
+  "src/cli/capability_manager.py": {
+    "mtime": 1772919059.258289,
+    "imports": [
+      "typing",
+      "re",
+      "pathlib"
+    ],
+    "functions": [
+      "get_capability_manager",
+      "get_all_capabilities",
+      "find_agents_by_capability",
+      "scan_and_register_agents",
+      "get_agent_capabilities",
+      "register_agent_capabilities",
+      "find_agents_by_keywords",
+      "suggest_capabilities_for_query"
+    ]
+  },
+  "src/cli/tui/__init__.py": {
+    "mtime": 1773373950.2374313,
+    "imports": [],
+    "functions": []
+  },
+  "src/cli/tui/app.py": {
+    "mtime": 1773650490.0501335,
+    "imports": [
+      "cli.tui.screens.system",
+      "textual.theme",
+      "skills.ai_content.generator",
+      "textual.app",
+      "textual.containers",
+      "cli.tui.screens.chat",
+      "textual.widgets",
+      "__future__"
+    ],
+    "functions": [
+      "update_metrics",
+      "compose",
+      "action_cycle_theme",
+      "action_switch_tab",
+      "action_cancel_generation"
+    ]
+  },
+  "src/cli/tui/screens/system.py": {
+    "mtime": 1773381503.1480246,
+    "imports": [
+      "psutil",
+      "asyncio",
+      "core.gateway",
+      "os",
+      "textual.app",
+      "textual.containers",
+      "textual.widgets",
+      "__future__",
+      "core.context_manager"
+    ],
+    "functions": [
+      "on_mount",
+      "compose",
+      "update_stats"
+    ]
+  },
+  "src/cli/tui/screens/__init__.py": {
+    "mtime": 1773373950.2376864,
+    "imports": [],
+    "functions": []
+  },
+  "src/cli/tui/screens/chat.py": {
+    "mtime": 1773812704.5614789,
+    "imports": [
+      "settings",
+      "json",
+      "textual.message",
+      "subprocess",
+      "asyncio",
+      "textual.widgets",
+      "rich.syntax",
+      "textual.app",
+      "re",
+      "os",
+      "textual.containers",
+      "textual.suggester",
+      "cli.tui.widgets.action_box",
+      "__future__",
+      "tempfile",
+      "core.gateway",
+      "textual",
+      "textual.binding"
+    ],
+    "functions": [
+      "add_message",
+      "action_cycle_mode",
+      "on_chat_screen_message_request",
+      "on_submit",
+      "action_open_editor",
+      "action_handle_escape",
+      "update_footer_metrics",
+      "on_mount",
+      "on_input_changed",
+      "compose",
+      "action_search_history"
+    ]
+  },
+  "src/cli/tui/widgets/action_box.py": {
+    "mtime": 1773532968.0355325,
+    "imports": [
+      "rich.text",
+      "rich.panel",
+      "textual.containers",
+      "textual.widgets",
+      "textual.app"
+    ],
+    "functions": [
+      "compose"
+    ]
+  },
+  "src/cli/tui/widgets/__init__.py": {
+    "mtime": 1773373950.2378962,
+    "imports": [],
+    "functions": []
+  },
+  "src/daemon/config.py": {
+    "mtime": 1773373104.3990653,
+    "imports": [
+      "os",
+      "pathlib"
+    ],
+    "functions": []
+  },
+  "src/daemon/monitor.py": {
+    "mtime": 1773650339.582748,
+    "imports": [
+      "dotenv",
+      "asyncio",
+      "daemon.logger",
+      "telegram.ext",
+      "pathlib",
+      "telegram",
+      "httpx",
+      "os",
+      "daemon.config",
+      "daemon.command_handler",
+      "sys"
+    ],
+    "functions": [
+      "run",
+      "start_cmd",
+      "process_msg"
+    ]
+  },
+  "src/daemon/command_handler.py": {
+    "mtime": 1773505249.3050756,
+    "imports": [
+      "logger",
+      "pathlib",
+      "time",
+      "config",
+      "os",
+      "subprocess",
+      "sys"
+    ],
+    "functions": [
+      "handle_command",
+      "execute_command",
+      "restart_asura"
+    ]
+  },
+  "src/daemon/__init__.py": {
+    "mtime": 1773373118.4207504,
+    "imports": [
+      "command_handler",
+      "monitor"
+    ],
+    "functions": []
+  },
+  "src/daemon/qwen_tts_server.py": {
+    "mtime": 1773189531.961167,
+    "imports": [
+      "qwen_tts",
+      "re",
+      "kokoro",
+      "fastapi",
+      "pydantic",
+      "numpy",
+      "uvicorn",
+      "time",
+      "json",
+      "soundfile",
+      "fastapi.responses",
+      "argparse",
+      "io",
+      "requests",
+      "tempfile",
+      "torch",
+      "faster_whisper",
+      "os"
+    ],
+    "functions": [
+      "voice_chat_stream",
+      "health_check",
+      "startup_event",
+      "generate_voice_chat_stream"
+    ]
+  },
+  "src/daemon/logger.py": {
+    "mtime": 1773373186.5430164,
+    "imports": [
+      "logging",
+      "config"
+    ],
+    "functions": [
+      "setup_logger"
+    ]
+  },
+  "src/skills/swarm_review.py": {
+    "mtime": 1773526915.3937302,
+    "imports": [
+      "asyncio",
+      "nest_asyncio",
+      "settings",
+      "core.declarative_agent_loader",
+      "core.llm",
+      "skills.logger"
+    ],
+    "functions": [
+      "review_code",
+      "review_file",
+      "run_swarm_review_sync",
+      "spawn_agent",
+      "run_swarm_review"
+    ]
+  },
+  "src/skills/__init__.py": {
+    "mtime": 1772802970.0675747,
+    "imports": [
+      "skill_registry"
+    ],
+    "functions": []
+  },
+  "src/skills/telegram_comm.py": {
+    "mtime": 1772737992.2005992,
+    "imports": [
+      "core.tool_protocol",
+      "skills.telegram_bot.bot",
+      "skills.logger"
+    ],
+    "functions": [
+      "register",
+      "send_message"
+    ]
+  },
+  "src/skills/dynamic_tools.py": {
+    "mtime": 1772738318.9057643,
+    "imports": [
+      "skills.logger",
+      "importlib.util",
+      "sys",
+      "os",
+      "core.tool_protocol"
+    ],
+    "functions": [
+      "create_transient_tool"
+    ]
+  },
+  "src/skills/skill_registry.py": {
+    "mtime": 1773650691.7579563,
+    "imports": [
+      "re",
+      "importlib",
+      "traceback",
+      "ast",
+      "settings",
+      "sys",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_tool_count",
+      "list_skills",
+      "load_skills",
+      "discover_skills",
+      "get_skill_code"
+    ]
+  },
+  "src/skills/encryption/__init__.py": {
+    "mtime": 1772737992.1654494,
+    "imports": [
+      "skills.encryption.crypto"
+    ],
+    "functions": []
+  },
+  "src/skills/encryption/crypto.py": {
+    "mtime": 1773526915.3851914,
+    "imports": [
+      "base64",
+      "cryptography.fernet",
+      "os",
+      "secrets",
+      "settings",
+      "json",
+      "skills.logger"
+    ],
+    "functions": [
+      "encrypt",
+      "decrypt",
+      "encrypt_file",
+      "decrypt_json",
+      "decrypt_file",
+      "encrypt_json"
+    ]
+  },
+  "src/skills/audio_say/audio_say.py": {
+    "mtime": 1773526915.3788586,
+    "imports": [
+      "skills.logger",
+      "gtts",
+      "typing",
+      "settings",
+      "argparse",
+      "os",
+      "__future__",
+      "sys"
+    ],
+    "functions": [
+      "log_audit",
+      "log_app",
+      "generate_audio",
+      "save"
+    ]
+  },
+  "src/skills/audio_say/__init__.py": {
+    "mtime": 1772737992.1664536,
+    "imports": [],
+    "functions": []
+  },
+  "src/skills/knowledge_graph/graph.py": {
+    "mtime": 1773526915.387714,
+    "imports": [
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "query_node",
+      "add_node",
+      "add_edge",
+      "get_graph_stats",
+      "search_nodes",
+      "build_context_from_topic"
+    ]
+  },
+  "src/skills/knowledge_graph/__init__.py": {
+    "mtime": 1772737992.1671753,
+    "imports": [
+      "skills.knowledge_graph.graph"
+    ],
+    "functions": []
+  },
+  "src/skills/smart_deps/__init__.py": {
+    "mtime": 1772737992.1675942,
+    "imports": [
+      "skills.smart_deps.upgrader"
+    ],
+    "functions": []
+  },
+  "src/skills/smart_deps/upgrader.py": {
+    "mtime": 1773526915.3929102,
+    "imports": [
+      "settings",
+      "json",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "upgrade_package",
+      "format_deps_report",
+      "check_outdated"
+    ]
+  },
+  "src/skills/logger/log.py": {
+    "mtime": 1773526915.3883514,
+    "imports": [
+      "threading",
+      "os",
+      "structlog",
+      "settings",
+      "json",
+      "datetime"
+    ],
+    "functions": [
+      "log_app",
+      "log_audit",
+      "query_logs"
+    ]
+  },
+  "src/skills/logger/__init__.py": {
+    "mtime": 1772737992.1686811,
+    "imports": [
+      "skills.logger.log"
+    ],
+    "functions": []
+  },
+  "src/skills/memory/procedural.py": {
+    "mtime": 1773526915.3890517,
+    "imports": [
+      "os",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "store_procedure",
+      "recall_procedures",
+      "count_procedures",
+      "get_procedures_summary"
+    ]
+  },
+  "src/skills/memory/store.py": {
+    "mtime": 1773526915.390224,
+    "imports": [
+      "faiss",
+      "threading",
+      "numpy",
+      "os",
+      "typing",
+      "time",
+      "settings",
+      "requests",
+      "json",
+      "datetime",
+      "hashlib",
+      "skills.logger"
+    ],
+    "functions": [
+      "store_update_log",
+      "store_memory",
+      "recall",
+      "surgery_cleanup",
+      "prune_memories",
+      "get_all_memories_summary",
+      "list_all",
+      "initialize",
+      "get_freshness_score",
+      "delete_by_metadata",
+      "get_memory_store"
+    ]
+  },
+  "src/skills/memory/self_awareness.py": {
+    "mtime": 1773526915.3897643,
+    "imports": [
+      "skills.memory.store",
+      "glob",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "index_system_docs",
+      "index_file"
+    ]
+  },
+  "src/skills/memory/__init__.py": {
+    "mtime": 1773347528.7607543,
+    "imports": [
+      "skills.memory.procedural",
+      "skills.memory.store",
+      "skills.memory.self_awareness",
+      "skills.memory.episodic"
+    ],
+    "functions": []
+  },
+  "src/skills/memory/episodic.py": {
+    "mtime": 1773526915.3886392,
+    "imports": [
+      "os",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "recall_episodes",
+      "count_episodes",
+      "recall_recent",
+      "store_episode",
+      "get_episode_summary"
+    ]
+  },
+  "src/skills/system_health/system_health.py": {
+    "mtime": 1773526915.3941019,
+    "imports": [
+      "psutil",
+      "time",
+      "settings",
+      "platform",
+      "skills.logger"
+    ],
+    "functions": [
+      "run"
+    ]
+  },
+  "src/skills/telegram_bot/handlers.py": {
+    "mtime": 1773810819.5697048,
+    "imports": [
+      "functools",
+      "core.memory_manager",
+      "skills.instagram_poster.poster",
+      "time",
+      "core.formatter",
+      "typing",
+      "html",
+      "re",
+      "skills.ai_content.generator",
+      "socket",
+      "asyncio",
+      "skills.voice.interface",
+      "skills.hardware_monitor.monitor",
+      "skills.instagram_poster.renderer",
+      "skills.telegram_bot.bot",
+      "telegram.ext",
+      "os",
+      "skills.logger",
+      "core.startup_checks",
+      "uuid",
+      "core.sovereignty",
+      "core.tool_protocol",
+      "skills.visual.vision",
+      "core.federation",
+      "telegram",
+      "settings",
+      "core.gateway"
+    ],
+    "functions": [
+      "caption_input",
+      "cancel",
+      "photo_handler",
+      "inline_query_handler",
+      "cmd_hibernate",
+      "suggest_topic_input",
+      "topic_callback",
+      "chat_handler",
+      "cmd_screenshot",
+      "checklist_callback",
+      "voice_handler",
+      "wrapper",
+      "preview_callback",
+      "send_topic_buttons",
+      "master_only",
+      "cmd_start",
+      "cmd_topics"
+    ]
+  },
+  "src/skills/telegram_bot/__init__.py": {
+    "mtime": 1773545634.0642428,
+    "imports": [
+      "bot",
+      "core.tool_protocol"
+    ],
+    "functions": [
+      "send_telegram_message",
+      "register"
+    ]
+  },
+  "src/skills/telegram_bot/bot.py": {
+    "mtime": 1773811491.95494,
+    "imports": [
+      "asyncio",
+      "datetime",
+      "os",
+      "core.federation",
+      "settings",
+      "core.memory_manager",
+      "threading",
+      "core.reasoning",
+      "sys",
+      "core.startup_checks",
+      "telegram",
+      "skills.logger",
+      "core.self_updater",
+      "telegram.ext",
+      "skills.shell_executor",
+      "skills.skill_registry",
+      "skills.telegram_bot.handlers",
+      "core.formatter",
+      "re",
+      "core.gateway",
+      "shutil",
+      "core.rbac",
+      "requests",
+      "pathlib",
+      "core.declarative_agent_loader",
+      "logging",
+      "functools",
+      "skills.hardware_monitor.monitor",
+      "skills.ai_content.generator"
+    ],
+    "functions": [
+      "requires_permission",
+      "send_file_to_master",
+      "start_bot",
+      "cmd_allow",
+      "decorator",
+      "cmd_users",
+      "send_smart_reply",
+      "cmd_skills",
+      "send_poll_to_master",
+      "cmd_run",
+      "safe_reply",
+      "cmd_think",
+      "set_proactive_engine",
+      "notify_master",
+      "owner_only",
+      "get_notify_fn",
+      "get_or_create_session",
+      "post_init",
+      "choice_callback",
+      "create_insta_bot",
+      "create_core_bot",
+      "back_to_skills_callback",
+      "send_ephemeral_message",
+      "wrapper",
+      "skill_info_callback"
+    ]
+  },
+  "src/skills/nl_commands/__init__.py": {
+    "mtime": 1772737992.1728094,
+    "imports": [
+      "skills.nl_commands.parser"
+    ],
+    "functions": []
+  },
+  "src/skills/nl_commands/parser.py": {
+    "mtime": 1772737992.1730735,
+    "imports": [
+      "re",
+      "skills.logger"
+    ],
+    "functions": [
+      "parse_intent",
+      "extract_args"
+    ]
+  },
+  "src/skills/backup_manager/__init__.py": {
+    "mtime": 1772737992.1735735,
+    "imports": [
+      "skills.backup_manager.manager"
+    ],
+    "functions": []
+  },
+  "src/skills/backup_manager/manager.py": {
+    "mtime": 1773526915.3801467,
+    "imports": [
+      "core.resource_governor",
+      "shutil",
+      "traceback",
+      "os",
+      "settings",
+      "tempfile",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "list_snapshots",
+      "restore_snapshot",
+      "create_snapshot"
+    ]
+  },
+  "src/skills/auto_tester/tester.py": {
+    "mtime": 1773526915.3796952,
+    "imports": [
+      "asyncio",
+      "skills.skill_registry",
+      "settings",
+      "requests",
+      "core.llm",
+      "tempfile",
+      "os",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "run_syntax_check",
+      "format_test_report",
+      "run_test_string",
+      "run_all_skill_imports",
+      "verify_code_intent",
+      "run_import_check",
+      "generate_test"
+    ]
+  },
+  "src/skills/auto_tester/__init__.py": {
+    "mtime": 1772737992.1747587,
+    "imports": [
+      "skills.auto_tester.tester"
+    ],
+    "functions": []
+  },
+  "src/skills/voice_chat/client.py": {
+    "mtime": 1773650440.1736214,
+    "imports": [
+      "skills.logger",
+      "settings",
+      "requests",
+      "io",
+      "wave"
+    ],
+    "functions": [
+      "synthesize",
+      "transcribe",
+      "synthesize_stream",
+      "check_health",
+      "detect_speech",
+      "voice_chat_direct_stream"
+    ]
+  },
+  "src/skills/voice_chat/__init__.py": {
+    "mtime": 1772737992.1754217,
+    "imports": [],
+    "functions": []
+  },
+  "src/skills/voice_chat/pipeline.py": {
+    "mtime": 1772981281.4327064,
+    "imports": [
+      "sounddevice",
+      "skills.logger",
+      "threading",
+      "skills.voice_chat.client",
+      "time",
+      "numpy",
+      "core.gateway",
+      "soundfile",
+      "requests",
+      "io",
+      "json",
+      "sys"
+    ],
+    "functions": [
+      "voice_chat_single",
+      "voice_chat_loop"
+    ]
+  },
+  "src/skills/instagram_poster/renderer.py": {
+    "mtime": 1773526915.387298,
+    "imports": [
+      "settings",
+      "os",
+      "skills.logger",
+      "html2image"
+    ],
+    "functions": [
+      "render_post"
+    ]
+  },
+  "src/skills/instagram_poster/__init__.py": {
+    "mtime": 1772737992.1763246,
+    "imports": [],
+    "functions": []
+  },
+  "src/skills/instagram_poster/poster.py": {
+    "mtime": 1773526915.3870907,
+    "imports": [
+      "cloudinary",
+      "cloudinary.uploader",
+      "settings",
+      "requests",
+      "skills.logger"
+    ],
+    "functions": [
+      "post_to_instagram",
+      "create_media_container",
+      "upload_image",
+      "publish_media"
+    ]
+  },
+  "src/skills/habit_tracker/__init__.py": {
+    "mtime": 1772737992.1770916,
+    "imports": [
+      "skills.habit_tracker.tracker"
+    ],
+    "functions": []
+  },
+  "src/skills/habit_tracker/tracker.py": {
+    "mtime": 1773526915.386635,
+    "imports": [
+      "collections",
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_proactive_insight",
+      "log_event",
+      "format_habits",
+      "get_patterns"
+    ]
+  },
+  "src/skills/feature_tracker/__init__.py": {
+    "mtime": 1772737992.1777902,
+    "imports": [
+      "skills.feature_tracker.tracker"
+    ],
+    "functions": []
+  },
+  "src/skills/feature_tracker/tracker.py": {
+    "mtime": 1773526915.3854923,
+    "imports": [
+      "core.resource_governor",
+      "re",
+      "os",
+      "settings",
+      "requests",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_replacement_history",
+      "register_feature",
+      "auto_register_existing_features",
+      "get_active_features",
+      "format_tracker_summary",
+      "apply_replacement",
+      "check_for_upgrades"
+    ]
+  },
+  "src/skills/graceful_mode/__init__.py": {
+    "mtime": 1772737992.179499,
+    "imports": [
+      "skills.graceful_mode.offline"
+    ],
+    "functions": []
+  },
+  "src/skills/graceful_mode/offline.py": {
+    "mtime": 1773526915.3864903,
+    "imports": [
+      "core.resource_governor",
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "process_offline_queue",
+      "cache_response",
+      "queue_for_later",
+      "get_cached",
+      "get_offline_status"
+    ]
+  },
+  "src/skills/doc_summarizer/__init__.py": {
+    "mtime": 1772737992.180285,
+    "imports": [
+      "skills.doc_summarizer.summarizer"
+    ],
+    "functions": []
+  },
+  "src/skills/doc_summarizer/summarizer.py": {
+    "mtime": 1773526915.3840516,
+    "imports": [
+      "asyncio",
+      "skills.web_intelligence",
+      "settings",
+      "PyPDF2",
+      "core.llm",
+      "os",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "summarize_file",
+      "summarize_text",
+      "summarize_url"
+    ]
+  },
+  "src/skills/scheduler/cron.py": {
+    "mtime": 1773526915.3911881,
+    "imports": [
+      "asyncio",
+      "threading",
+      "core.state_manager",
+      "os",
+      "time",
+      "settings",
+      "core.self_updater",
+      "json",
+      "datetime",
+      "skills.shell_executor",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "remove_schedule",
+      "get_due_tasks",
+      "toggle_schedule",
+      "mark_task_run",
+      "start",
+      "format_schedules_summary",
+      "add_schedule",
+      "list_schedules"
+    ]
+  },
+  "src/skills/scheduler/__init__.py": {
+    "mtime": 1772737992.1814542,
+    "imports": [
+      "skills.scheduler.cron"
+    ],
+    "functions": []
+  },
+  "src/skills/hardware_monitor/monitor.py": {
+    "mtime": 1772737992.1823425,
+    "imports": [
+      "psutil",
+      "shutil",
+      "skills.log_cleanup",
+      "skills.telegram_comm",
+      "threading",
+      "platform",
+      "os",
+      "datetime",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_system_info",
+      "check_resources_ok",
+      "get_resource_summary"
+    ]
+  },
+  "src/skills/hardware_monitor/__init__.py": {
+    "mtime": 1772737992.1825924,
+    "imports": [
+      "skills.hardware_monitor.monitor"
+    ],
+    "functions": []
+  },
+  "src/skills/disk_usage/skill.py": {
+    "mtime": 1773531635.889982,
+    "imports": [
+      "os",
+      "psutil",
+      "settings",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_usage"
+    ]
+  },
+  "src/skills/cloud_sync/sync.py": {
+    "mtime": 1773526915.3814528,
+    "imports": [
+      "shutil",
+      "settings",
+      "os",
+      "datetime",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_sync_status",
+      "sync_to_local_backup",
+      "sync_rclone"
+    ]
+  },
+  "src/skills/cloud_sync/__init__.py": {
+    "mtime": 1772737992.1837637,
+    "imports": [
+      "skills.cloud_sync.sync"
+    ],
+    "functions": []
+  },
+  "src/skills/git_manager/git.py": {
+    "mtime": 1773526915.3863437,
+    "imports": [
+      "shlex",
+      "settings",
+      "os",
+      "datetime",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "diff",
+      "format_git_summary",
+      "switch_branch",
+      "log",
+      "auto_commit",
+      "init_repo",
+      "create_branch",
+      "status"
+    ]
+  },
+  "src/skills/git_manager/__init__.py": {
+    "mtime": 1772737992.1844652,
+    "imports": [
+      "skills.git_manager.git"
+    ],
+    "functions": []
+  },
+  "src/skills/feedback/__init__.py": {
+    "mtime": 1772737992.1849356,
+    "imports": [
+      "skills.feedback.learner"
+    ],
+    "functions": []
+  },
+  "src/skills/feedback/learner.py": {
+    "mtime": 1773526915.385734,
+    "imports": [
+      "skills.memory",
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_learned_preferences",
+      "get_feedback_stats",
+      "record_feedback",
+      "auto_detect_sentiment"
+    ]
+  },
+  "src/skills/shell_executor/__init__.py": {
+    "mtime": 1772737992.185667,
+    "imports": [
+      "skills.shell_executor.interactive_skill",
+      "skills.shell_executor.executor"
+    ],
+    "functions": []
+  },
+  "src/skills/shell_executor/interactive_skill.py": {
+    "mtime": 1773526915.391955,
+    "imports": [
+      "threading",
+      "time",
+      "settings",
+      "os",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "get_errors",
+      "get_session_status",
+      "get_output",
+      "start",
+      "send_session_input",
+      "send_input",
+      "start_interactive_session"
+    ]
+  },
+  "src/skills/shell_executor/executor.py": {
+    "mtime": 1773526915.3916276,
+    "imports": [
+      "core.utils",
+      "asyncio",
+      "shlex",
+      "settings",
+      "os",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "execute",
+      "list_project_files",
+      "read_file",
+      "execute_python",
+      "write_file"
+    ]
+  },
+  "src/skills/webhook_handler/handler.py": {
+    "mtime": 1773526915.39754,
+    "imports": [
+      "asyncio",
+      "threading",
+      "os",
+      "settings",
+      "http.server",
+      "skills.telegram_bot.bot",
+      "hmac",
+      "json",
+      "datetime",
+      "hashlib",
+      "skills.logger"
+    ],
+    "functions": [
+      "run",
+      "get_webhook_log",
+      "start_webhook_server",
+      "verify_signature",
+      "log_message",
+      "create_webhook_server",
+      "process_webhook",
+      "do_POST"
+    ]
+  },
+  "src/skills/webhook_handler/__init__.py": {
+    "mtime": 1772737992.1871524,
+    "imports": [
+      "skills.webhook_handler.handler"
+    ],
+    "functions": []
+  },
+  "src/skills/dashboard/visual_audit.py": {
+    "mtime": 1772954467.4331903,
+    "imports": [],
+    "functions": []
+  },
+  "src/skills/dashboard/__init__.py": {
+    "mtime": 1772737992.1876457,
+    "imports": [
+      "skills.dashboard.app"
+    ],
+    "functions": []
+  },
+  "src/skills/dashboard/progress_socket.py": {
+    "mtime": 1772737992.1878915,
+    "imports": [
+      "time",
+      "queue",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "report_progress",
+      "subscribe",
+      "unsubscribe",
+      "get_latest_updates",
+      "broadcast"
+    ]
+  },
+  "src/skills/dashboard/app.py": {
+    "mtime": 1773734114.4582283,
+    "imports": [
+      "socket",
+      "threading",
+      "skills.todo_manager",
+      "core.state_manager",
+      "core.knowledge_graph",
+      "config",
+      "os",
+      "datetime",
+      "psutil",
+      "skills.dashboard.progress_socket",
+      "asyncio",
+      "core.vcs",
+      "traceback",
+      "core.gateway",
+      "urllib.parse",
+      "settings",
+      "skills.feature_tracker.tracker",
+      "skills.logger",
+      "sys",
+      "skills.memory.store",
+      "re",
+      "skills.skill_registry",
+      "core.auth",
+      "http.cookies",
+      "io",
+      "core.federation",
+      "core.self_updater",
+      "core.memory_manager",
+      "skills.voice_chat.pipeline",
+      "core.job_manager",
+      "ast",
+      "time",
+      "http.server",
+      "skills.hardware_monitor",
+      "skills.memory.episodic",
+      "json",
+      "subprocess"
+    ],
+    "functions": [
+      "render_template",
+      "run",
+      "include_replacer",
+      "get_all",
+      "do_GET",
+      "log_message",
+      "start_dashboard",
+      "do_OPTIONS",
+      "do_POST"
+    ]
+  },
+  "src/skills/codebase_investigator/__init__.py": {
+    "mtime": 1772737992.190992,
+    "imports": [
+      "investigator"
+    ],
+    "functions": []
+  },
+  "src/skills/codebase_investigator/investigator.py": {
+    "mtime": 1773526915.3822103,
+    "imports": [
+      "re",
+      "pathlib",
+      "ast",
+      "os",
+      "typing",
+      "settings",
+      "sys",
+      "json",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "grep",
+      "investigate",
+      "architecture_report",
+      "trace_imports",
+      "detect_issues",
+      "find_symbol"
+    ]
+  },
+  "src/skills/browser/automation.py": {
+    "mtime": 1773526915.3809848,
+    "imports": [
+      "playwright.sync_api",
+      "skills.web_intelligence",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "browse_url",
+      "fill_form",
+      "take_screenshot"
+    ]
+  },
+  "src/skills/browser/visual_nav.py": {
+    "mtime": 1773524126.2897513,
+    "imports": [
+      "asyncio",
+      "skills.logger",
+      "skills.visual.vision",
+      "time",
+      "os",
+      "skills.browser.agent",
+      "sys"
+    ],
+    "functions": [
+      "stop",
+      "test_visual_nav",
+      "start",
+      "see_and_act"
+    ]
+  },
+  "src/skills/browser/__init__.py": {
+    "mtime": 1772737992.192685,
+    "imports": [
+      "skills.browser.automation"
+    ],
+    "functions": []
+  },
+  "src/skills/browser/agent.py": {
+    "mtime": 1773526915.380589,
+    "imports": [
+      "asyncio",
+      "re",
+      "skills.visual.vision",
+      "time",
+      "json",
+      "settings",
+      "playwright.async_api",
+      "sys",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "click",
+      "run_browser_task",
+      "navigate",
+      "screenshot",
+      "start",
+      "type",
+      "get_content"
+    ]
+  },
+  "src/skills/email_manager/__init__.py": {
+    "mtime": 1772737992.1935859,
+    "imports": [
+      "skills.email_manager.mailer"
+    ],
+    "functions": []
+  },
+  "src/skills/email_manager/mailer.py": {
+    "mtime": 1773526915.3845894,
+    "imports": [
+      "skills.logger",
+      "smtplib",
+      "email",
+      "settings",
+      "email.mime.text",
+      "datetime",
+      "email.mime.multipart",
+      "imaplib"
+    ],
+    "functions": [
+      "check_inbox",
+      "format_inbox_summary",
+      "send_email"
+    ]
+  },
+  "src/skills/file_organizer/grep_skill.py": {
+    "mtime": 1773526915.3860483,
+    "imports": [
+      "re",
+      "fnmatch",
+      "settings",
+      "concurrent.futures",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "scan_file",
+      "grep_search"
+    ]
+  },
+  "src/skills/file_organizer/__init__.py": {
+    "mtime": 1772737992.1945744,
+    "imports": [
+      "code_nav_skill",
+      "grep_skill",
+      "organizer"
+    ],
+    "functions": []
+  },
+  "src/skills/file_organizer/code_nav_skill.py": {
+    "mtime": 1773526915.3859007,
+    "imports": [
+      "fnmatch",
+      "ast",
+      "settings",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_item_source",
+      "list_code_items"
+    ]
+  },
+  "src/skills/file_organizer/organizer.py": {
+    "mtime": 1773526915.3861945,
+    "imports": [
+      "settings",
+      "os",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "find_dead_imports",
+      "find_duplicates",
+      "find_large_files",
+      "get_project_stats"
+    ]
+  },
+  "src/skills/skill_hotreload/reloader.py": {
+    "mtime": 1773526915.3923373,
+    "imports": [
+      "importlib",
+      "skills.skill_registry",
+      "settings",
+      "sys",
+      "skills.logger"
+    ],
+    "functions": [
+      "reload_all_skills",
+      "reload_skill"
+    ]
+  },
+  "src/skills/skill_hotreload/__init__.py": {
+    "mtime": 1772737992.1957932,
+    "imports": [
+      "skills.skill_hotreload.reloader"
+    ],
+    "functions": []
+  },
+  "src/skills/dream_machine/dreamer.py": {
+    "mtime": 1773526915.3843,
+    "imports": [
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "update_progress",
+      "format_goals",
+      "add_goal",
+      "get_active_goals"
+    ]
+  },
+  "src/skills/dream_machine/__init__.py": {
+    "mtime": 1772737992.1964624,
+    "imports": [
+      "skills.dream_machine.dreamer"
+    ],
+    "functions": []
+  },
+  "src/skills/log_cleanup/__init__.py": {
+    "mtime": 1773526915.388085,
+    "imports": [
+      "re",
+      "pathlib",
+      "os",
+      "typing",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "run"
+    ]
+  },
+  "src/skills/voice/interface.py": {
+    "mtime": 1773541951.3586771,
+    "imports": [
+      "settings",
+      "requests",
+      "os",
+      "subprocess",
+      "skills.logger"
+    ],
+    "functions": [
+      "voice_to_voice",
+      "text_to_speech",
+      "transcribe_audio"
+    ]
+  },
+  "src/skills/voice/__init__.py": {
+    "mtime": 1772737992.1978598,
+    "imports": [
+      "skills.voice.interface"
+    ],
+    "functions": []
+  },
+  "src/skills/health_alerter/alerter.py": {
+    "mtime": 1773526915.3867977,
+    "imports": [
+      "psutil",
+      "core.resource_governor",
+      "threading",
+      "time",
+      "settings",
+      "skills.logger"
+    ],
+    "functions": [
+      "stop",
+      "start"
+    ]
+  },
+  "src/skills/health_alerter/__init__.py": {
+    "mtime": 1772737992.1985915,
+    "imports": [
+      "skills.health_alerter.alerter"
+    ],
+    "functions": []
+  },
+  "src/skills/visual/vision.py": {
+    "mtime": 1773794630.7228467,
+    "imports": [
+      "asyncio",
+      "skills.logger",
+      "pyautogui",
+      "typing",
+      "settings",
+      "platform",
+      "core.llm",
+      "core.model_manager",
+      "os",
+      "subprocess",
+      "base64"
+    ],
+    "functions": [
+      "analyze_image",
+      "take_screenshot",
+      "ocr_image",
+      "describe_screenshot",
+      "debug_ui_screenshot"
+    ]
+  },
+  "src/skills/visual/__init__.py": {
+    "mtime": 1772737992.1993484,
+    "imports": [
+      "skills.visual.vision"
+    ],
+    "functions": []
+  },
+  "src/skills/api_server/server.py": {
+    "mtime": 1773729637.4208505,
+    "imports": [
+      "fastapi.middleware.cors",
+      "threading",
+      "skills.doc_summarizer",
+      "fastapi.responses",
+      "skills.todo_manager",
+      "os",
+      "core.tool_protocol",
+      "skills.swarm_review",
+      "fastapi.security",
+      "fastapi",
+      "core.gateway",
+      "skills.ai_content.generator",
+      "settings",
+      "core.observability",
+      "skills.knowledge_graph",
+      "skills.logger",
+      "core.workflow_engine",
+      "skills.calendar_manager",
+      "skills.memory",
+      "skills.skill_registry",
+      "core.auth",
+      "core.self_updater",
+      "skills.shell_executor.executor",
+      "pydantic",
+      "skills.voice_chat.pipeline",
+      "skills.voice_chat.client",
+      "uvicorn",
+      "skills.hardware_monitor",
+      "json"
+    ],
+    "functions": [
+      "todos",
+      "run",
+      "skills",
+      "summarize",
+      "evolve",
+      "calendar",
+      "tools",
+      "chat",
+      "run_workflow",
+      "event_stream",
+      "review",
+      "voice_chat",
+      "memory_search",
+      "sessions",
+      "verify_api_key",
+      "cancel",
+      "stats",
+      "voice_health",
+      "run_command",
+      "start_api_server",
+      "health",
+      "knowledge",
+      "workflows",
+      "create_app"
+    ]
+  },
+  "src/skills/api_server/__init__.py": {
+    "mtime": 1772737992.2001393,
+    "imports": [
+      "skills.api_server.server"
+    ],
+    "functions": []
+  },
+  "src/skills/audio_generator/__init__.py": {
+    "mtime": 1772737992.2008493,
+    "imports": [
+      "audio_generator"
+    ],
+    "functions": []
+  },
+  "src/skills/audio_generator/audio_generator.py": {
+    "mtime": 1772737992.2011135,
+    "imports": [
+      "pathlib",
+      "gtts",
+      "math",
+      "os",
+      "__future__",
+      "wave"
+    ],
+    "functions": [
+      "speak_text",
+      "generate_tone",
+      "generate_audio"
+    ]
+  },
+  "src/skills/calendar_manager/__init__.py": {
+    "mtime": 1772737992.2015638,
+    "imports": [
+      "skills.calendar_manager.calendar"
+    ],
+    "functions": []
+  },
+  "src/skills/calendar_manager/calendar.py": {
+    "mtime": 1773526915.381239,
+    "imports": [
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_due_reminders",
+      "remove_event",
+      "format_calendar_summary",
+      "add_event",
+      "get_upcoming",
+      "mark_reminded"
+    ]
+  },
+  "src/skills/ai_content/__init__.py": {
+    "mtime": 1772737992.202293,
+    "imports": [
+      "image_gen"
+    ],
+    "functions": []
+  },
+  "src/skills/ai_content/image_gen.py": {
+    "mtime": 1773526915.3771684,
+    "imports": [
+      "urllib.parse",
+      "time",
+      "settings",
+      "requests",
+      "os",
+      "skills.logger"
+    ],
+    "functions": [
+      "generate_image"
+    ]
+  },
+  "src/skills/ai_content/generator.py": {
+    "mtime": 1773811892.7407506,
+    "imports": [
+      "core.model_manager",
+      "core.memory_manager",
+      "skills.skill_registry",
+      "skills.conversation.history",
+      "skills.memory.episodic",
+      "os",
+      "json",
+      "requests",
+      "re",
+      "skills.memory.procedural",
+      "httpx",
+      "core.llm",
+      "core.declarative_agent_loader",
+      "core.context_manager",
+      "skills.logger",
+      "datetime",
+      "settings",
+      "asyncio",
+      "core.tool_protocol",
+      "time",
+      "threading",
+      "concurrent.futures",
+      "core.reasoning"
+    ],
+    "functions": [
+      "generate_topics",
+      "cancel_current_task",
+      "chat",
+      "generate_caption",
+      "get_agent_task",
+      "chat_stream"
+    ]
+  },
+  "src/skills/todo_manager/__init__.py": {
+    "mtime": 1772737992.2040684,
+    "imports": [
+      "skills.todo_manager.manager"
+    ],
+    "functions": []
+  },
+  "src/skills/todo_manager/manager.py": {
+    "mtime": 1773526915.3959718,
+    "imports": [
+      "core.state_manager",
+      "os",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "format_todos_summary",
+      "get_next_todo",
+      "complete_todo",
+      "get_open_todos",
+      "add_todo"
+    ]
+  },
+  "src/skills/web_intelligence/__init__.py": {
+    "mtime": 1772737992.2047958,
+    "imports": [
+      "skills.web_intelligence.intelligence"
+    ],
+    "functions": []
+  },
+  "src/skills/web_intelligence/intelligence.py": {
+    "mtime": 1772737992.2051623,
+    "imports": [
+      "logging",
+      "bs4",
+      "duckduckgo_search",
+      "urllib.parse",
+      "typing",
+      "requests",
+      "skills.logger"
+    ],
+    "functions": [
+      "scrape_url",
+      "web_search",
+      "research_topic"
+    ]
+  },
+  "src/skills/multi_model/__init__.py": {
+    "mtime": 1772737992.2056425,
+    "imports": [
+      "skills.multi_model.manager"
+    ],
+    "functions": []
+  },
+  "src/skills/multi_model/manager.py": {
+    "mtime": 1773526915.3906918,
+    "imports": [
+      "asyncio",
+      "settings",
+      "core.llm",
+      "core.model_manager",
+      "skills.logger"
+    ],
+    "functions": [
+      "chat_completion",
+      "model_info",
+      "format_models_summary",
+      "list_available_models",
+      "generate",
+      "get_model"
+    ]
+  },
+  "src/skills/emotion/detector.py": {
+    "mtime": 1773526915.3849807,
+    "imports": [
+      "settings",
+      "datetime",
+      "re",
+      "skills.logger"
+    ],
+    "functions": [
+      "should_suggest_break",
+      "detect_emotion",
+      "get_adaptive_prefix"
+    ]
+  },
+  "src/skills/emotion/__init__.py": {
+    "mtime": 1772737992.209049,
+    "imports": [
+      "skills.emotion.detector"
+    ],
+    "functions": []
+  },
+  "src/skills/notification_router/__init__.py": {
+    "mtime": 1772737992.209585,
+    "imports": [
+      "skills.notification_router.router"
+    ],
+    "functions": []
+  },
+  "src/skills/notification_router/router.py": {
+    "mtime": 1773526915.3909123,
+    "imports": [
+      "skills.email_manager",
+      "settings",
+      "skills.telegram_bot.bot",
+      "skills.logger"
+    ],
+    "functions": [
+      "route_notification",
+      "set_route",
+      "format_routes",
+      "get_routes"
+    ]
+  },
+  "src/skills/time_tracker/__init__.py": {
+    "mtime": 1772737992.2104414,
+    "imports": [
+      "skills.time_tracker.tracker"
+    ],
+    "functions": []
+  },
+  "src/skills/time_tracker/tracker.py": {
+    "mtime": 1773526915.3956373,
+    "imports": [
+      "os",
+      "time",
+      "settings",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "start_timer",
+      "get_weekly_report",
+      "stop_timer"
+    ]
+  },
+  "src/skills/sub_agent_manager/__init__.py": {
+    "mtime": 1772894785.1738698,
+    "imports": [],
+    "functions": []
+  },
+  "src/skills/sub_agent_manager/manager.py": {
+    "mtime": 1773526915.393225,
+    "imports": [
+      "asyncio",
+      "core.tool_protocol",
+      "os",
+      "settings",
+      "core.declarative_agent_loader",
+      "core.llm",
+      "json",
+      "core.sub_agent_memory",
+      "skills.logger"
+    ],
+    "functions": [
+      "delete_agent_definition",
+      "run_subagent_task",
+      "spawn_subagent",
+      "list_subagents",
+      "inspect_subagent_memory",
+      "kill_subagent"
+    ]
+  },
+  "src/skills/conversation/__init__.py": {
+    "mtime": 1773197971.2109013,
+    "imports": [
+      "logging",
+      "skills.conversation.history",
+      "typing",
+      "__future__",
+      "skills.logger"
+    ],
+    "functions": [
+      "log_app",
+      "build_chat_messages",
+      "log_audit",
+      "get_history_stats",
+      "get_system_prompt",
+      "get_recent_context",
+      "search_history",
+      "add_message"
+    ]
+  },
+  "src/skills/conversation/history.py": {
+    "mtime": 1773526915.3827078,
+    "imports": [
+      "core.resource_governor",
+      "skills.skill_registry",
+      "os",
+      "settings",
+      "core.declarative_agent_loader",
+      "json",
+      "datetime",
+      "skills.logger"
+    ],
+    "functions": [
+      "get_recent_context",
+      "load_history",
+      "build_chat_messages",
+      "save_history",
+      "search_history",
+      "get_history_stats",
+      "get_system_prompt",
+      "add_message",
+      "get_semantic_context"
+    ]
+  }
+}

@@ -177,7 +177,7 @@ class ModelManager:
         if provider == "groq":
             return getattr(config, "GROQ_MODEL", "llama-3.3-70b-versatile")
         else:
-            return getattr(config, "OLLAMA_MODEL", "qwen3.5:35b")
+            return getattr(config, "OLLAMA_MODEL", "gpt-oss:20b")
 
     async def route_by_complexity(self, prompt: str, system_prompt: str = None) -> str:
         """
@@ -259,14 +259,14 @@ Respond with ONLY one word: fast OR heavy."""
 
         # Map task types to standardized OLLAMA config variables
         model_map = {
-            "default": getattr(config, "OLLAMA_MODEL", "qwen3.5:35b"),
-            "reasoning": getattr(config, "OLLAMA_MODEL_REASONING", "qwen3.5:35b"),
+            "default": getattr(config, "OLLAMA_MODEL", "gpt-oss:20b"),
+            "reasoning": getattr(config, "OLLAMA_MODEL_REASONING", "gpt-oss:20b"),
             "vision": getattr(config, "OLLAMA_MODEL_VISION", "qwen3.5:0.8b"),
-            "heavy_vision": getattr(config, "OLLAMA_MODEL", "qwen3.5:35b"),
+            "heavy_vision": getattr(config, "OLLAMA_MODEL", "gpt-oss:20b"),
             "caption": getattr(config, "OLLAMA_MODEL_CAPTION", "qwen3.5:0.8b"),
             "summary": getattr(config, "OLLAMA_MODEL_SUMMARY", "qwen3.5:0.8b"),
-            "code": getattr(config, "OLLAMA_MODEL_CODE", "qwen3.5:35b"),
-            "review": getattr(config, "OLLAMA_MODEL_REVIEWER", "qwen3.5:35b"),
+            "code": getattr(config, "OLLAMA_MODEL_CODE", "gpt-oss:20b"),
+            "review": getattr(config, "OLLAMA_MODEL_REVIEWER", "gpt-oss:20b"),
             "intent": getattr(config, "OLLAMA_MODEL_INTENT", "qwen3.5:0.8b"),
             "fast": getattr(config, "OLLAMA_MODEL_FAST", "qwen3.5:0.8b"),
         }
@@ -275,12 +275,12 @@ Respond with ONLY one word: fast OR heavy."""
         
         # Dynamic Vision Routing (Contextual override)
         if task_type in ("vision", "caption", "heavy_vision"):
-            # Use 35b for heavy vision tasks or if default is already 35b and multimodal
+            # Use 20b for heavy vision tasks or if default is already 20b and multimodal
             if task_type == "heavy_vision":
-                return model_map["default"] if "35b" in model_map["default"].lower() else "qwen3.5:35b"
+                return model_map["default"] if "20b" in model_map["default"].lower() else "gpt-oss:20b"
 
             main_model = model_map["default"]
-            if self.is_multimodal(main_model) and "35b" in main_model.lower():
+            if self.is_multimodal(main_model) and "20b" in main_model.lower():
                 return main_model
             # Otherwise use the designated vision/caption model
             return active_ollama

@@ -199,9 +199,24 @@ class SelfHealingDaemon:
                     # But keep the original crash site in context
                     context_files.append(rel_mod_path)
         
-        # Don't try to fix protected files
+        # Don't try to auto-code-fix protected files
         if target_file in config.PROTECTED_FILES:
-            log_audit("HEALING", f"Skipping protected file: {target_file}")
+            log_audit("HEALING", f"Protected file crash detected: {target_file}. Initiating Ghost Restore...")
+            try:
+                # ─── GHOST RESTORE ────────────
+                # Instead of code-fixing, we copy from the recovery cache
+                recovery_path = os.path.join(config.DATA_DIR, "recovery_cache", target_file)
+                if os.path.isfile(recovery_path):
+                    import shutil
+                    shutil.copy2(recovery_path, os.path.join(config.BASE_DIR, target_file))
+                    log_app(f"👻 Ghost Repair: Restored {target_file} from recovery cache.")
+                    if self._notify:
+                        self._notify(f"👻 <b>Ghost Repair Successful</b>\n\nCore file <code>{target_file}</code> was corrupted and has been restored from a stable snapshot.")
+                    return
+                else:
+                    log_audit("HEALING_FAIL", f"Recovery cache missing for {target_file}")
+            except Exception as e:
+                log_audit("HEALING_ERROR", f"Ghost Repair failed: {e}")
             return
 
         signature = f"{err_msg}|{target_file}"

@@ -215,7 +215,8 @@ Respond with a JSON object: {{"status": "VALID" | "FLAWED", "feedback": "...", "
         history.append(f"Step {i+1} Observation: {observation[:200]}...")
         history.append(f"Step {i+1} Reflection: {reflection}")
         
-        current_context += f"\n\n[Previous Results]:\n{observation}"
+        # Truncate observation to prevent context explosion
+        current_context += f"\n\n[Step {i+1} Result (Truncated)]:\n{observation[:1000]}"
 
     # --- Cleanup Evaluation (Despawner Integration) ---
     try:
@@ -237,29 +238,15 @@ Respond with a JSON object: {{"status": "VALID" | "FLAWED", "feedback": "...", "
     }
 
 
-def think(task: str, context: str = "", max_steps: int = 5) -> dict:
+async def think(task: str, context: str = "", max_steps: int = 5) -> dict:
     """
-    Chain-of-thought reasoning exposed synchronously.
+    Chain-of-thought reasoning (Async).
     """
-    import asyncio
     try:
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
-
-        if loop and loop.is_running():
-            # If we are in an event loop, we must run this in a thread 
-            # and use a NEW event loop for the async reasoning core
-            import concurrent.futures
-            def _sync_wrapper():
-                return asyncio.run(_recursive_think_async(task, max_steps, context))
-            
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                result = pool.submit(_sync_wrapper).result()
-        else:
-            result = asyncio.run(_recursive_think_async(task, max_recursion=max_steps, context=context))
+        # Call the async core directly
+        result = await _recursive_think_async(task, max_steps, context)
     except Exception as e:
+        from skills.logger import log_audit
         log_audit("REASONING_ERROR", f"Recursive thinking failed: {e}")
         return {
             "thought_process": [str(e)],
