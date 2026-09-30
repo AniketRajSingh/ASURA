@@ -229,6 +229,81 @@ async def handle_command(user_id: str, command: str, channel: str = "api") -> st
         import config
         config.DEBUG_MODE = not getattr(config, "DEBUG_MODE", False)
         return f"🐛 Debug mode is now **{'ON' if config.DEBUG_MODE else 'OFF'}**."
+    elif cmd.startswith("/brain"):
+        from core.brain_router import brain_router
+        parts = command.split()
+        subcmd = parts[1].lower() if len(parts) > 1 else "status"
+
+        if subcmd in ("status", "info"):
+            status = brain_router.get_status_summary()
+            ollama_status = "🟢 Online" if status["ollama_alive"] else "🔴 Offline (Cascading to Cloud)"
+            override = f"`{status['active_override'][0]}:{status['active_override'][1]}`" if status["active_override"] else "🤖 **Autonomous Dynamic Cascade**"
+            
+            exhausted_lines = ""
+            if status["exhausted_models"]:
+                exhausted_lines = "\n\n⚠️ **Models in Cooldown (Backoff):**\n" + "\n".join(
+                    f"• `{m}`: {info['remaining_seconds']}s remaining ({info['reason']})"
+                    for m, info in status["exhausted_models"].items()
+                )
+            else:
+                exhausted_lines = "\n\n✅ **Zero models in cooldown** (All pools healthy)"
+
+            failover_lines = ""
+            if status["recent_failovers"]:
+                failover_lines = "\n\n🔄 **Recent Cascade Failovers:**\n" + "\n".join(
+                    f"• {f['timestamp']} | `{f['from_model']}` ➔ `{f['to_model']}` ({f['reason']})"
+                    for f in status["recent_failovers"][-3:]
+                )
+
+            return (
+                f"🧠 **ASURA Brain & Router Status**\n\n"
+                f"• **Active Mode:** {override}\n"
+                f"• **Local Ollama Daemon:** {ollama_status}\n"
+                f"• **OpenRouter Model Pool:** {status['cached_models_count']} total ({status['free_models_count']} Free | {status['vision_models_count']} Vision | {status['reasoning_models_count']} Reasoning)\n"
+                f"{exhausted_lines}"
+                f"{failover_lines}\n\n"
+                f"💡 _Commands: `/brain refresh`, `/brain switch <model>`, `/brain reset`, `/brain clear`, `/models`_"
+            )
+
+        elif subcmd == "refresh":
+            models = await brain_router.fetch_openrouter_models(force=True)
+            free_cnt = len([m for m in models if m.is_free])
+            return f"🔄 **OpenRouter Live Sync:** Fetched {len(models)} models ({free_cnt} free models available)."
+
+        elif subcmd == "switch":
+            if len(parts) < 3:
+                return "❌ Usage: `/brain switch <model_id>` (e.g. `/brain switch nvidia/nemotron-3.5-lightning:free`)"
+            target = parts[2].strip()
+            msg = brain_router.switch_model(target)
+            return f"🧠 {msg}"
+
+        elif subcmd == "reset":
+            return f"🧠 {brain_router.reset_to_automatic()}"
+
+        elif subcmd == "clear":
+            brain_router.clear_exhaustion()
+            return "🧹 **Exhaustion Backoffs Cleared.** All models returned to active rotation."
+
+        else:
+            return "❓ Unknown brain sub-command. Options: `status`, `refresh`, `switch <model>`, `reset`, `clear`."
+
+    elif cmd.startswith("/models"):
+        from core.brain_router import brain_router
+        models = await brain_router.fetch_openrouter_models()
+        free_models = [m for m in models if m.is_free]
+        
+        vision = [m.id for m in free_models if m.is_vision][:4]
+        reasoning = [m.id for m in free_models if m.is_reasoning][:4]
+        fast = [m.id for m in free_models if m.is_fast][:4]
+
+        return (
+            f"🌐 **OpenRouter Free Tier Model Registry ({len(free_models)} Active)**\n\n"
+            f"👁️ **Vision / Multimodal Models:**\n" + "\n".join(f"• `{m}`" for m in vision) + "\n\n"
+            f"🧠 **Reasoning / Coding Models:**\n" + "\n".join(f"• `{m}`" for m in reasoning) + "\n\n"
+            f"⚡ **High-Speed / Utility Models:**\n" + "\n".join(f"• `{m}`" for m in fast) + "\n\n"
+            f"💡 _Switch models with `/brain switch <model_id>` or use `/brain reset` for auto-cascade._"
+        )
+
     elif cmd.startswith("/model"):
         import config
         parts = command.split(" ", 1)

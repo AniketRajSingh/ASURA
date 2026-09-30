@@ -135,7 +135,28 @@ class ModelManager:
         """Look up capabilities for a model. Returns defaults for unknown models."""
         model = model or self.get_active_model()
         key = model.lower().split("/")[-1]
-        return self._registry.get(key, _DEFAULT_CAPS)
+        caps = self._registry.get(key)
+        if caps:
+            return caps
+
+        # Check dynamic brain router cache for OpenRouter models
+        try:
+            from core.brain_router import brain_router
+            for m in brain_router._cached_models:
+                if m.id.lower() == model.lower() or m.id.lower().endswith(f"/{key}"):
+                    return ModelCapabilities(
+                        display_name=m.name,
+                        context_window=m.context_length,
+                        max_output_tokens=min(m.context_length, 8192),
+                        is_multimodal=m.is_vision,
+                        can_see_images=m.is_vision,
+                        supports_thinking=m.is_reasoning,
+                        supports_code_generation=m.is_code,
+                    )
+        except Exception:
+            pass
+
+        return _DEFAULT_CAPS
 
     def is_multimodal(self, model: str = None) -> bool:
         """Check if the model can process any non-text input."""
@@ -172,10 +193,19 @@ class ModelManager:
     # ─── Model Selection ─────────────────────────────────
 
     def get_active_model(self) -> str:
-        """Get the currently active model name based on provider config."""
+        """Get the currently active model name based on brain router or provider config."""
+        try:
+            from core.brain_router import brain_router
+            if brain_router._active_override:
+                return brain_router._active_override[1]
+        except Exception:
+            pass
+
         provider = getattr(config, "LLM_PROVIDER", "ollama").lower()
         if provider == "groq":
             return getattr(config, "GROQ_MODEL", "llama-3.3-70b-versatile")
+        elif provider == "openrouter":
+            return getattr(config, "OPENROUTER_MODEL_FREE", "nvidia/nemotron-3.5-lightning:free")
         else:
             return getattr(config, "OLLAMA_MODEL", "gpt-oss:20b")
 

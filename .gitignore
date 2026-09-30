@@ -39,6 +39,7 @@ data/memory/
 data/memory_store/
 data/sub_agent_memory/
 data/update_history/
+data/openrouter_models_cache.json
 data/*.webm
 data/*.txt
 

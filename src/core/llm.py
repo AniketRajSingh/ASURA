@@ -6,111 +6,129 @@ from skills.logger import log_audit, log_app
 from core.model_manager import model_manager
 from core.utils.retry import async_retry
 
+from core.brain_router import brain_router
+
 async def call_llm(prompt: str, model: str = None, system_prompt: str = None, stream: bool = False, format: str = None, images: list[str] = None, temperature: float = 0.7, timeout: int = None):
     """
-    Unified LLM call interface supporting Ollama, SGLang, and Groq.
-    Supports multimodal inputs (images) and parameter tuning.
+    Unified ASURA Brain call interface supporting Local Ollama, Groq, and OpenRouter.
+    Features:
+    - Dynamic OpenRouter model discovery and live metadata sync.
+    - Automatic functional tier matching (Vision, Reasoning, Fast, Free).
+    - Seamless cascade failover on HTTP 429 rate limit, 5xx server errors, or timeouts.
+    - Automatic exhaustion tracking with temporary cooldown and recovery.
     """
-    # ─── Auto-Model Routing ─────────────────────────────
-    # If no model is specified, route based on complexity
-    if not model and not images:
-        model = await model_manager.route_by_complexity(prompt, system_prompt)
-        log_audit("LLM_ROUTING", f"Auto-routed to {model}")
-    # ──────────────────────────────────────────────────
-
-    # Intelligent default timeout: 30s for fast models, 300s for heavy
-    if timeout is None:
-        timeout = 30 if "fast" in (model or "").lower() or "0.8b" in (model or "").lower() else 300
-
-    provider = getattr(config, "LLM_PROVIDER", "ollama").lower()
-    
     from core.resource_governor import get_governor
     gov = get_governor()
-    
-    if provider == "groq" and not gov.is_exhausted("groq"):
-        try:
-            # Map model to valid Groq models (openai/gpt-oss-20b, openai/gpt-oss-120b, qwen/qwen3.8-27b)
-            if model and ("gpt-oss" in model or "qwen3.8" in model):
-                groq_model = model
-            elif model and any(k in model.lower() for k in ["heavy", "35b", "reasoning", "architect", "120b"]):
-                groq_model = config.GROQ_MODEL_HEAVY
-            else:
-                groq_model = config.GROQ_MODEL_FAST
-            res = await _call_groq(prompt, groq_model, system_prompt, stream, format, images, temperature, timeout=timeout)
-            gov.record_usage("groq")
-            return res
-        except Exception as e:
-            log_app(f"Primary Groq failed, trying fallback chain: {e}")
 
-    if provider == "openrouter" and not gov.is_exhausted("openrouter"):
-        try:
-            res = await _call_openrouter(prompt, model or config.OPENROUTER_MODEL_FREE, system_prompt, stream, format, images, temperature, timeout=timeout)
-            gov.record_usage("openrouter")
-            return res
-        except Exception as e:
-            log_app(f"Primary OpenRouter failed, trying fallback chain: {e}")
+    # Determine task classification
+    task_type = "default"
+    if images:
+        task_type = "vision"
+    elif not model:
+        prompt_lower = prompt.lower()
+        fast_keywords = ["summary", "caption", "extract", "shorten", "list", "who", "what", "where", "translate", "greet", "hello", "hi"]
+        heavy_keywords = ["reason", "think", "analyze", "debug", "fix", "code", "architect", "design", "refactor", "complex", "steps", "plan"]
+        if len(prompt) < 200 and any(kw in prompt_lower for kw in fast_keywords):
+            task_type = "fast"
+        elif any(kw in prompt_lower for kw in heavy_keywords) or len(prompt) > 1000:
+            task_type = "reasoning"
 
-    # Default/Fallback Chain
-    try:
-        return await _call_ollama(prompt, model or config.OLLAMA_MODEL, system_prompt, stream, format, images, temperature, timeout=timeout)
-    except Exception as e:
-        log_app(f"Ollama failed ({e.__class__.__name__}). Checking if daemon is alive before fallback...")
-        
-        # Ping Ollama daemon
-        is_ollama_alive = False
-        base_url = model_manager.get_ollama_url()
+    # Intelligent default timeout
+    if timeout is None:
+        timeout = 35 if task_type == "fast" else 180
+
+    # Obtain prioritized candidates from BrainRouter
+    candidates = await brain_router.get_candidates(
+        task_type=task_type,
+        require_vision=bool(images),
+        requested_model=model
+    )
+
+    if not candidates:
+        log_app("BrainRouter: All candidate models currently exhausted. Resetting backoff cooldowns for emergency retry.")
+        brain_router.clear_exhaustion()
+        candidates = await brain_router.get_candidates(
+            task_type=task_type,
+            require_vision=bool(images),
+            requested_model=model
+        )
+
+    log_audit("LLM_CASCADE_START", f"Task: {task_type} | Candidates ({len(candidates)}): {[c['model'] for c in candidates[:4]]}")
+
+    cascade_errors = []
+
+    for idx, cand in enumerate(candidates):
+        prov = cand["provider"]
+        cand_model = cand["model"]
+
+        # Check governor limits for cloud providers
+        if prov in ("groq", "openrouter") and gov.is_exhausted(prov):
+            continue
+
         try:
-            async with httpx.AsyncClient(timeout=2.0) as client:
-                resp = await client.get(f"{base_url}/")
-                if resp.status_code == 200:
-                    is_ollama_alive = True
-        except Exception:
-            pass
-            
-        if is_ollama_alive:
-            log_app("Ollama daemon is ALIVE. Checking VRAM state and aggressively retrying local model (No Cloud Fallback).")
-            # Check currently loaded models
-            try:
-                async with httpx.AsyncClient(timeout=5.0) as client:
-                    ps_resp = await client.get(f"{base_url}/api/ps")
-                    loaded_models = [m.get("name") for m in ps_resp.json().get("models", [])]
-                    log_app(f"Currently loaded in VRAM: {loaded_models}")
-            except Exception as ps_e:
-                log_app(f"Failed to fetch /api/ps: {ps_e}")
-                
-            # Retry forcefully with extreme timeout
-            log_app("Asserting strict Ollama usage. Increasing timeout to 900s.")
-            return await _call_ollama(prompt, model or config.OLLAMA_MODEL, system_prompt, stream, format, images, temperature, timeout=900)
-            
-        log_app("Ollama daemon is DEAD or unreachable. Proceeding to Cloud Fallbacks.")
-        
-        # Try Groq if not exhausted
-        if not images and not gov.is_exhausted("groq"):
-            try:
-                # MAP to Groq-compatible model
-                fallback_model = config.GROQ_MODEL_HEAVY if any(k in (model or "").lower() for k in ["35b", "heavy", "120b", "reasoning", "architect"]) else config.GROQ_MODEL_FAST
-                # Handle JSON enforcement
+            log_app(f"BrainRouter: Attempting [{prov}] {cand_model} (Candidate {idx+1}/{len(candidates)})")
+
+            if prov == "ollama":
+                res = await _call_ollama(prompt, cand_model, system_prompt, stream, format, images, temperature, timeout=timeout)
+                return res
+            elif prov == "groq":
+                if images:
+                    continue # Groq text endpoint does not accept images
                 prompt_to_send = prompt + " Return strictly JSON." if format == "json" else prompt
-                res = await _call_groq(prompt_to_send, fallback_model, system_prompt, stream, format, None, 0.5, timeout=timeout)
+                res = await _call_groq(prompt_to_send, cand_model, system_prompt, stream, format, None, temperature, timeout=timeout)
                 gov.record_usage("groq")
                 return res
-            except Exception as ge:
-                log_app(f"Groq fallback failed: {ge}")
-        
-        # Try OpenRouter if not exhausted
-        if not gov.is_exhausted("openrouter"):
-            try:
-                # Auto-patch deprecated models
-                or_model = config.OPENROUTER_MODEL_FREE
-                if "gemini-2.0-flash-exp" in or_model:
-                    or_model = "google/gemini-2.0-flash-lite-preview-02-05:free"
-                res = await _call_openrouter(prompt, or_model, system_prompt, stream, format, images, 0.5, timeout=timeout)
+            elif prov == "openrouter":
+                res = await _call_openrouter(prompt, cand_model, system_prompt, stream, format, images, temperature, timeout=timeout)
                 gov.record_usage("openrouter")
                 return res
-            except Exception as oe:
-                log_app(f"OpenRouter fallback failed: {oe}")
-                
-        raise e # Re-raise if everything failed
+            elif prov == "sglang":
+                res = await _call_sglang(prompt, cand_model, system_prompt, stream, format, images, temperature)
+                return res
+            else:
+                log_app(f"BrainRouter: Unknown provider '{prov}', skipping candidate {cand_model}")
+                continue
+
+        except httpx.HTTPStatusError as hse:
+            status_code = hse.response.status_code if hse.response else 0
+            err_text = ""
+            try:
+                err_text = hse.response.text[:200]
+            except Exception:
+                pass
+
+            # 429 Rate Limit (180s cooldown), 402/404 (300s cooldown), others (60s cooldown)
+            cooldown = 180 if status_code == 429 else 300 if status_code in (402, 404) else 60
+            reason = f"HTTP {status_code}: {err_text or hse}"
+            brain_router.mark_exhausted(cand_model, reason=reason, cooldown_seconds=cooldown)
+
+            next_model = candidates[idx + 1]["model"] if idx + 1 < len(candidates) else "NONE"
+            brain_router.record_failover(cand_model, next_model, f"HTTP {status_code}")
+            cascade_errors.append(f"[{prov}] {cand_model} -> HTTP {status_code}")
+            log_app(f"BrainRouter: Model {cand_model} EXHAUSTED ({reason}). Cascading to next candidate {next_model}...")
+            continue
+
+        except (httpx.TimeoutException, httpx.ConnectError) as net_err:
+            reason = f"Network/Timeout ({net_err.__class__.__name__})"
+            brain_router.mark_exhausted(cand_model, reason=reason, cooldown_seconds=120)
+            next_model = candidates[idx + 1]["model"] if idx + 1 < len(candidates) else "NONE"
+            brain_router.record_failover(cand_model, next_model, reason)
+            cascade_errors.append(f"[{prov}] {cand_model} -> {reason}")
+            log_app(f"BrainRouter: Model {cand_model} unreachable/timed out. Cascading to next candidate {next_model}...")
+            continue
+
+        except Exception as e:
+            reason = f"Execution error: {e}"
+            brain_router.mark_exhausted(cand_model, reason=reason, cooldown_seconds=60)
+            next_model = candidates[idx + 1]["model"] if idx + 1 < len(candidates) else "NONE"
+            brain_router.record_failover(cand_model, next_model, str(e))
+            cascade_errors.append(f"[{prov}] {cand_model} -> {e}")
+            log_app(f"BrainRouter: Model {cand_model} failed ({e}). Cascading to next candidate {next_model}...")
+            continue
+
+    fail_msg = f"All ASURA Brain candidate models exhausted. Failures: {'; '.join(cascade_errors)}"
+    log_audit("LLM_CASCADE_FAILED", fail_msg)
+    raise RuntimeError(fail_msg)
 
 async def _call_openrouter(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.5, timeout: int = 120):
     """Fallback caller for OpenRouter."""
@@ -143,7 +161,7 @@ async def _call_openrouter(prompt: str, model: str, system_prompt: str, stream: 
     if format == "json":
         payload["response_format"] = {"type": "json_object"}
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=timeout or 120) as client:
         try:
             resp = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload)
             resp.raise_for_status()
@@ -182,7 +200,7 @@ async def _call_groq(prompt: str, model: str, system_prompt: str, stream: bool, 
     if format == "json":
         payload["response_format"] = {"type": "json_object"}
 
-    async with httpx.AsyncClient(timeout=120) as client:
+    async with httpx.AsyncClient(timeout=timeout or 120) as client:
         try:
             resp = await client.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=payload)
             resp.raise_for_status()
@@ -286,7 +304,11 @@ async def list_models():
     provider = getattr(config, "LLM_PROVIDER", "ollama").lower()
     
     if provider == "groq":
-        return [config.GROQ_MODEL]
+        return [config.GROQ_MODEL, config.GROQ_MODEL_HEAVY]
+        
+    if provider == "openrouter":
+        or_models = await brain_router.fetch_openrouter_models()
+        return [m.id for m in or_models if m.is_free]
         
     if provider == "sglang":
         base_url = model_manager.get_sglang_url()
