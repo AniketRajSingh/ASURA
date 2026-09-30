@@ -65,7 +65,50 @@ class TaskQueue:
             )
             self._workers.append(t)
             t.start()
-        log_app(f"Task queue started ({self._max_workers} workers)")
+        
+        # ─── Recommendation Poller ────────────
+        t_poller = threading.Thread(
+            target=self._recommendation_poller, daemon=True, name="rec-poller"
+        )
+        t_poller.start()
+        
+        log_app(f"Task queue started ({self._max_workers} workers + Poller)")
+
+    def _recommendation_poller(self):
+        """Periodically poll the RecommendationStore for approved tasks."""
+        while self._running:
+            try:
+                from core.recommendation import recommendation_store
+                from core.reasoning import think
+                import asyncio
+                
+                approved = recommendation_store.get_approved()
+                for rec in approved:
+                    # Submit to queue
+                    # We use a wrapper to run the async think() in the worker thread
+                    def _think_task(task_content, rec_id):
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        try:
+                            res = loop.run_until_complete(think(task_content))
+                            recommendation_store.update_status(rec_id, "done")
+                            return res.get("conclusion", "Task complete.")
+                        finally:
+                            loop.close()
+
+                    self.submit(
+                        name=f"Autonomous: {rec.content[:30]}",
+                        func=_think_task,
+                        args=(rec.content, rec.id),
+                        priority=7 # Lower priority for background tasks
+                    )
+                    # Mark as executing so we don't re-submit
+                    recommendation_store.update_status(rec.id, "executing")
+                    
+            except Exception as e:
+                log_app(f"Rec-Poller error: {e}")
+            
+            time.sleep(60) # Poll every minute
 
     def stop(self):
         self._running = False

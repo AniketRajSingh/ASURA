@@ -241,7 +241,11 @@ async def _compact_react_messages(messages: list[dict], iteration: int) -> list[
     return compacted
 
 
-async def chat(user_message: str, history: list[dict] | None = None, platform: str = "TUI", agent_name: str = None) -> tuple[str, list[dict]]:
+async def chat(user_message: str, history: list[dict] | None = None, platform: str = "TUI", agent_name: str = None, emotional_pulse: str = "neutral") -> tuple[str, list[dict]]:
+    """
+    Main blocking chat function.
+    emotional_pulse: Adaptation trigger inspired by OpenClaw.
+    """
     """
     Autonomous ReAct chat engine — Claude Code parity edition (Async).
     """
@@ -367,9 +371,16 @@ async def chat(user_message: str, history: list[dict] | None = None, platform: s
 
             try:
                 # Use the unified call_llm wrapper which handles SGLang/Ollama/Groq
+                
+                # Intelligent Model Mapping: Prevent heavy reasoning models from gridlocking simple system tasks
+                if agent_name in ["titler", "summary", "summarizer", "formatter"]:
+                    target_tier = "fast"
+                else:
+                    target_tier = "reasoning"
+
                 reply = await call_llm(
                     prompt=messages[-1]["content"], 
-                    model=model_manager.get_model_for_task("reasoning"),
+                    model=model_manager.get_model_for_task(target_tier),
                     system_prompt=messages[0]["content"] if messages[0]["role"] == "system" else None,
                     stream=False,
                     format=None
@@ -429,6 +440,8 @@ async def chat(user_message: str, history: list[dict] | None = None, platform: s
                     messages.append({"role": "user", "content": "(Please respond to the user's message above)"})
                     continue
                 final_reply = reply
+                if iteration == 0 and locals().get("adaptation"):
+                    final_reply = adaptation + final_reply
                 break
 
     if final_reply.strip():
@@ -476,7 +489,7 @@ async def chat(user_message: str, history: list[dict] | None = None, platform: s
     return final_reply or "(No response generated)", history
 
 
-async def chat_stream(user_message: str, history: list[dict] | None = None, platform: str = "TUI", agent_name: str = None):
+async def chat_stream(user_message: str, history: list[dict] | None = None, platform: str = "TUI", agent_name: str = None, emotional_pulse: str = "neutral"):
     _cancel_event.clear()
     """
     Autonomous ReAct streaming engine.
@@ -486,6 +499,11 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
         history = []
 
     history.append({"role": "user", "content": user_message})
+
+    # ── RESONANCE: Apply personality adaptation ───
+    from skills.emotion.detector import get_adaptive_prefix
+    adaptation = get_adaptive_prefix(emotional_pulse)
+    if adaptation: yield adaptation
 
     # ─── TURBO-PARALLEL: Concurrent Preparation ────────────
     from core.declarative_agent_loader import get_agent_loader
@@ -567,8 +585,9 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
                                 yield f"[METADATA]{json.dumps(metrics)}[/METADATA]"
                         except: continue
             else:
-                # Default Ollama - Use FAST model for stream responsiveness if not specified
-                active_model = config.OLLAMA_MODEL_FAST if not agent_name else config.OLLAMA_MODEL
+                # Default Ollama - User permanently disabled fast model routing natively
+                # Locking stream to heavy 20B reasoning model for maximum cognitive density
+                active_model = getattr(config, "OLLAMA_MODEL_REASONING", getattr(config, "OLLAMA_MODEL", "gpt-oss:20b"))
                 log_app(f"DEBUG: Initiating Ollama stream (Model: {active_model})")
                 async with httpx.AsyncClient(timeout=300, trust_env=False) as client:
                     async with client.stream(

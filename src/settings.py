@@ -89,14 +89,17 @@ class ASURASettings(BaseSettings):
     SGLANG_BASE_URL: str = Field(default="http://localhost:11435", validation_alias=AliasChoices("ASURA_SGLANG_BASE_URL", "SGLANG_BASE_URL"))
     GROQ_API_KEY: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_GROQ_API_KEY", "GROQ_API_KEY"))
     OPENROUTER_API_KEY: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"))
+    GEMINI_API_KEY: Optional[str] = Field(default=None, validation_alias=AliasChoices("ASURA_GEMINI_API_KEY", "GEMINI_API_KEY", "GOOGLE_API_KEY"))
     
     # Models
     OLLAMA_MODEL: str = Field(default="gpt-oss:20b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL", "OLLAMA_MODEL"))
     OLLAMA_MODEL_FAST: str = Field(default="qwen3.5:0.8b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_FAST", "OLLAMA_MODEL_FAST"))
-    GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile", validation_alias=AliasChoices("ASURA_GROQ_MODEL", "GROQ_MODEL"))
+    GROQ_MODEL: str = Field(default="openai/gpt-oss-20b", validation_alias=AliasChoices("ASURA_GROQ_MODEL", "GROQ_MODEL"))
     OPENROUTER_MODEL_FREE: str = Field(default="google/gemini-2.0-flash-exp:free", validation_alias=AliasChoices("ASURA_OPENROUTER_MODEL_FREE", "OPENROUTER_MODEL_FREE"))
-    GROQ_MODEL_HEAVY: str = Field(default="llama-3.3-70b-versatile", validation_alias=AliasChoices("ASURA_GROQ_MODEL_HEAVY", "GROQ_MODEL_HEAVY"))
-    GROQ_MODEL_FAST: str = Field(default="llama-3.3-70b-specdec", validation_alias=AliasChoices("ASURA_GROQ_MODEL_FAST", "GROQ_MODEL_FAST"))
+    GROQ_MODEL_HEAVY: str = Field(default="openai/gpt-oss-120b", validation_alias=AliasChoices("ASURA_GROQ_MODEL_HEAVY", "GROQ_MODEL_HEAVY"))
+    GROQ_MODEL_FAST: str = Field(default="openai/gpt-oss-20b", validation_alias=AliasChoices("ASURA_GROQ_MODEL_FAST", "GROQ_MODEL_FAST"))
+    GEMINI_MODEL: str = Field(default="gemini-2.5-flash", validation_alias=AliasChoices("ASURA_GEMINI_MODEL", "GEMINI_MODEL"))
+    GEMINI_MODEL_HEAVY: str = Field(default="gemini-2.5-pro", validation_alias=AliasChoices("ASURA_GEMINI_MODEL_HEAVY", "GEMINI_MODEL_HEAVY"))
     
     # Role-based models
     OLLAMA_MODEL_REASONING: str = Field(default="gpt-oss:20b", validation_alias=AliasChoices("ASURA_OLLAMA_MODEL_REASONING", "OLLAMA_MODEL_REASONING"))
@@ -226,8 +229,8 @@ class ASURASettings(BaseSettings):
     @field_validator("LLM_PROVIDER")
     @classmethod
     def validate_provider(cls, v: str) -> str:
-        if v.lower() not in ["ollama", "groq", "sglang"]:
-            raise ValueError("LLM_PROVIDER must be 'ollama', 'groq', or 'sglang'")
+        if v.lower() not in ["ollama", "groq", "sglang", "openrouter", "gemini"]:
+            raise ValueError("LLM_PROVIDER must be 'ollama', 'groq', 'sglang', 'openrouter', or 'gemini'")
         return v.lower()
 
 

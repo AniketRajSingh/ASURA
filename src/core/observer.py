@@ -159,7 +159,7 @@ class FileSystemObserver:
             if os.path.isfile(os.path.join(config.BASE_DIR, potential_test)):
                 test_file = potential_test
 
-        if test_file:
+        if test_file and os.path.basename(test_file).startswith("test_"):
             log_audit("OBSERVER", f"Auto-running test: {test_file}")
             # Run test in background
             proc = await asyncio.create_subprocess_exec(

@@ -43,11 +43,27 @@ class CommandHandler:
         
         # 2. Start Core in background
         try:
+            # Create logs dir if not exists
+            log_dir = PROJECT_ROOT / "data" / "logs"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            log_file = log_dir / "asura_core.log"
+            
             # Re-launch using root run.py with managed bot flag
             env = os.environ.copy()
             env["ASURA_MANAGED_BOT"] = "true"
-            subprocess.Popen([sys.executable, "run.py", "start"], cwd=str(PROJECT_ROOT), env=env, start_new_session=True)
-            logger.info("✅ Core restart triggered.")
+            
+            # Open log file in append mode
+            with open(log_file, "a") as f:
+                # We use Popen with start_new_session to decouple it
+                subprocess.Popen(
+                    [sys.executable, "run.py", "start"], 
+                    cwd=str(PROJECT_ROOT), 
+                    env=env, 
+                    stdout=f, 
+                    stderr=f, 
+                    start_new_session=True
+                )
+            logger.info(f"✅ Core restart triggered. Logs: {log_file}")
             return True
         except Exception as e:
             logger.error(f"Failed to launch Core: {e}")

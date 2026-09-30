@@ -4,9 +4,21 @@ import threading
 from datetime import datetime
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 import http.cookies as http_cookies
+import asyncio
 from settings import settings as config
 from skills.logger import log_audit, log_app
 from core.auth import create_access_token, verify_token
+
+def run_async(coro):
+    """Bridge to run async coroutines in a synchronous context."""
+    try:
+        loop = asyncio.new_event_loop()
+        return loop.run_until_complete(coro)
+    except Exception as e:
+        log_app(f"Dashboard Async Bridge Error: {e}")
+        return None
+    finally:
+        loop.close()
 
 
 def render_template(template_name: str, context: dict = None) -> str:
@@ -207,15 +219,85 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 return self._serve_static()
             elif self.path in ["/", "/dashboard"]:
                 self._serve_dashboard()
-            elif self.path == "/api/status":
+            elif self.path == "/api/health" or self.path == "/api/status":
                 from skills.hardware_monitor import get_system_info
-                self._send_json(get_system_info())
+                import time
+                stats = get_system_info()
+                telegram_active = os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true"
+                is_leader = os.environ.get("ASURA_MANAGED_BOT") == "true" or telegram_active
+                
+                # Use correct nested access for hardware_monitor stats
+                self._send_json({
+                    "status": "ok",
+                    "instance_name": config.INSTANCE_NAME,
+                    "is_leader": is_leader,
+                    "telegram_active": telegram_active,
+                    "cpu": stats.get("cpu", {}).get("usage_percent", 0) if isinstance(stats, dict) else 0,
+                    "ram": stats.get("memory", {}).get("used_percent", 0) if isinstance(stats, dict) else 0,
+                    "disk": stats.get("disk", {}).get("used_percent", 0) if isinstance(stats, dict) else 0,
+                    "uptime": int(time.time() - getattr(config, "_start_time", time.time()))
+                })
             elif self.path == "/api/vcs/history":
                 from core.vcs import get_vcs
                 self._send_json(get_vcs().list_history())
             elif self.path == "/api/system/processes":
+                import psutil, time
+                procs = []
+                seen_types = set()
+                
+                # 1. Get OS-Level Processes
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
+                    try:
+                        cmdline = " ".join(proc.info['cmdline'] or [])
+                        name = proc.info['name'] or ""
+                        
+                        # Broader match to include daemon and telegram
+                        is_python = "python" in cmdline or "python" in name.lower()
+                        if is_python:
+                            p_type = None
+                            if "main.py" in cmdline: p_type = "Core Engine"
+                            elif "telegram_daemon.py" in cmdline: p_type = "Telegram Bot"
+                            elif "run.py" in cmdline: p_type = "Bootloader"
+                            elif "monitor.py" in cmdline: p_type = "Daemon Monitor"
+                            
+                            if p_type:
+                                # Deduplicate: Only show the newest instance of each type
+                                if p_type in seen_types: continue
+                                seen_types.add(p_type)
+
+                                procs.append({
+                                    "id": proc.info['pid'],
+                                    "name": p_type,
+                                    "status": "active",
+                                    "uptime": int(time.time() - proc.info['create_time']),
+                                    "type": "process"
+                                })
+                    except: continue
+                
+                # 2. Get ONLY Active background jobs
                 from core.job_manager import manager
-                self._send_json(manager.list_jobs())
+                jobs = manager.list_jobs()
+                for job in jobs:
+                    if job.get("status") in ["running", "queued"]:
+                        job["type"] = "job"
+                        procs.append(job)
+                    
+                self._send_json({"processes": procs})
+                return
+
+            elif self.path.startswith("/api/system/terminate"):
+                from urllib.parse import urlparse, parse_qs
+                query = parse_qs(urlparse(self.path).query)
+                pid = int(query.get("pid", [0])[0])
+                if pid:
+                    import psutil
+                    try:
+                        p = psutil.Process(pid)
+                        p.terminate()
+                        log_audit("DASHBOARD", f"Master terminated process {pid}")
+                        self._send_json({"success": True})
+                    except: self._send_json({"success": False, "error": "Process not found"})
+                return
             elif self.path == "/api/system/resources":
                 try:
                     stats_path = os.path.join(config.DATA_DIR, 'resource_stats.json')
@@ -229,13 +311,22 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 except Exception as e:
                     log_app(f"Dashboard API Error reading resources: {e}")
                     self._send_json([])
-            elif self.path == "/api/settings":
-                env_keys = [
-                    "TELEGRAM_BOT_TOKEN", "OLLAMA_BASE_URL", "MASTER_NAME",
-                    "LLM_PROVIDER", "GROQ_API_KEY", "GROQ_MODEL"
-                ]
-                settings_data = {k: getattr(config, k, "N/A") for k in env_keys}
-                self._send_json(settings_data)
+            elif self.path == "/api/settings/list":
+                # Return all settings as a dict for the UI to render
+                schema = {}
+                # Handle Pydantic BaseModel introspection safely
+                config_dict = config.model_dump() if hasattr(config, "model_dump") else config.__dict__
+                for k, v in config_dict.items():
+                    if k.isupper() and not k.startswith("_"):
+                        # Mask sensitive-looking keys
+                        if any(s in k.lower() for s in ["token", "key", "password", "secret"]):
+                            schema[k] = "********" if v else ""
+                        else:
+                            schema[k] = v
+                self._send_json(schema)
+            elif self.path == "/api/llm/status":
+                from core.resource_governor import get_governor
+                self._send_json({"live": get_governor()._check_ollama()})
             elif self.path == "/api/persona":
                 self._send_json(getattr(config, "PERSONA", {}))
             elif self.path == "/api/skills/list":
@@ -247,7 +338,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 from core.memory_manager import memory_manager
                 
                 docs = get_memory_store()
-                vault_data = memory_manager._load_vault()
+                vault_data = run_async(memory_manager._load_vault()) or {}
                 vault_facts = vault_data.get("permanent_facts", [])
                 
                 self._send_json({
@@ -352,12 +443,17 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     "nodes": filtered_nodes,
                     "edges": filtered_edges
                 })
+            elif self.path == "/api/recommendations/list":
+                from core.recommendation import recommendation_store
+                recs = recommendation_store.get_pending()
+                self._send_json([r.to_dict() for d, r in enumerate(recs)])
+
             elif self.path == "/api/memory/rag":
                 from skills.memory.store import get_memory_store
                 self._send_json(get_memory_store()[-50:])
             elif self.path == "/api/memory/vault":
                 from core.memory_manager import memory_manager
-                vault_data = memory_manager._load_vault()
+                vault_data = run_async(memory_manager._load_vault()) or {}
                 self._send_json(vault_data.get("permanent_facts", []))
             elif self.path == "/api/memory/episodes":
                 from skills.memory.episodic import recall_episodes
@@ -481,15 +577,38 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 from skills.hardware_monitor import get_system_info
                 
                 async def get_all():
+                    # Reference globals or local imports carefully to avoid NameError shadowing
+                    import os as _os
+                    stats = get_system_info()
                     local_info = {
+                        "url": "local",
                         "instance_name": config.INSTANCE_NAME,
                         "status": "online",
                         "is_local": True,
-                        "system": get_system_info(),
-                        "telegram_active": os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true"
+                        "cpu": stats.get("cpu", {}).get("usage_percent", 0),
+                        "ram": stats.get("memory", {}).get("used_percent", 0),
+                        "disk": stats.get("disk", {}).get("used_percent", 0),
+                        "telegram_active": _os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true",
+                        "is_leader": _os.environ.get("ASURA_MANAGED_BOT") == "true" or _os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true"
                     }
                     peer_results = await federation.ping_peers()
-                    return [local_info] + peer_results
+                    
+                    # Flatten peer results for easy UI consumption
+                    formalized = [local_info]
+                    for pr in peer_results:
+                        p_data = pr.get("data", {})
+                        formalized.append({
+                            "url": pr.get("url"),
+                            "instance_name": p_data.get("instance_name", pr.get("url")),
+                            "status": pr.get("status"),
+                            "cpu": p_data.get("cpu", 0),
+                            "ram": p_data.get("ram", 0),
+                            "disk": p_data.get("disk", 0),
+                            "is_leader": p_data.get("is_leader", False),
+                            "telegram_active": p_data.get("telegram_active", False),
+                            "error": pr.get("error")
+                        })
+                    return formalized
 
                 try:
                     loop = asyncio.new_event_loop()
@@ -614,11 +733,14 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     self._send_json({"response": f"⚠️ Error: {chat_err}"})
 
             elif self.path == "/api/command":
-                import asyncio
                 from core.gateway import handle_command
                 cmd = data.get("command", "")
                 try:
-                    res = asyncio.run(handle_command("dashboard", cmd, channel="web")) if asyncio.iscoroutinefunction(handle_command) else handle_command("dashboard", cmd, channel="web")
+                    # Use existing run_async bridge for robustness
+                    if asyncio.iscoroutinefunction(handle_command):
+                        res = run_async(handle_command("dashboard", cmd, channel="web"))
+                    else:
+                        res = handle_command("dashboard", cmd, channel="web")
                     self._send_json({"response": res or "Acknowledged."})
                 except Exception as cmd_err:
                     self._send_json({"response": f"⚠️ Error: {cmd_err}"})
@@ -715,6 +837,30 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 except Exception as e:
                     self._send_json({"output": f"Error: {str(e)}"}, 400)
 
+            elif self.path == "/api/recommendations/approve":
+                from core.recommendation import recommendation_store
+                rec_id = data.get("id")
+                if rec_id:
+                    recommendation_store.update_status(rec_id, "approved")
+                    self._send_json({"status": f"Recommendation {rec_id} approved"})
+                else:
+                    self._send_json({"error": "ID required"}, 400)
+
+            elif self.path == "/api/recommendations/dismiss":
+                from core.recommendation import recommendation_store
+                rec_id = data.get("id")
+                if rec_id:
+                    recommendation_store.update_status(rec_id, "dismissed")
+                    self._send_json({"status": f"Recommendation {rec_id} dismissed"})
+                else:
+                    self._send_json({"error": "ID required"}, 400)
+
+            elif self.path == "/api/recommendations/clear":
+                from core.recommendation import recommendation_store
+                status = data.get("status")
+                recommendation_store.clear_all(status)
+                self._send_json({"status": f"All {status or 'pending'} recommendations cleared"})
+
             else:
                 self.send_error(404)
 
@@ -753,24 +899,32 @@ def start_dashboard():
     def run():
         import socket
         port = config.DASHBOARD_PORT
+        log_app(f"Initializing Command Center on port {port}...")
+        
+        class ReuseAddrServer(ThreadingHTTPServer):
+            def server_bind(self):
+                self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                super().server_bind()
+
         try:
-            srv = ThreadingHTTPServer(("0.0.0.0", port), DashboardHandler)
-            srv.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            srv = ReuseAddrServer(("0.0.0.0", port), DashboardHandler)
         except OSError:
             import psutil
-            log_app(f"Port {port} in use. Clearing...")
+            log_app(f"Port {port} in use. Forcing clear...")
             try:
-                for conn in psutil.net_connections(kind='inet'):
-                    if conn.laddr.port == port:
-                        try:
-                            psutil.Process(conn.pid).terminate()
-                        except: pass
-            except (psutil.AccessDenied, Exception) as e:
-                log_app(f"Could not clear port {port} via psutil: {e}. Trying fallback...")
-                # Fallback: try to bind anyway after a short wait, or let the user handle it
+                for proc in psutil.process_iter(['pid', 'name']):
+                    try:
+                        for conn in proc.connections(kind='inet'):
+                            if conn.laddr.port == port:
+                                log_app(f"Killing PID {proc.info['pid']} holding port {port}")
+                                proc.kill()
+                    except: pass
+            except Exception as e:
+                log_app(f"Port clear error: {e}")
+            
             import time
             time.sleep(1.0)
-            srv = ThreadingHTTPServer(("0.0.0.0", port), DashboardHandler)
+            srv = ReuseAddrServer(("0.0.0.0", port), DashboardHandler)
         
         log_app(f"Sovereign Command Center on http://localhost:{port}")
         srv.serve_forever()

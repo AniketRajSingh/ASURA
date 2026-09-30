@@ -1,0 +1,144 @@
+/* ============================================================
+   ASURA Sovereign Design System
+   Consolidated UI Patterns for Absolute Consistency
+   ============================================================ */
+
+/* ─── Standardized Containers ────────── */
+.asura-section {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.asura-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+/* ─── The Unified Card ────────── */
+.asura-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.asura-card:hover {
+    border-color: var(--text-dim);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+/* ─── Section Headers ────────── */
+.asura-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.asura-header h3 {
+    font-size: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+}
+
+/* ─── Typography & Badges ────────── */
+.asura-tag {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 4px 10px;
+    background: var(--bg-alt);
+    border-radius: 6px;
+    color: var(--text-dim);
+    width: fit-content;
+}
+
+/* ─── Buttons ────────── */
+.asura-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: var(--font-main);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.asura-btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.asura-btn-primary:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.asura-btn-secondary {
+    background: var(--bg-alt);
+    color: var(--text);
+    border-color: var(--border);
+}
+
+.asura-btn-secondary:hover {
+    border-color: var(--text-dim);
+    background: var(--surface);
+}
+
+/* ─── Progress & Stats ────────── */
+.asura-progress-track {
+    height: 6px;
+    background: var(--border-light);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.asura-progress-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.asura-stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+
+/* ─── Animations ────────── */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Interaction States ────────── */
+.loading-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}

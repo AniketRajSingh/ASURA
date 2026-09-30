@@ -11,11 +11,12 @@
 import os
 import json
 import time
+import asyncio
 import threading
 from datetime import datetime, timezone
 from typing import Optional, Generator, AsyncGenerator
 
-import config
+from settings import settings as config
 from skills.logger import log_audit, log_app
 from core.context_manager import compact_history
 
@@ -49,6 +50,7 @@ class GatewaySession:
         self.created_at = datetime.now(timezone.utc).isoformat()
         self.last_active = self.created_at
         self.metadata: dict = {}
+        self.emotional_pulse: str = "neutral"
         self.tool_calls: int = 0
         self.total_messages: int = 0
         self.MAX_HISTORY = 100
@@ -61,6 +63,7 @@ class GatewaySession:
             "created_at": self.created_at,
             "last_active": self.last_active,
             "metadata": self.metadata,
+            "emotional_pulse": self.emotional_pulse,
             "tool_calls": self.tool_calls,
             "total_messages": self.total_messages,
         }
@@ -72,6 +75,7 @@ class GatewaySession:
         session.created_at = data.get("created_at", session.created_at)
         session.last_active = data.get("last_active", session.last_active)
         session.metadata = data.get("metadata", {})
+        session.emotional_pulse = data.get("emotional_pulse", "neutral")
         session.tool_calls = data.get("tool_calls", 0)
         session.total_messages = data.get("total_messages", 0)
         return session
@@ -162,7 +166,26 @@ async def handle_message(
 
     log_audit("GATEWAY", f"[{channel}] {user_id}: {message[:80]}...")
 
-    # Intercept Gateway Commands first
+    # 1. Emotional Pulse Detection
+    try:
+        from skills.emotion.detector import detect_emotion
+        emotion_data = detect_emotion(message)
+        session.emotional_pulse = emotion_data["emotion"]
+    except Exception: pass
+
+    # 2. Curiosity Layer (Proactive Capability Expansion)
+    try:
+        from core.curiosity import curiosity_engine
+        curiosity_trigger = await curiosity_engine.sense_wonder(message, {}, user_id)
+        if curiosity_trigger:
+            if stream:
+                async def _gen_curiosity(): yield curiosity_trigger
+                return _gen_curiosity()
+            return curiosity_trigger
+    except Exception as e:
+        log_app(f"Curiosity Check failed: {e}")
+
+    # 3. Intercept Gateway Commands
     if message.startswith("/"):
         cmd_res = await handle_command(user_id, message, channel)
         if cmd_res:
@@ -217,6 +240,40 @@ async def handle_command(user_id: str, command: str, channel: str = "api") -> st
         from skills.ai_content.generator import cancel_current_task
         cancel_current_task()
         return "⚡ Task cancelled."
+    elif cmd == "/restart":
+        log_audit("SYSTEM", "Remote restart command received via Gateway")
+        import sys
+        async def _warm_restart():
+            await asyncio.sleep(2)
+            os.execv(sys.executable, ['python'] + sys.argv)
+        asyncio.create_task(_warm_restart())
+        return "🔄 Warm-restart initiated. System will be back in 10s."
+    elif cmd == "/health":
+        from core.startup_checks import run_startup_checks
+        from skills.hardware_monitor.monitor import get_resource_summary
+        integrity = await run_startup_checks(silent=True)
+        hw = get_resource_summary()
+        return f"📊 **System Vitals**\n\n{hw}\n\n🛠️ **Integrity:** {integrity}"
+    elif cmd == "/probe":
+        from core.startup_checks import verify_dispatcher_tools
+        res = await verify_dispatcher_tools()
+        passed = ", ".join(res.get("passed", []))
+        return f"🛠️ **Capability Probe**\n✅ Operational: {passed}"
+    elif cmd == "/cleanup":
+        from settings import settings as cfg
+        from core.declarative_agent_loader import get_agent_loader
+        # Silent purge
+        for log in [cfg.APP_LOG_PATH, cfg.AUDIT_LOG_PATH]:
+            if os.path.exists(log):
+                with open(log, "w") as f: f.write("")
+        loader = get_agent_loader(); loader._learned_cache = {}; loader._save_cache()
+        return "🧹 Deep Cleanup complete on remote node."
+    elif cmd == "/logs":
+        from settings import settings as cfg
+        try:
+            with open(cfg.APP_LOG_PATH, "r") as f:
+                return "".join(f.readlines()[-15:])
+        except: return "❌ Failed to read remote logs."
     elif cmd == "/history":
         session = get_or_create_session(user_id, channel)
         if not session.history:
@@ -392,6 +449,23 @@ async def handle_command(user_id: str, command: str, channel: str = "api") -> st
             return f"🌀 **ASURA Zero Reasoning**:\n\n{result['final_conclusion']}"
         except Exception as e:
             return f"❌ Zero Reasoning failed: {e}"
+
+    elif cmd == "/prune":
+        from skills.conversation.history import prune_history
+        # 1. Prune Global Memory
+        res = prune_history(semantic=True)
+        # 2. Prune Current Session
+        session = get_or_create_session(user_id, channel)
+        initial_sess = len(session.history)
+        session.history = [m for m in session.history if not m.get("metadata", {}).get("is_test")]
+        final_sess = len(session.history)
+        session.save()
+        
+        return (f"🧹 **Sovereign History Pruned**\n\n"
+                f"- Global test artifacts: {res['test_pruned']}\n"
+                f"- Global conversational noise: {res['pruned'] - res['test_pruned']}\n"
+                f"- Session artifacts: {initial_sess - final_sess}\n"
+                f"- Remaining global memory: {res['remaining']}")
 
     elif cmd.startswith("/notify "):
         msg = command[8:].strip()
@@ -659,7 +733,8 @@ async def _handle_sync(session: GatewaySession, message: str, agent_name: str = 
         if len(session.history) > 20:
              session.history = await compact_history(session.history)
              
-        reply, updated_history = await chat(message, session.history, platform=session.channel, agent_name=agent_name)
+        pulse = getattr(session, "emotional_pulse", "neutral")
+        reply, updated_history = await chat(message, session.history, platform=session.channel, agent_name=agent_name, emotional_pulse=pulse)
         session.history = updated_history
         
         # ─── MCQ Button Detection ─────────────
@@ -672,6 +747,12 @@ async def _handle_sync(session: GatewaySession, message: str, agent_name: str = 
                 log_audit("GATEWAY", f"Detected {len(choices)} MCQ buttons")
         
         session.save()
+        
+        # Archival to Global Sovereign Memory
+        from skills.conversation.history import add_message
+        add_message("user", message)
+        add_message("assistant", reply or "(No response generated)")
+        
         return reply or "(No response generated)"
     except Exception as e:
         log_audit("GATEWAY_ERROR", f"Chat failed: {e}")
@@ -687,8 +768,9 @@ async def _handle_stream(session: GatewaySession, message: str, agent_name: str 
         if len(session.history) > 20:
              session.history = await compact_history(session.history)
 
+        pulse = getattr(session, "emotional_pulse", "neutral")
         full_reply = ""
-        async for chunk in chat_stream(message, session.history, platform=session.channel, agent_name=agent_name):
+        async for chunk in chat_stream(message, session.history, platform=session.channel, agent_name=agent_name, emotional_pulse=pulse):
             full_reply += chunk
             yield chunk
 
@@ -697,6 +779,11 @@ async def _handle_stream(session: GatewaySession, message: str, agent_name: str 
             session.history.append({"role": "user", "content": message})
             session.history.append({"role": "assistant", "content": full_reply})
             session.save()
+
+            # Archival to Global Sovereign Memory
+            from skills.conversation.history import add_message
+            add_message("user", message)
+            add_message("assistant", full_reply)
     except Exception as e:
         yield f"\n⚠️ Stream error: {e}"
 

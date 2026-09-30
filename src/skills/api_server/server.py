@@ -67,12 +67,47 @@ def create_app():
     @app.get("/health")
     def health():
         from skills.hardware_monitor import get_system_info
+        import time
+        # Check if this process is the one actually running the bot
+        telegram_active = os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true"
+        is_leader = os.environ.get("ASURA_MANAGED_BOT") == "true" or telegram_active
+        
+        stats = get_system_info()
         return {
             "status": "ok", 
             "instance_name": config.INSTANCE_NAME,
-            "telegram_active": os.environ.get("ASURA_TELEGRAM_ACTIVE") == "true",
-            "system": get_system_info()
+            "is_leader": is_leader,
+            "telegram_active": telegram_active,
+            "system": stats, # RESTORED: Legacy nested object
+            "cpu": stats.get("cpu_percent", 0),
+            "ram": stats.get("memory_percent", 0),
+            "disk": stats.get("disk_percent", 0),
+            "uptime": int(time.time() - getattr(config, "_start_time", time.time()))
         }
+
+    @app.post("/witness/verify")
+    async def witness_verify(request: Request):
+        """Cross-node verification: Stable node verifies unstable node's fix."""
+        from core.phantom_verify import verify_fix_in_ghost
+        data = await request.json()
+        target_file = data.get("target_file")
+        new_code = data.get("new_code")
+        test_script = data.get("test_script")
+        
+        log_audit("WITNESS_REQUEST", f"Verifying fix for: {target_file}")
+        
+        if not target_file or not new_code:
+            return {"verified": False, "error": "Incomplete request"}
+            
+        # Run verification in local sandbox
+        res = await verify_fix_in_ghost(target_file, new_code, test_script)
+        
+        if res["success"]:
+            log_app(f"⚖️ Witness: Fix for {target_file} VERIFIED.")
+            return {"verified": True}
+        else:
+            log_audit("WITNESS_FAIL", f"Witness rejected fix: {res.get('error')}")
+            return {"verified": False, "error": res.get("error")}
 
     # ── Skills ────────────────────────────────────────────────
     @app.get("/skills")
@@ -260,9 +295,25 @@ def start_api_server():
 
     def run():
         import uvicorn
+        import psutil
+        port = config.API_PORT
+        host = config.API_HOST
+        
+        # Proactive Port Clear
+        try:
+            for proc in psutil.process_iter(['pid', 'name']):
+                try:
+                    for conn in proc.connections(kind='inet'):
+                        if conn.laddr.port == port:
+                            log_app(f"Closing legacy API process (PID {proc.info['pid']}) on port {port}")
+                            proc.kill()
+                except: pass
+        except Exception as e:
+            log_app(f"API port clear error: {e}")
+
         app = create_app()
-        log_app(f"API server starting on {config.API_HOST}:{config.API_PORT}")
-        uvicorn.run(app, host=config.API_HOST, port=config.API_PORT, log_level="warning")
+        log_app(f"API server starting on {host}:{port}")
+        uvicorn.run(app, host=host, port=port, log_level="warning")
 
     _server_thread = threading.Thread(target=run, daemon=True, name="api-server")
     _server_thread.start()

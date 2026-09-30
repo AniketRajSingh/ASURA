@@ -61,19 +61,9 @@ def update_env(updates: dict):
     Write updated key-value pairs to .env and hot-patch the live config module.
     Called by the dashboard Settings page when the user clicks Save.
     """
-    import config as cfg
+    from settings import settings as cfg
 
-    # Map from UI key → env var name (and config attribute)
-    key_map = {
-        "LLM_PROVIDER":    "TF_LLM_PROVIDER",
-        "OLLAMA_BASE_URL":  "TF_OLLAMA_BASE_URL",
-        "GROQ_API_KEY":    "TF_GROQ_API_KEY",
-        "GROQ_MODEL":      None,   # stored directly on config, no env prefix
-        "TELEGRAM_BOT_TOKEN": "TELEGRAM_BOT_TOKEN",
-        "MASTER_NAME":      "MASTER_NAME",
-    }
-
-    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".env")
+    env_path = os.path.join(cfg.ENGINE_HOME, ".env")
 
     # Read current .env
     env_lines = []
@@ -90,18 +80,22 @@ def update_env(updates: dict):
 
     # Apply updates
     for ui_key, value in updates.items():
-        if not value:
-            continue
+        if isinstance(value, (dict, list)):
+            continue # Skip trying to save complex objects to .env for now, or use json.dumps
+        if value is None:
+            value = ""
+        
         # Update live config
         if hasattr(cfg, ui_key):
             setattr(cfg, ui_key, value)
-        # Update env dict
-        env_var = key_map.get(ui_key)
-        if env_var:
-            env_dict[env_var] = value
-        elif ui_key not in key_map:
-            # Unknown key — try setting directly
-            env_dict[ui_key] = value
+            
+        # Update env dict (prefer ASURA_ prefix for standard settings)
+        env_var = f"ASURA_{ui_key}" if not ui_key.startswith("ASURA_") else ui_key
+        # For some things that are also standard without prefix
+        if ui_key in ["TELEGRAM_BOT_TOKEN", "MASTER_NAME"]:
+            env_var = ui_key
+            
+        env_dict[env_var] = str(value)
 
     # Write .env back
     with open(env_path, "w") as f:

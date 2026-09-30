@@ -539,12 +539,8 @@ Rules:
             
             # 3. Global System Check (Ensures no regression in other modules)
             from core.startup_checks import run_startup_checks
-            import asyncio
             try:
-                # We run this in a fresh event loop since we might be in a thread
-                loop = asyncio.new_event_loop()
-                summary = loop.run_until_complete(run_startup_checks())
-                loop.close()
+                summary = run_async(run_startup_checks())
                 
                 if "issues found" in summary and "0 issues" not in summary:
                     return False, f"Global Regression Detected:\n{summary}"

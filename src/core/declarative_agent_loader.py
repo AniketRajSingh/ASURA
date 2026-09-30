@@ -141,10 +141,10 @@ class AgentLoader:
             from skills.logger import log_app
             log_app(f"DEBUG: Intent recognition Level 3 starting (Model: {fast_model})...")
             
-            # Increase timeout for complex cluster routing
+            # Aggressive timeout for fast intent routing
             response = await asyncio.wait_for(
                 call_llm(prompt, model=fast_model, temperature=0.0),
-                timeout=15.0
+                timeout=5.0
             )
             
             selected = response.strip().lower().split()[0].replace(".", "").replace("'", "")

@@ -100,6 +100,26 @@ def create_venv():
     print("✅ Virtual environment created")
 
 
+def rotate_logs():
+    """Archive previous session logs into .old to ensure a fresh Guardian check."""
+    logs_dir = os.path.join(BASE_DIR, "data", "logs")
+    if not os.path.isdir(logs_dir):
+        return
+        
+    for fname in ["audit.txt", "log.txt", "telegram_bot.log", "audit.jsonl"]:
+        path = os.path.join(logs_dir, fname)
+        if os.path.isfile(path):
+            old_path = path + ".old"
+            try:
+                import shutil
+                shutil.copy2(path, old_path)
+                with open(path, "w") as f:
+                    f.write("")
+            except Exception:
+                pass
+    print("🧹 Previous session logs archived. Starting clean.")
+
+
 def install_deps():
     if os.path.isfile(PYPROJECT):
         print("📦 Installing dependencies with uv (ultra-fast)...")
@@ -234,9 +254,34 @@ def _is_already_running() -> bool:
     return False
 
 
+def start_telegram_daemon():
+    """Start the persistent Telegram interaction layer."""
+    print("🤖 Starting Persistent Telegram Interaction Layer...")
+    env = get_clean_env()
+    env["ASURA_MANAGED_BOT"] = "true"
+    
+    daemon_script = os.path.join(SRC_DIR, "daemon", "telegram_daemon.py")
+    log_file = os.path.join(BASE_DIR, "data", "logs", "telegram_bot.log")
+    
+    try:
+        with open(log_file, "a") as f:
+            # We use start_new_session=True so it doesn't die when run.py is interrupted
+            subprocess.Popen(
+                [PYTHON, "-u", daemon_script],
+                cwd=BASE_DIR,
+                env=env,
+                stdout=f,
+                stderr=f,
+                start_new_session=True
+            )
+        print(f"✅ Telegram Bot persistent. Logs: {os.path.relpath(log_file, BASE_DIR)}")
+    except Exception as e:
+        print(f"❌ Failed to start persistent bot: {e}")
+
+
 def start_system(watch: bool = True):
     """Start main.py with optional auto-restart on code changes."""
-    
+    rotate_logs()
     env = get_clean_env()
 
     # ── Single-instance guard ──────────────────────────────
@@ -246,6 +291,17 @@ def start_system(watch: bool = True):
         return
 
     print("\n🚀 Starting ASURA Self-Updating AI...\n")
+
+    # ─── Start Persistent Interaction Layer ───────────
+    # If we are in watch mode, we spawn the bot as a sidecar process 
+    # so it survives core engine restarts.
+    if watch:
+        start_telegram_daemon()
+        # Set flag so main.py doesn't start another bot instance
+        env["ASURA_MANAGED_BOT"] = "false" # main.py will see this
+        # Wait, if I set it to false, main.py WILL start it. 
+        # I want main.py to NOT start it.
+        env["ASURA_MANAGED_BOT"] = "skip" # Custom flag
 
     if not watch:
         # Simple mode — no watcher

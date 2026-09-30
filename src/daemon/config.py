@@ -25,8 +25,8 @@ COMMANDS = {
 }
 
 # Execution Paths
-ASURA_STOP_SCRIPT = PROJECT_ROOT / 'asura' / 'stop'
-ASURA_RUN_SCRIPT = PROJECT_ROOT / 'asura' / 'run'
+ASURA_STOP_SCRIPT = PROJECT_ROOT / 'stop.py'
+ASURA_RUN_SCRIPT = PROJECT_ROOT / 'run.py'
 
 # Timeout Settings
 RESTART_TIMEOUT = 30

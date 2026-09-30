@@ -22,15 +22,20 @@ def kill_processes(force: bool = False, scope: str = "all"):
     
     if scope in ["all", "core"]:
         phases.extend([
-            ("Watcher", ["run.py"]),
-            ("Core", ["main.py"]),
+            ("Watcher", ["run.py", "uv"]),
+            ("Core", ["main.py", "src/main.py", "src.main", "ASURA/src/main"]),
+            ("Telegram", ["telegram_daemon.py", "bot.py"]),
+            ("Dashboard", ["app.py", "dashboard/app.py"]),
         ])
         
     if scope in ["all", "daemon"]:
-        phases.append(("Gateway", ["src/daemon/monitor.py"]))
+        phases.append(("Gateway", ["monitor.py", "command_handler.py"]))
 
     if scope == "all":
-        phases.append(("Power Locks", ["caffeinate", "systemd-inhibit"]))
+        phases.extend([
+            ("AI Engines", ["qwen_tts_server.py", "ollama"]),
+            ("Power Locks", ["caffeinate", "systemd-inhibit"]),
+        ])
 
     total_killed = 0
 
@@ -43,15 +48,21 @@ def kill_processes(force: bool = False, scope: str = "all"):
                 cmdline = " ".join(proc.info['cmdline'] or [])
                 name = proc.info['name'] or ""
 
-                # Special check for monitor.py as it might be in cmdline
+                # Broader matching
                 is_target = any(t in cmdline or t in name for t in targets)
 
                 if is_target:
                     print(f"  ⚡ [{phase_name}] Terminating PID {proc.info['pid']} ({name})")
-                    if force:
-                        proc.kill()
-                    else:
+                    try:
                         proc.terminate()
+                        # Short wait before force kill
+                        _, alive = psutil.wait_procs([proc], timeout=1)
+                        if alive:
+                            print(f"  🚨 PID {proc.info['pid']} resilient. SIGKILL sent.")
+                            proc.kill()
+                    except:
+                        try: proc.kill()
+                        except: pass
                     total_killed += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass

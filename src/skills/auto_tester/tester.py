@@ -2,9 +2,24 @@
 # skills/auto_tester/tester.py — Automated Self-Testing
 # AI writes + runs tests before applying evolution changes
 # ============================================================
-import os, subprocess, tempfile
+import os, subprocess, tempfile, json
 from settings import settings as config
 from skills.logger import log_audit
+import asyncio
+
+def run_async(coro):
+    """Run an async coroutine synchronously, even if an event loop is already running."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+        
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    else:
+        return asyncio.run(coro)
 
 def run_syntax_check(filepath: str) -> dict:
     """Check Python file for syntax errors."""
@@ -40,14 +55,9 @@ def run_all_skill_imports() -> dict:
 
 def generate_test(code: str, purpose: str) -> str:
     """Use LLM to generate a test for given code."""
-    import asyncio
-    from core.llm import call_llm
-    prompt = f"""Write a simple pytest test for this code. Only return the test code.
-PURPOSE: {purpose}
-CODE:
-{code[:3000]}"""
     try:
-        return asyncio.run(call_llm(prompt, model=config.OLLAMA_MODEL_REVIEWER, stream=False))
+        from core.llm import call_llm
+        return run_async(call_llm(prompt, model=config.OLLAMA_MODEL_REVIEWER, stream=False))
     except: return ""
 
 def run_test_string(test_code: str) -> dict:
@@ -95,9 +105,8 @@ Return ONLY a JSON object:
 {{"passed": true/false, "feedback": "detailed explanation of any flaws or 'OK'"}}
 """
     try:
-        import asyncio
         from core.llm import call_llm
-        raw = asyncio.run(call_llm(prompt, model=config.OLLAMA_MODEL_REVIEWER, stream=False))
+        raw = run_async(call_llm(prompt, model=config.OLLAMA_MODEL_REVIEWER, stream=False))
         # Extract JSON from potential markdown fences
         if "```json" in raw:
             raw = raw.split("```json")[1].split("```")[0].strip()

@@ -1,13 +1,16 @@
 <!-- Widget: Pending Operations -->
-<div class="bg-white border border-zinc-200 rounded-2xl p-6 flex flex-col gap-6 shadow-sm w-full">
-    <div class="flex justify-between items-center bg-zinc-50 -m-6 mb-0 p-6 rounded-t-2xl border-b border-zinc-100">
+<div class="asura-card w-full">
+    <div class="asura-header">
         <div>
-            <h3 class="font-bold text-zinc-900 tracking-tight">Active Operation Stack</h3>
+            <h3>Active Operation Stack</h3>
             <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-[0.2em] mt-0.5">Autonomous Priority Queue</p>
         </div>
-        <span class="bg-black text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-lg shadow-lg">{{ todo_count }}</span>
+        <span id="op-counter" class="bg-black text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded-lg shadow-lg">{{ todo_count }}</span>
     </div>
-    <div class="flex flex-col gap-3 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar mt-2">
-        {{ todo_items }}
+    <div id="process-list" class="flex flex-col gap-3 overflow-y-auto max-h-[75vh] pr-2 custom-scrollbar mt-2">
+        <div class="flex items-center justify-center p-10 text-zinc-400">
+            <div class="animate-spin mr-3"><span class="material-symbols-outlined">sync</span></div>
+            <span class="text-xs font-bold uppercase tracking-widest">Polling Cluster...</span>
+        </div>
     </div>
 </div>

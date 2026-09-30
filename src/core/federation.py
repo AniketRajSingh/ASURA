@@ -21,7 +21,7 @@ class SovereignFederation:
     def __init__(self):
         self.peers = config.ASURA_PEERS
         self.auth_token = config.PEER_AUTH_TOKEN
-        self.client = httpx.AsyncClient(headers={"X-ASURA-Peer-Token": self.auth_token}, timeout=30)
+        self.client = httpx.AsyncClient(headers={"X-ASURA-Key": self.auth_token}, timeout=30)
         self._sync_running = False
 
     def start_sync_daemon(self):
@@ -147,27 +147,65 @@ class SovereignFederation:
             except Exception as e:
                 pass # Silently fail for peers that are offline
 
+    async def request_witness_verification(self, target_file: str, new_code: str, test_script: str) -> bool:
+        """
+        Send a fix to a stable peer for 'Witness' verification.
+        Returns True if the stable node confirms the fix is safe.
+        """
+        if not self.peers: return True # Solo mode is self-witnessed
+        
+        log_app(f"⚖️ Requesting Witness Verification from cluster...")
+        for url in self.peers:
+            try:
+                resp = await self.client.post(
+                    f"{url}/witness/verify", 
+                    json={
+                        "target_file": target_file,
+                        "new_code": new_code,
+                        "test_script": test_script
+                    },
+                    timeout=60
+                )
+                if resp.status_code == 200:
+                    res = resp.json()
+                    if res.get("verified"):
+                        log_app(f"✅ Witness {url} confirmed fix is safe.")
+                        return True
+                    else:
+                        log_audit("WITNESS_REJECTED", f"Peer {url} rejected fix: {res.get('error')}")
+            except Exception as e:
+                log_app(f"Witness node {url} unreachable: {e}")
+        
+        return False # No stable node confirmed safety
+
     async def should_start_bot(self) -> bool:
         """
         Deteremine if this instance should be the 'Leader' (Telegram active).
-        Checks if any peer is already online.
+        Aggressive Failover: If peers are offline or unhealthy, claim leadership.
         """
         if not self.peers:
-            return True # Solo mode
+            log_app("👑 Solo node detected. Claiming Leader Role (Bot ON).")
+            return True
             
         log_app("🌐 Federation: Checking peer status for Bot Election...")
         for url in self.peers:
             try:
-                resp = await self.client.get(f"{url}/health", timeout=5)
+                resp = await self.client.get(f"{url}/health", timeout=3)
                 if resp.status_code == 200:
                     data = resp.json()
+                    # A node is only a valid leader if it explicitly says telegram_active=True
                     if data.get("telegram_active") is True:
-                        log_app(f"📡 Peer {url} is already LEADER. Entering Follower Mode (Bot OFF).")
+                        log_app(f"📡 Peer {url} is HEALTHY and LEADER. Entering Follower Mode.")
                         return False
-            except Exception:
+                    else:
+                        log_app(f"📡 Peer {url} is online but PASSIVE.")
+                else:
+                    log_app(f"⚠️ Peer {url} returned status {resp.status_code}. Ignoring as leader candidate.")
+            except Exception as e:
+                log_app(f"⚠️ Peer {url} UNREACHABLE: {e}. Considering this node for leadership.")
                 continue
         
-        log_app("👑 No active leaders found. Claiming Leader Role (Bot ON).")
+        log_app("👑 No healthy active leaders found in cluster. Claiming Leader Role (Bot ON).")
         return True
 
 # Singleton

@@ -4,9 +4,25 @@
 
 import os
 import json
+import asyncio
 from datetime import datetime
 from settings import settings as config
 from skills.logger import log_audit, log_app
+
+
+def run_async(coro):
+    """Run an async coroutine synchronously, even if an event loop is already running."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+        
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    else:
+        return asyncio.run(coro)
 
 
 def _get_global_history_path() -> str:
@@ -44,6 +60,12 @@ def save_history(history: list[dict]):
 def add_message(role: str, content: str, metadata: dict = None):
     """Add a message to the unified global memory."""
     history = load_history()
+    
+    # Auto-tag if in Test Mode
+    if os.environ.get("ASURA_TEST_MODE") == "true":
+        if metadata is None: metadata = {}
+        metadata["is_test"] = True
+
     entry = {
         "role": role,
         "content": content,
@@ -272,3 +294,93 @@ def get_recent_context(limit: int = 5, **kwargs) -> list[dict]:
     """Return the most recent conversation entries for context injection."""
     history = load_history()
     return history[-limit:] if history else []
+
+def prune_history(semantic: bool = False) -> dict:
+    """
+    Remove low-value or test interactions from history.
+    Returns: {'pruned_count': int, 'removed_types': list}
+    """
+    history = load_history()
+    initial_len = len(history)
+    
+    # 1. Hard Pruning: Remove tagged tests
+    new_history = [m for m in history if not m.get("metadata", {}).get("is_test")]
+    pruned_tests = initial_len - len(new_history)
+    
+    # 2. Semantic Pruning: Filter noise (Greetings, trivial tests)
+    if semantic and len(new_history) > 10:
+        log_app("Anti-Bloat: Running semantic history pruning...")
+        prompt = f"""[AGENT: simplifier]
+Analyze the following conversation history. Identify and remove messages that are:
+1. Simple greetings (Hi, Hello, Hey) with no substantive follow-up.
+2. Trivial test messages (e.g. "test", "check", "working?") that don't contribute to long-term memory.
+3. Repetitive status confirmations that don't contain reasoning insights.
+
+Keep ALL substantive questions, code results, reasoning chains, and important project updates.
+
+CONVERSATION:
+{json.dumps(new_history[-30:], indent=2)}
+
+Return ONLY the cleaned JSON list of messages.
+"""
+        try:
+            from core.llm import call_llm
+            raw = run_async(call_llm(prompt, model=config.OLLAMA_MODEL_FAST))
+            import re
+            match = re.search(r'\[.*\]', raw, re.DOTALL)
+            if match:
+                cleaned_chunk = json.loads(match.group())
+                new_history = new_history[:-30] + cleaned_chunk
+        except Exception as e:
+            log_app(f"Semantic pruning failed: {e}")
+
+    final_len = len(new_history)
+    if final_len != initial_len:
+        save_history(new_history)
+        log_app(f"Pruned {initial_len - final_len} messages from history.")
+    
+    return {
+        "pruned": initial_len - final_len,
+        "remaining": final_len,
+        "test_pruned": pruned_tests
+    }
+
+
+def consolidate_history(user_id: str):
+    """
+    Consolidate redundant status messages and repetitive tips in history.
+    Uses the 'simplifier' agent to merge similar entries.
+    """
+    history = load_history()
+    if len(history) < 15: return # Need a decent chunk to consolidate
+
+    # 1. Identify candidates for consolidation (assistant status msgs, repetitive tips)
+    # We'll send the last 20 messages to the simplifier
+    chunk_to_simplify = history[-20:]
+    
+    prompt = f"""[AGENT: simplifier]
+Analyze the following conversation history. Identify REDUNDANT or REPETITIVE status messages, 
+hardware monitoring logs, or proactive tips that can be merged into a single concise summary.
+
+CONVERSATION:
+{json.dumps(chunk_to_simplify, indent=2)}
+
+GOAL:
+Replace the redundant blocks with a single 'Operational Summary' message.
+Keep all actual user questions and complex reasoning results intact.
+
+Return ONLY the consolidated JSON list of messages.
+"""
+    try:
+        from core.llm import call_llm
+        raw = run_async(call_llm(prompt, model=config.OLLAMA_MODEL_FAST))
+        import re
+        match = re.search(r'\[.*\]', raw, re.DOTALL)
+        if match:
+            new_chunk = json.loads(match.group())
+            # Replace the old chunk with the new one
+            new_history = history[:-20] + new_chunk
+            save_history(new_history)
+            log_app("Anti-Bloat: History consolidation successful.")
+    except Exception as e:
+        log_app(f"Anti-Bloat: Consolidation failed: {e}")

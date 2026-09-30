@@ -78,7 +78,8 @@ async def _summarize_messages(messages: list[dict]) -> str:
 
     try:
         # Use summary model (standardized)
-        res = await call_llm(prompt, model=getattr(config, "OLLAMA_MODEL_SUMMARY", config.OLLAMA_MODEL_FAST), stream=False)
+        # Force a short timeout so chat doesn't hang; fall back to text summary quickly
+        res = await call_llm(prompt, model=getattr(config, "OLLAMA_MODEL_SUMMARY", config.OLLAMA_MODEL_FAST), stream=False, timeout=15)
         if not res or len(res.strip()) < 10:
             log_audit("CONTEXT", "LLM summary too short, using fallback")
             return _fallback_summary(messages)

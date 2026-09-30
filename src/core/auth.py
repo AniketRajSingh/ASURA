@@ -43,6 +43,9 @@ def validate_api_key(key: str) -> bool:
     if hasattr(config, "API_KEY") and key == config.API_KEY:
         return True
     
+    if hasattr(config, "PEER_AUTH_TOKEN") and key == config.PEER_AUTH_TOKEN:
+        return True
+    
     # Check StateManager
     try:
         from core.state_manager import get_state_manager

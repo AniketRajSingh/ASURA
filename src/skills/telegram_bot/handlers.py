@@ -7,6 +7,7 @@ import html as html_mod
 import os
 import asyncio
 from typing import List
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import ContextTypes, ConversationHandler
 
@@ -37,6 +38,7 @@ __all__ = [
     "chat_handler",
     "voice_handler",
     "photo_handler",
+    "show_task_manager",
 ]
 
 # ===========================================================================
@@ -47,11 +49,11 @@ def master_only(func):
     from functools import wraps
     @wraps(func)
     async def wrapper(update, context, *args, **kwargs):
-        from settings import settings as config
+        from settings import settings as cfg
         user_id = update.effective_user.id
-        if config.PUBLIC_ACCESS_ALLOWED:
+        if cfg.PUBLIC_ACCESS_ALLOWED:
             return await func(update, context, *args, **kwargs)
-        if user_id != config.TELEGRAM_ADMIN_CHAT_ID:
+        if user_id != cfg.TELEGRAM_ADMIN_CHAT_ID:
             log_audit("SECURITY_ALERT", f"Unauthorized access attempt by {user_id}")
             await update.message.reply_text(
                 format_message("⛔ <b>Access Denied.</b> Only my Master has sovereignty over my systems.", platform="telegram"),
@@ -64,11 +66,11 @@ def master_only(func):
 @master_only
 async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle voice notes: Transcribe -> Reasoning -> Speak back."""
-    from settings import settings as config
+    from settings import settings as cfg
     log_audit("TELEGRAM", "Processing voice note...")
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="record_voice")
     voice_file = await update.message.voice.get_file()
-    ogg_path = os.path.join(config.DATA_DIR, f"voice_{update.message.message_id}.ogg")
+    ogg_path = os.path.join(cfg.DATA_DIR, f"voice_{update.message.message_id}.ogg")
     await voice_file.download_to_drive(ogg_path)
     try:
         from skills.voice.interface import transcribe_audio
@@ -85,20 +87,20 @@ async def voice_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 @master_only
 async def photo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle photos for visual analysis and UI debugging."""
-    from settings import settings as config
+    from settings import settings as cfg
     log_audit("TELEGRAM", "Processing incoming photo...")
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="upload_photo")
     photo = update.message.photo[-1]
     photo_file = await photo.get_file()
-    path = os.path.join(config.DATA_DIR, f"photo_{update.message.message_id}.jpg")
+    path = os.path.join(cfg.DATA_DIR, f"photo_{update.message.message_id}.jpg")
     await photo_file.download_to_drive(path)
     caption = update.message.caption or "Analyze this image."
     try:
         from skills.visual.vision import analyze_image, debug_ui_screenshot
         if any(w in caption.lower() for w in ["debug", "fix", "issue", "broken"]):
-            analysis = debug_ui_screenshot(path, bug_description=caption)
+            analysis = await debug_ui_screenshot(path, bug_description=caption)
         else:
-            analysis = analyze_image(path, question=caption, heavy=True)
+            analysis = await analyze_image(path, question=caption, heavy=True)
         await update.message.reply_text(format_message(analysis, platform="telegram"), parse_mode="HTML")
     finally:
         if os.path.exists(path): os.remove(path)
@@ -119,7 +121,7 @@ async def send_topic_buttons(update_or_context, topics: List[str], chat_id: int 
 
 @master_only
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    from settings import settings as config
+    from settings import settings as cfg
     from telegram import WebAppInfo
     import socket
     
@@ -127,7 +129,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # 1. Use manual override if set in .env
     # 2. Use local network IP (so it works on phone via Wi-Fi)
     # 3. Fallback to localhost
-    webapp_url = config.TELEGRAM_WEBAPP_URL
+    webapp_url = cfg.TELEGRAM_WEBAPP_URL
     
     if not webapp_url:
         try:
@@ -136,9 +138,9 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             s.connect(("8.8.8.8", 80))
             local_ip = s.getsockname()[0]
             s.close()
-            webapp_url = f"http://{local_ip}:{config.DASHBOARD_PORT}"
+            webapp_url = f"http://{local_ip}:{cfg.DASHBOARD_PORT}"
         except:
-            webapp_url = f"http://localhost:{config.DASHBOARD_PORT}"
+            webapp_url = f"http://localhost:{cfg.DASHBOARD_PORT}"
 
     # ─── Deep Linking Logic ────────────
     args = context.args
@@ -161,7 +163,8 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     reply_kb = ReplyKeyboardMarkup([
         ["🖥️ Dashboard", "🧩 Skills"],
         ["🚦 Health", "📸 Screenshot"],
-        ["🔍 Think", "🛠️ Control Panel"]
+        ["🔍 Think", "📋 Task Manager"],
+        ["🛠️ Control Panel"]
     ], resize_keyboard=True)
 
     # Inline Action Buttons
@@ -179,7 +182,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     welcome_text = (
         f"🤖 <b>ASURA — Sovereign AI</b>\n"
-        f"Master: <code>{config.MASTER_NAME}</code>\n\n"
+        f"Master: <code>{cfg.MASTER_NAME}</code>\n\n"
         f"I am your recursive intelligence hub. Use the button below to launch the "
         f"interactive <b>Command Center</b> Mini-App, or use the menu buttons below."
     )
@@ -334,7 +337,13 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                         f"{hardware_stats}\n\n"
                         f"🛠️ <b>Integrity Check:</b>\n{integrity_res}"
                     )
-                    try: await status_msg.edit_text(full_report, parse_mode="HTML")
+                    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+                    kb = InlineKeyboardMarkup([
+                        [InlineKeyboardButton("📋 Task Manager", callback_data="choice_task_manager")],
+                        [InlineKeyboardButton("🧹 Deep Cleanup", callback_data="deep_cleanup")],
+                        [InlineKeyboardButton("🛑 Stop Live", callback_data="choice_stop_live")]
+                    ])
+                    try: await status_msg.edit_text(full_report, reply_markup=kb, parse_mode="HTML")
                     except: break
                     await asyncio.sleep(5)
                 except: break
@@ -352,11 +361,13 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             reply_markup=ForceReply(selective=True),
             parse_mode="HTML"
         )
+    elif user_msg == "📋 Task Manager":
+        return await show_task_manager(update, context)
 
     elif user_msg == "🛠️ Control Panel":
-        from settings import settings as config
-        debug_status = "✅ ON" if getattr(config, "DEBUG_MODE", False) else "❌ OFF"
-        public_status = "✅ ON" if getattr(config, "PUBLIC_ACCESS_ALLOWED", False) else "❌ OFF"
+        from settings import settings as cfg
+        debug_status = "✅ ON" if getattr(cfg, "DEBUG_MODE", False) else "❌ OFF"
+        public_status = "✅ ON" if getattr(cfg, "PUBLIC_ACCESS_ALLOWED", False) else "❌ OFF"
         
         kb = [
             [InlineKeyboardButton(f"🪲 Debug Mode: {debug_status}", callback_data="toggle_debug")],
@@ -379,12 +390,67 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     # Handle replies to the "Think" prompt
     if update.message.reply_to_message and "What should I reason about?" in update.message.reply_to_message.text:
         from skills.telegram_bot.bot import cmd_think
-        # Create a mock context with the user message as an argument
         context.args = [user_msg]
         return await cmd_think(update, context)
 
+    # ─── New: Edit/Question Recommendation Loop ───────────
+    if update.message.reply_to_message and "Edit Recommendation" in update.message.reply_to_message.text:
+        rec_id = context.user_data.get("editing_rec_id")
+        if rec_id:
+            from core.recommendation import recommendation_store
+            from core.llm import call_llm
+            status = await update.message.reply_text("🔄 <i>Updating recommendation...</i>", parse_mode="HTML")
+            
+            # Logic: Use LLM to update the recommendation based on user feedback
+            items = recommendation_store.get_pending()
+            rec = next((i for i in items if i.id == rec_id), None)
+            
+            prompt = f"Original Recommendation: {rec.content if rec else 'N/A'}\nUser Feedback/Question: {user_msg}\n\nUpdate the recommendation or answer the question concisely. Maintain a proactive, actionable tone."
+            updated_content = await call_llm(prompt)
+            updated_content = updated_content.replace("<br>", "\n").replace("<br/>", "\n").replace("</br>", "")
+            import re
+            
+            # Simple Markdown to HTML Conversion for Telegram
+            updated_content = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', updated_content)
+            updated_content = re.sub(r'__(.+?)__', r'<b>\1</b>', updated_content)
+            updated_content = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<i>\1</i>', updated_content)
+            updated_content = re.sub(r'```(.*?)```', r'<pre>\1</pre>', updated_content, flags=re.DOTALL)
+            
+            # Smart Table Wrapping
+            table_pattern = r'(\n(?:\|.*?\|)+\n(?:\|[- :|]+\|)+\n(?:\|.*?\|(?: *\n|$))+)'
+            def wrap_table(match): return f"\n<pre>{match.group(1).strip()}</pre>\n"
+            updated_content = re.sub(table_pattern, wrap_table, "\n" + updated_content)
+            
+            # Clean unsupported HTML
+            updated_content = re.sub(r'<(?!/?(b|i|u|s|a|code|pre)\b)[^>]+>', '', updated_content)
+            
+            recommendation_store.update_content(rec_id, updated_content)
+            
+            await status.delete()
+            kb = [
+                [InlineKeyboardButton("📥 Add to Queue", callback_data=f"choice_rec_add_{rec_id}")],
+                [InlineKeyboardButton("✏️ Further Edit / Question", callback_data=f"choice_rec_edit_{rec_id}")],
+                [InlineKeyboardButton("❌ Dismiss", callback_data=f"choice_rec_del_{rec_id}")]
+            ]
+            return await update.message.reply_text(
+                f"🎯 <b>Updated Recommendation</b>\n\n{updated_content}",
+                reply_markup=InlineKeyboardMarkup(kb),
+                parse_mode="HTML"
+            )
+
+    # ─── New: Anti-Bloat Consolidation ───────────────────
+    context.user_data["msg_count"] = context.user_data.get("msg_count", 0) + 1
+    if context.user_data["msg_count"] >= 10:
+        context.user_data["msg_count"] = 0
+        from core.gateway import get_or_create_session
+        session = get_or_create_session(user_id, "telegram")
+        # Trigger async consolidation (simplified)
+        log_app("Anti-Bloat: Consolidating history...")
+        from skills.conversation.history import consolidate_history
+        await asyncio.to_thread(consolidate_history, user_id)
+
     # ─── Multi-Device Routing Logic ───────────
-    from settings import settings as config
+    from settings import settings as cfg
     from core.federation import federation
     
     target_peer = None
@@ -398,8 +464,8 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         clean_msg = match.group(2).strip()
         
         # If target is NOT this instance, find the peer URL
-        if target_name.lower() != config.INSTANCE_NAME.lower():
-            for peer_url in config.ASURA_PEERS:
+        if target_name.lower() != cfg.INSTANCE_NAME.lower():
+            for peer_url in cfg.ASURA_PEERS:
                 # We'll ping to verify name (simplified for now)
                 target_peer = peer_url
                 break
@@ -411,62 +477,73 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
     # ──────────────────────────────────────────
 
-    # ─── Visual Thinking Indicator ───────────
-    thinking_gif = "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHB0eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6eGZ6ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7bu3XilJ5BOiSGic/giphy.gif"
-    gif_msg = None
-    try:
-        gif_msg = await update.message.reply_animation(animation=thinking_gif)
-    except: pass
-    
-    status_msg = await update.message.reply_text("🧠 <i>ASURA is processing...</i>", parse_mode="HTML")
-    
-    try:
-        from core.gateway import handle_message
-        from skills.telegram_bot.bot import send_smart_reply
-        
-        # Use Fast model for general chat responsiveness
-        stream = await handle_message(user_id, user_msg, channel="telegram", stream=True, agent_name="asura-telegram")
-        full_reply = ""; last_up = 0
-        import time
-        async for chunk in stream:
-            if "[METADATA]" in chunk: continue
-            full_reply += chunk
-            if time.time() - last_up > 2.5: # Increased interval for stability
-                try: await status_msg.edit_text(format_message(full_reply + " █", platform="telegram"), parse_mode="HTML"); last_up = time.time()
-                except: pass
-        
-        # Safe cleanup
-        try: await status_msg.delete()
-        except: pass
-        if gif_msg:
-            try: await gif_msg.delete()
-            except: pass
+    # ─── Precision Telemetry & Profiling ────────────
+    import time
+    t_start = time.perf_counter()
 
-        from skills.telegram_bot.bot import get_or_create_session
-        session = get_or_create_session(user_id, "telegram"); choices = session.metadata.pop("pending_choices", None)
-        markup = None
+    # ─── Visual Thinking Indicator (Sticker) ────────
+    # Using local premium thinking sticker
+    sticker_path = os.path.join(cfg.BASE_DIR, "assets", "thinking.png")
+    sticker_msg = None
+    if os.path.exists(sticker_path):
+        try:
+            with open(sticker_path, "rb") as f:
+                sticker_msg = await update.message.reply_sticker(sticker=f)
+        except Exception as e:
+            log_app(f"Sticker Error: {e}")
+    
+    t_sticker = time.perf_counter()
+    status_msg = await update.message.reply_text("🧠 <i>ASURA is processing...</i>", parse_mode="HTML")
+    t_status = time.perf_counter()
+    
+    try:
+        from skills.telegram_bot.bot import get_llm_queue
         
-        # 1. Handle MCQ Buttons
-        if choices:
-            kb = [[InlineKeyboardButton(c, callback_data=f"choice_{i+j}") for j, c in enumerate(choices[i:i+2])] for i in range(0, len(choices), 2)]
-            markup = InlineKeyboardMarkup(kb); context.user_data["pending_mcq"] = {"choices": choices}; session.save()
-            
-        # 2. Handle Checklist (MSQ) Buttons
-        check_items = re.findall(r'[☐☑]\s*(.*)', full_reply)
-        if check_items and not markup: # Don't mix MCQ and MSQ for now
-            kb = [[InlineKeyboardButton(f"☐ {item}", callback_data=f"toggle_check_{i}")] for i, item in enumerate(check_items)]
-            markup = InlineKeyboardMarkup(kb)
-            # Remove raw checklist from text
-            full_reply = re.sub(r'[☐☑]\s*.*', '', full_reply).strip()
-            full_reply += "\n\n📋 <b>Interactive Checklist:</b>"
-        full_reply = full_reply.strip()
-        if full_reply:
-            await send_smart_reply(update, full_reply, parse_mode="HTML", reply_markup=markup)
+        # Create Task Payload for the Sovereign Worker
+        task = {
+            "user_id": user_id,
+            "user_msg": user_msg,
+            "status_msg": status_msg,
+            "sticker_msg": sticker_msg,
+            "update": update,
+            "context": context
+        }
+        
+        # Enqueue the workload instantly to free the polling connection
+        await get_llm_queue().put(task)
+        log_audit("TELEGRAM", f"Message payload from {user_id} dispatched to Sovereign Worker Queue")
     except Exception as e:
         log_app(f"Chat Handler Error: {e}")
         try:
             await update.message.reply_text(f"❌ <b>Error:</b> {e}", parse_mode="HTML")
         except: pass
+
+async def show_task_manager(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show the Task Manager queue."""
+    from core.recommendation import recommendation_store
+    approved = recommendation_store.get_approved()
+    
+    # Handle both Message and CallbackQuery
+    send_fn = update.message.reply_text if update.message else update.callback_query.message.reply_text
+    
+    if not approved:
+        kb = [[InlineKeyboardButton("🧠 Manage Recommendations", callback_data="choice_expand_recs")]]
+        await send_fn(
+            "📋 <b>Task Manager</b>\nYour queue is currently empty. Would you like to review pending recommendations?", 
+            reply_markup=InlineKeyboardMarkup(kb),
+            parse_mode="HTML"
+        )
+        return
+    
+    msg = "📋 <b>Active Sovereign Queue</b>\nThese tasks execute autonomously when resources allow.\n\n"
+    kb = []
+    for i, task in enumerate(approved):
+        msg += f"{i+1}. <b>{task.content}</b>\n"
+        kb.append([
+            InlineKeyboardButton(f"✅ Done #{i+1}", callback_data=f"choice_task_done_{task.id}"),
+            InlineKeyboardButton(f"🗑️ Delete #{i+1}", callback_data=f"choice_task_del_{task.id}")
+        ])
+    await send_fn(msg, reply_markup=InlineKeyboardMarkup(kb), parse_mode="HTML")
 
 async def checklist_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle interactive checklist toggles."""

@@ -91,13 +91,15 @@ def detect_emotion(message: str) -> dict:
     return {"emotion": "neutral", "confidence": 0.5, "signals": []}
 
 
-def get_adaptive_prefix(emotion: str) -> str:
+def get_adaptive_prefix(emotion: str, confidence: float = 1.0) -> str:
     """Get a response style adaptation based on detected emotion."""
+    if confidence < 0.4: return ""
+    
     adaptations = {
-        "frustrated": "I sense some frustration — let me help fix this quickly and clearly. ",
-        "excited": "Love the energy! ",
-        "tired": "Quick answer for you — ",
-        "curious": "Great question! ",
+        "frustrated": "I sense some frustration—let's resolve this with precision. ",
+        "excited": "Love the momentum! 🚀 ",
+        "tired": "Quick and efficient for you— ",
+        "curious": "Intriguing direction! ",
         "neutral": "",
     }
     return adaptations.get(emotion, "")

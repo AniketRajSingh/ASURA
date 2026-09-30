@@ -1,6 +1,6 @@
 # ASURA Capabilities Registry
 > This file is autonomously maintained by the DocUpdater daemon.
-> Last updated: Wed Mar 18 11:15:09 2026
+> Last updated: Tue Mar 24 13:00:36 2026
 
 ASURA possesses a modular 'Skill' architecture. Each skill is a self-contained capability that registers one or more tools into the MCP-Lite protocol.
 

@@ -72,14 +72,29 @@ def _image_to_base64(path: str) -> Optional[str]:
     except Exception:
         return None
 
-def analyze_image(image_path: str, question: str = "Describe this image in detail.", heavy: bool = False) -> str:
-    """Analyze an image using Qwen3.5 Vision.
-    
-    Args:
-        image_path: Path to the image file.
-        question: Prompt for the model.
-        heavy: If True, uses the 35B model for deep reasoning.
-    """
+class AwaitableString(str):
+    """String subclass that can also be awaited in async contexts."""
+    def __await__(self):
+        async def _coro():
+            return str(self)
+        return _coro().__await__()
+
+def run_async(coro):
+    """Run an async coroutine synchronously, even if an event loop is already running."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+        
+    if loop and loop.is_running():
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor(1) as pool:
+            return pool.submit(asyncio.run, coro).result()
+    else:
+        return asyncio.run(coro)
+
+async def _async_analyze_image(image_path: str, question: str = "Describe this image in detail.", heavy: bool = False) -> str:
+    """Internal coroutine for image analysis."""
     if not os.path.isfile(image_path):
         return f"Image not found: {image_path}"
 
@@ -95,10 +110,10 @@ def analyze_image(image_path: str, question: str = "Describe this image in detai
     
     try:
         log_audit("VISION", f"Routing to {vision_model} (heavy={heavy})")
-        result = asyncio.run(call_llm(
+        result = await call_llm(
             question, model=vision_model,
             images=[img_b64], stream=False
-        ))
+        )
         if result:
             return result
     except Exception as e:
@@ -107,7 +122,15 @@ def analyze_image(image_path: str, question: str = "Describe this image in detai
 
     return "No response from vision model."
 
-def ocr_image(image_path: str) -> str:
+def analyze_image(image_path: str, question: str = "Describe this image in detail.", heavy: bool = False) -> AwaitableString:
+    """Analyze an image using Qwen3.5 Vision.
+    
+    Can be called synchronously OR awaited in an async context.
+    """
+    res = run_async(_async_analyze_image(image_path, question=question, heavy=heavy))
+    return AwaitableString(res)
+
+def ocr_image(image_path: str) -> AwaitableString:
     """Extract and list ALL text visible in this image."""
     return analyze_image(
         image_path, 
@@ -115,7 +138,7 @@ def ocr_image(image_path: str) -> str:
         heavy=False
     )
 
-def describe_screenshot(image_path: str) -> str:
+def describe_screenshot(image_path: str) -> AwaitableString:
     """Produce a detailed, UI-aware description of a screenshot using 35B."""
     ui_prompt = (
         "Describe this screenshot in detail. Identify all UI elements such as "
@@ -126,7 +149,7 @@ def describe_screenshot(image_path: str) -> str:
     )
     return analyze_image(image_path, ui_prompt, heavy=True)
 
-def debug_ui_screenshot(image_path: str, bug_description: str = "Look for visual glitches or broken UI.") -> str:
+def debug_ui_screenshot(image_path: str, bug_description: str = "Look for visual glitches or broken UI.") -> AwaitableString:
     """Analyze a screenshot specifically for UI bugs and fixes using Qwen 35B."""
     debug_prompt = (
         f"CONTEXT: The user is reporting a UI issue: '{bug_description}'\n\n"

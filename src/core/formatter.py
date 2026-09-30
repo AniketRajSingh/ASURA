@@ -110,26 +110,26 @@ def format_message(text: str, platform: str = "cli"):
         # 1. Strip internal RAG/Memory tags
         processed = re.sub(r'\[(EPISODIC|VAULT|ARCH)\]\s*', '', text)
         
-        # 2. Strip Action/Observation markers (since they are now split into separate messages)
+        # 2. Strip Action/Observation markers
         processed = re.sub(r'\[/?(ACTION|OBSERVATION)\]', '', processed)
 
-        # 3. Handle Mermaid diagrams (Telegram doesn't render them)
+        # 3. Handle Mermaid diagrams
         processed = re.sub(r'```mermaid.*?```', r'📊 <b>[Mermaid Diagram]</b>\n<i>(Use a Mermaid viewer for full visualization)</i>', processed, flags=re.DOTALL)
 
-        # 3. Handle tables first (wrap markdown tables in <pre> so they don't break)
+        # 4. Detect and Extract Markdown Tables
         table_pattern = r'((?:\|.*\|(?:\n|$))+(?:\|[- :|]*\|(?:\n|$))+(?:\|.*\|(?:\n|$))+)'
-        def wrap_table(match):
-            return f"\n<pre>{match.group(1).strip()}</pre>\n"
+        # Wrap tables in <pre> tags so they render elegantly with monospaced font
+        def wrap_table(match): return f"\n<pre>{match.group(1).strip()}</pre>\n"
         processed = re.sub(table_pattern, wrap_table, processed, flags=re.MULTILINE)
         
-        # 4. Escape HTML entities NOT in our pre blocks or basic tags
+        # 5. Escape HTML entities
         processed = processed.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-        processed = processed.replace("&lt;pre&gt;", "<pre>").replace("&lt;/pre&gt;", "</pre>")
         processed = processed.replace("&lt;b&gt;", "<b>").replace("&lt;/b&gt;", "</b>")
         processed = processed.replace("&lt;i&gt;", "<i>").replace("&lt;/i&gt;", "</i>")
         processed = processed.replace("&lt;code&gt;", "<code>").replace("&lt;/code&gt;", "</code>")
+        processed = processed.replace("&lt;pre&gt;", "<pre>").replace("&lt;/pre&gt;", "</pre>")
         
-        # 5. Bold/Italic/Code mapping
+        # 6. Bold/Italic/Code mapping
         processed = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', processed)
         processed = re.sub(r'\*(.*?)\*', r'<i>\1</i>', processed)
         processed = re.sub(r'`(.*?)`', r'<code>\1</code>', processed)

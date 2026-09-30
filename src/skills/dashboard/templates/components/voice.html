@@ -50,13 +50,15 @@
         </div>
 
         <!-- Transcription Floating Panel -->
-        <div class="absolute bottom-12 left-12 right-12 bg-white/5 backdrop-blur-3xl border border-white/10 rounded-3xl p-8 max-h-48 overflow-y-auto custom-scrollbar shadow-2xl">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-2 h-2 bg-zinc-500 rounded-full animate-pulse"></div>
-                <span class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Neural Stream</span>
-            </div>
-            <div id="transcript" class="text-zinc-200 text-sm font-medium leading-relaxed font-mono opacity-80">
-                Awaiting audio input...
+        <div class="modal-overlay pointer-events-none" style="background-color: transparent;">
+            <div class="modal-card glass-card modal-center w-[80%] max-h-48 overflow-y-auto custom-scrollbar shadow-2xl pointer-events-auto bg-zinc-900/90 border-zinc-800">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-2 h-2 bg-zinc-500 rounded-full animate-pulse"></div>
+                    <span class="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Neural Stream</span>
+                </div>
+                <div id="transcript" class="text-zinc-200 text-sm font-medium leading-relaxed font-mono opacity-80">
+                    Awaiting audio input...
+                </div>
             </div>
         </div>
     </div>

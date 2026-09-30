@@ -29,40 +29,38 @@ class SelfHealingDaemon:
         self._notify = notify_fn
         self._running = False
         self._thread = None
-        self._last_position = 0
+        self._last_positions = {}  # {log_path: position}
         self._failure_counts = {}  # {error_signature: count}
         self._max_auto_attempts = 3
         
-        # signature = hash(error_message + target_file)
-        self.log_file = config.AUDIT_LOG_PATH
+        # Surveillance list: Monitor both core and app-specific logs
+        self.log_files = [config.AUDIT_LOG_PATH, config.APP_LOG_PATH]
 
     async def start(self):
         """Start the self-healing monitoring task."""
         self._running = True
-        # Initialize log position to end of file to avoid re-fixing old errors
-        if os.path.isfile(self.log_file):
-            self._last_position = os.path.getsize(self.log_file)
+        # Initialize log positions to end of file to avoid re-fixing old errors
+        for log in self.log_files:
+            if os.path.isfile(log):
+                self._last_positions[log] = os.path.getsize(log)
             
         asyncio.create_task(self._loop())
-        log_app("✨ Self-healing system initialized (Antibodies Active)")
+        log_app("✨ Self-healing system initialized (Multi-Log Surveillance Active)")
 
     async def pre_start_check(self):
-        """
-        Check for crashes that happened during the LAST run.
-        This handles the "Main Thread" crash scenario where the daemon
-        stopped because the whole process died.
-        """
-        if not os.path.isfile(self.log_file):
+        """Check for crashes that happened during the LAST run."""
+        # Check the primary audit log for session-ending crashes
+        audit_log = config.AUDIT_LOG_PATH
+        if not os.path.isfile(audit_log):
             return
 
         log_app("🛡️ Guardian Drive: Scanning for session-ending crashes...")
         
-        # Read last 10KB of logs (enough for a few tracebacks)
-        file_size = os.path.getsize(self.log_file)
+        file_size = os.path.getsize(audit_log)
         read_size = min(file_size, 10240)
         
         content = ""
-        with open(self.log_file, "r", encoding="utf-8") as f:
+        with open(audit_log, "r", encoding="utf-8") as f:
             f.seek(file_size - read_size)
             content = f.read()
 
@@ -102,37 +100,69 @@ class SelfHealingDaemon:
                 log_audit("HEALING_ERROR", f"Daemon loop failed: {e}")
 
     async def _scan_logs(self):
-        """Scan audit log for new tracebacks."""
-        if not os.path.isfile(self.log_file):
+        """Pattern-agnostic log surveillance."""
+        for log_path in self.log_files:
+            if not os.path.isfile(log_path): continue
+            current_size = os.path.getsize(log_path)
+            last_pos = self._last_positions.get(log_path, 0)
+            if current_size < last_pos: last_pos = 0 
+            if current_size == last_pos: continue
+
+            with open(log_path, "r", encoding="utf-8") as f:
+                f.seek(last_pos)
+                new_lines = f.readlines()
+                self._last_positions[log_path] = f.tell()
+
+            # Broad Anomaly Detection: Look for 'error', 'exception', 'fail', 'traceback'
+            for i, line in enumerate(new_lines):
+                low_line = line.lower()
+                if any(trigger in low_line for trigger in ["error", "exception", "fail", "traceback"]):
+                    # Skip known benign warnings
+                    if "ptbuserwarning" in low_line: continue
+                    
+                    # Capture context (3 lines before, 2 lines after)
+                    start = max(0, i - 3)
+                    end = min(len(new_lines), i + 3)
+                    context = "".join(new_lines[start:end])
+                    
+                    log_audit("HEALING_SENSE", f"Anomaly detected in {os.path.basename(log_path)}")
+                    await self._analyze_anomaly(context, log_path)
+
+    async def _analyze_anomaly(self, context: str, source_log: str):
+        """Use the LLM to determine if the log anomaly is a fixable bug."""
+        # Avoid duplicate analysis for the same error in a short window
+        error_hash = hash(context.strip())
+        if error_hash in self._failure_counts and self._failure_counts[error_hash] > 5:
             return
 
-        current_size = os.path.getsize(self.log_file)
-        if current_size < self._last_position:
-            self._last_position = 0  # Log rotated
+        prompt = f"""[AGENT: bug_hunter]
+You are the ASURA Sovereign Healer. You found this anomaly in {source_log}:
+---
+{context}
+---
 
-        if current_size == self._last_position:
-            return
+MISSION:
+1. Is this a Python error or system failure that needs a code fix? (YES/NO)
+2. If YES, identify the file and the error message.
+3. Propose a surgical fix.
 
-        new_content = ""
-        with open(self.log_file, "r", encoding="utf-8") as f:
-            f.seek(self._last_position)
-            new_content = f.read()
-            self._last_position = f.tell()
-
-        # Look for tracebacks
-        matches = re.findall(
-            r"(Traceback \(most recent call last\):.*?)\n([a-zA-Z0-9_.]+: .*?)\n", 
-            new_content, 
-            re.DOTALL
-        )
-
-        for tb, err_msg in matches:
-            await self._handle_crash(tb.strip(), err_msg.strip())
-
-        # ─── Detect Telegram Conflict (Duplicate Instance) ───
-        if "terminated by other getUpdates request" in new_content:
-            log_audit("HEALING", "Detected Telegram Conflict (Multi-instance). Initiating cleanup.")
-            await self._handle_telegram_conflict()
+Return ONLY a JSON object:
+{{"is_bug": bool, "file": "path/to/file.py", "error": "message", "fix_idea": "..."}}
+"""
+        try:
+            raw = await call_llm(prompt, model=config.OLLAMA_MODEL_FAST)
+            import json, re
+            # Fix: Look for standard single-brace JSON
+            match = re.search(r'\{.*\}', raw, re.DOTALL)
+            if not match: 
+                log_audit("HEALING_WARN", "LLM returned no valid JSON fix")
+                return
+            res = json.loads(match.group())
+            
+            if res.get("is_bug"):
+                self._failure_counts[error_hash] = self._failure_counts.get(error_hash, 0) + 1
+                await self._handle_crash(context, res["error"])
+        except: pass
 
     async def _handle_telegram_conflict(self):
         """Emergency cleanup for duplicate bot instances."""
@@ -244,64 +274,96 @@ class SelfHealingDaemon:
         await self._apply_fix(target_file, err_msg, tb, context_files)
 
     async def _apply_fix(self, target_file: str, err_msg: str, tb: str, context_files: list[str] = None):
-        """Invoke SelfUpdater to fix the bug."""
+        """Invoke Architect-Critic loop to fix and verify the bug in a sandbox."""
         try:
             from core.resource_governor import get_governor
+            from core.phantom_verify import verify_fix_in_ghost
+            from core.self_updater import SelfUpdater
+            
             can, reason = get_governor().can_proceed("llm")
-            if not can:
-                log_audit("HEALING", f"Deferred: {reason}")
-                return
+            if not can: return
+
+            from core.antigravity_bridge import antigravity_bridge
+            incident = antigravity_bridge.record_incident(err_msg, tb, target_file, context_files)
+            incident_id = incident.get("id")
 
             updater = SelfUpdater(telegram_notify_fn=self._notify)
-            
-            # Read context from all relevant files
             extra_context = ""
             if context_files:
                 for cf in set(context_files):
                     try:
                         with open(os.path.join(config.BASE_DIR, cf), "r") as f:
                             extra_context += f"\n### File Content: {cf}\n{f.read()}\n"
-                    except Exception:
-                        pass
+                    except: pass
 
-            # Specialized analysis prompt for healing
-            prompt = f"""You are fixing a BUG in a Self-Updating AI system.
-Crash Traceback:
+            # ─── 🧠 Phase 1: Architect (Heavy Reasoning) ───────────
+            architect_prompt = f"""[AGENT: bug_hunter]
+You are the ARCHITECT of the ASURA Sovereign Healer.
+FAILURE: {err_msg}
+TRACEBACK:
 {tb}
 
-Error: {err_msg}
-Target File to Fix: {target_file}
-
+TARGET: {target_file}
+CONTEXT FILES:
 {extra_context}
 
-Rules:
-1. Return ONLY a JSON object:
-   {{"summary": "Fix for {err_msg}", "target_file": "{target_file}", "is_new_file": false, "reasoning": "Root cause analysis: ...", "todo_id": null}}
-2. Ensure you resolve the ROOT CAUSE (e.g., if a symbol is missing, add it to the target file).
-3. Do not just patch the traceback file if the error indicates a missing symbol in an imported module.
+MISSION:
+Plan a surgical fix. Provide the fix idea and the actual updated code for the target file.
+Return ONLY a JSON object:
+{{"summary": "Fix for {err_msg}", "code": "full updated content of {target_file}", "test_script": "python code to re-verify the fix (optional)"}}
 """
-            # Use unified call_llm wrapper
-            raw_idea = await call_llm(prompt, model=config.OLLAMA_MODEL, stream=False)
-            idea = updater._extract_json(raw_idea)
-            if not idea:
-                raise ValueError("LLM failed to generate fix idea")
+            # Prefer powerful Groq heavy model if available
+            architect_model = config.GROQ_MODEL_HEAVY if (getattr(config, "GROQ_API_KEY", None) and not get_governor().is_exhausted("groq")) else config.OLLAMA_MODEL
+            log_app(f"🧠 Self-Healing Architect using model: {architect_model}")
+            raw_plan = await call_llm(architect_prompt, model=architect_model)
+            plan = updater._extract_json(raw_plan)
+            if not plan or "code" not in plan: raise ValueError("Architect failed to generate plan")
 
-            # Proceed with generation and application
-            context = updater.analyze()
-            code = updater.generate(idea, context)
-            valid, msg = updater.validate(code)
-            if valid:
-                backup_path = updater.apply(code, target_file)
-                passed, msg = updater.test(target_file)
-                if passed:
-                    log_app(f"✅ Successfully healed {target_file}")
-                    if self._notify:
-                        self._notify(f"✨ <b>Healed!</b>\n\nI fixed the bug in <code>{target_file}</code> and verified the code.")
-                else:
-                    log_audit("HEALING", f"Test failed after apply: {msg}. Rolling back.")
-                    updater.rollback(target_file, backup_path)
-            else:
-                log_audit("HEALING", f"LLM generated invalid code: {msg}")
+            # ─── 🛡️ Phase 2: Critic (Qwen-0.8B) ────────────
+            critic_prompt = f"""[AGENT: reviewer]
+Review this proposed fix for ASURA.
+ERROR: {err_msg}
+CODE CHANGE:
+{plan['code']}
+
+Check for:
+1. Logic errors or obvious bugs.
+2. Security risks or file-system violations.
+3. Unnecessary bloat.
+
+If perfect, respond 'APPROVED'. If not, explain WHY.
+"""
+            review = await call_llm(critic_prompt, model=config.OLLAMA_MODEL_FAST)
+            if "APPROVED" not in review.upper():
+                log_audit("HEALING_CRITIC", f"Critic rejected plan: {review[:100]}...")
+                # Optional: Loop back to architect here
+                return
+
+            # ─── 👻 Phase 3: Phantom Verification ─────────
+            log_app(f"👻 Spawning Ghost Sandbox for {target_file}...")
+            v_res = await verify_fix_in_ghost(target_file, plan["code"], plan.get("test_script"))
+            
+            if not v_res["success"]:
+                log_audit("HEALING_FAIL", f"Phantom verification failed: {v_res.get('error')}")
+                if self._notify: self._notify(f"❌ <b>Heal Failed in Sandbox</b>\n{target_file}: {v_res.get('error')}")
+                return
+
+            # ─── ⚖️ Phase 4: Witness Protocol ────────────────
+            from core.federation import federation
+            witnessed = await federation.request_witness_verification(target_file, plan["code"], plan.get("test_script"))
+            
+            if not witnessed:
+                log_audit("HEALING_FAIL", f"Witness verification failed for {target_file}. Discarding fix.")
+                if self._notify: self._notify(f"⚖️ <b>Witness Veto</b>\nThe cluster rejected the fix for <code>{target_file}</code>. Searching for safer alternative.")
+                return
+
+            # Apply to production
+            backup_path = updater.apply(plan["code"], target_file)
+            if incident_id:
+                antigravity_bridge.resolve_incident(incident_id, f"Healed {target_file}: {plan.get('summary', 'fix applied')}")
+            log_app(f"✅ Successfully healed {target_file}")
+            if self._notify:
+                self._notify(f"✨ <b>Sovereign Heal!</b>\n\nI fixed <code>{target_file}</code> using the Architect-Critic loop, verified it in a Ghost Sandbox, and received cluster-wide <b>Witness Approval</b>.")
 
         except Exception as e:
             log_audit("HEALING_ERROR", f"Fix attempt failed: {e}")

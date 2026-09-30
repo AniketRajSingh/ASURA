@@ -52,7 +52,7 @@ graph TD
 | **ast_surgeon** | Unknown | `src/core/ast_surgeon.py` |
 | **auth** | Unknown | `src/core/auth.py` |
 | **context_manager** | Context Window Management | `src/core/context_manager.py` |
-| **curiosity** | Autonomous Curiosity Engine | `src/core/curiosity.py` |
+| **curiosity** | Unknown | `src/core/curiosity.py` |
 | **declarative_agent_loader** | Declarative Agent System | `src/core/declarative_agent_loader.py` |
 | **doc_updater** | Autonomous Documentation Daemon | `src/core/doc_updater.py` |
 | **federation** | Peer-to-Peer AI Synchronization | `src/core/federation.py` |
@@ -72,9 +72,11 @@ graph TD
 | **observability** | Tool Execution Observability | `src/core/observability.py` |
 | **observer** | Proactive File System Observer | `src/core/observer.py` |
 | **permissions** | Granular Permissions Framework | `src/core/permissions.py` |
+| **phantom_verify** | Ghost Sandbox Verification | `src/core/phantom_verify.py` |
 | **proactive** | Proactive Messaging & Idle Behavior | `src/core/proactive.py` |
 | **rbac** | Role-Based Access Control | `src/core/rbac.py` |
 | **reasoning** | Chain-of-Thought Reasoning Engine | `src/core/reasoning.py` |
+| **recommendation** | Unified Recommendation & Task Store | `src/core/recommendation.py` |
 | **resource_governor** | Resource Governor | `src/core/resource_governor.py` |
 | **rule_engine** | Declarative Behavior Rule Engine | `src/core/rule_engine.py` |
 | **self_healing** | Autonomous Self-Healing Daemon | `src/core/self_healing.py` |
@@ -96,9 +98,10 @@ graph TD
 ASURA solves "Context Starvation" via a tiered storage architecture:
 
 *   **Level 1 (Short-Term)**: Rolling 50-turn context window managed in `context_manager.py`.
-*   **Level 2 (Intermediate)**: Semantic RAG. Uses `nomic-embed-text` to index episode summaries.
+*   **Level 2 (Intermediate)**: Semantic RAG. Uses `nomic-embed-text` to index episode summaries into a FAISS vector store.
 *   **Level 3 (Relational)**: Architectural Knowledge Graph. Maps code dependencies via AST.
-*   **Level 4 (Sovereign Vault)**: Immutable facts and high-priority user preferences.
+*   **Level 4 (Sovereign Vault)**: Immutable facts and high-priority user preferences injected into every prompt.
+*   **Agent Vaults**: Isolated JSON scratchpads for declarative sub-agents to prevent context pollution.
 
 ---
 
@@ -107,10 +110,47 @@ ASURA solves "Context Starvation" via a tiered storage architecture:
 ### The 5-Layer Validation Sandbox
 ASURA never writes to `src/` without passing:
 1.  **Syntax Validation**: `ast.parse` ensures code is valid Python.
-2.  **Import Tracing**: Subprocess dry-runs ensure all dependencies are met.
+2.  **Import Tracing**: Subprocess dry-runs ensure all dependencies are met (auto-installs if needed).
 3.  **Phantom Isolation**: Mutations are applied to temporary Git branches.
 4.  **Ghost Repair**: If a core file is corrupted, the system restores it from a **Golden Snapshot**.
 5.  **Surgical VCS**: Every change is logged as an invertible patch.
 
+### Resource Throttling
+- **Warning (>75%)**: Throttles non-essential background daemons (Curiosity, Documentation).
+- **Critical (>90%)**: Enters Safe Mode, suspends all outbound mutations, and triggers self-healing.
+
 ---
-*Last Updated: 2026-03-18 (Phase S.2 - Absolute Integrity Edition)*
+
+## 6. The "Witness" Advanced Self-Healing
+
+Implemented in `src/core/self_healing.py`, this architecture moves beyond reactive fixing to a biologically-inspired immune response.
+
+1.  **Sentinel (Sensing)**: Case-insensitive, pattern-agnostic log monitoring for "anomaly scent."
+2.  **Architect-Critic (Brain)**: GPT-20B plans the fix; Qwen-0.8B reviews for security and bloat.
+3.  **Surgeon (Precision)**: Multi-point patching that addresses root causes in dependency trees.
+4.  **Sandbox (Isolation)**: **Ghost Sandbox** verifies fixes in isolated clones before deployment.
+5.  **Witness (Cluster)**: PC-1 requests validation from RNDPC before final commitment.
+
+---
+
+## 7. Production Directory Structure
+
+```
+ASURA/
+├── src/
+│   ├── core/           # The Sovereign Engine (Logic, Reasoning, Memory)
+│   │   └── utils/      # Shared utilities (JSON, retry, time)
+│   ├── skills/         # Capabilities: 50+ modular tools
+│   ├── cli/            # Interface: TUI and CLI entry points
+│   ├── agents/         # Personas: Markdown-defined specialists
+│   └── daemon/         # Background: Persistent servers (Voice, Gateway)
+├── tests/              # Verification: Benchmarks, audits, and unit tests
+├── data/
+│   ├── memory_store/   # FAISS Vector Index
+│   ├── recovery_cache/ # Persistent Golden Snapshots
+│   └── logs/           # Unified audit and application traces
+└── docs/               # Sovereignty: Master Documentation
+```
+
+---
+*Last Updated: 2026-03-19 (Phase S.2 - Witness Architecture Edition)*

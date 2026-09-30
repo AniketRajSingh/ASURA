@@ -238,7 +238,15 @@ async def start_parallel_services():
 
     # 5. Start Telegram Bots Async (Federated Election)
     from core.federation import federation
-    is_leader = await federation.should_start_bot()
+    
+    # Check if run.py handled the bot separately (Parallel Persistence)
+    managed_flag = os.environ.get("ASURA_MANAGED_BOT")
+    
+    if managed_flag == "skip":
+        log_app("🤖 Interaction Layer: ACTIVE (Managed by separate process)")
+        is_leader = False # Don't start another instance
+    else:
+        is_leader = await federation.should_start_bot()
     
     if is_leader:
         from skills.telegram_bot.bot import create_core_bot, create_insta_bot
@@ -251,7 +259,15 @@ async def start_parallel_services():
         await insta_app.initialize()
         await insta_app.start()
 
-        if os.environ.get("ASURA_MANAGED_BOT") != "true":
+        # ─── Multi-Bot Polling (Parallel) ────
+        # Managed Bot mode means the bot is running in its own persistent process
+        if os.environ.get("ASURA_MANAGED_BOT") == "true":
+            log_app("🤖 PERSISTENT BOT MODE: Starting long-polling...")
+            await core_app.updater.start_polling()
+            await insta_app.updater.start_polling()
+            log_app("🤖 Interaction Layer: STANDBY (Parallel to Core)")
+        else:
+            # Standard mode (Core + Bots in same process)
             await core_app.updater.start_polling()
             await insta_app.updater.start_polling()
             log_app("🤖 Dual Bots Polling: ACTIVE")

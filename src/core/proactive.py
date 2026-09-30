@@ -32,9 +32,9 @@ class ProactiveEngine:
         self._last_interaction = time.time()
         self._last_proactive = time.time()
 
-        # Sovereign Autonomy: How long before ASURA initiates action?
-        self.idle_threshold = 300   # 5 minutes
-        self.cooldown = 600         # 10 minutes cooldown minimum
+        # Sovereign Autonomy: High-throttle for Master's peace
+        self.idle_threshold = 600   # 10 minutes idle
+        self.cooldown = 3600         # 1 hour cooldown minimum between insights
 
     def start(self):
         self._running = True
@@ -79,7 +79,9 @@ class ProactiveEngine:
                 message = self._generate_autonomous_initiation(idle_duration)
                 if message:
                     self._send(message)
-                    self._last_proactive = time.time()
+                
+                # Update cooldown even for summaries (which return None after notifying)
+                self._last_proactive = time.time()
             except Exception as e:
                 log_app(f"Proactive initiation error: {e}")
 
@@ -87,61 +89,64 @@ class ProactiveEngine:
         """ASURA initiates action based on high-level goals and recent memories."""
         from skills.todo_manager import get_open_todos
         from skills.hardware_monitor import get_resource_summary
+        from core.recommendation import recommendation_store
 
+        # ... (history context logic) ...
         try:
             from skills.conversation.history import load_history, get_semantic_context
             history = load_history()
-        except Exception:
-            history = []
-
-        # Even with no history, ASURA should still initiate
+        except Exception: history = []
         last_user_msg = ""
         for m in reversed(history):
             if m["role"] == "user":
-                last_user_msg = m["content"]
-                break
-
+                last_user_msg = m["content"]; break
         context = get_semantic_context(last_user_msg, limit=1) if last_user_msg else ""
 
-        # 2. Autonomous Decision Logic
         health_summary = ""
-        try:
-            health_summary = get_resource_summary()
-        except Exception:
-            health_summary = "Unable to fetch system health."
-
-        open_todos = 0
-        try:
-            open_todos = len(get_open_todos())
-        except Exception:
-            pass
-
-        if last_user_msg:
-            topic_hint = f'Your Master\'s last message was: "{last_user_msg}"\n{context}'
-        else:
-            topic_hint = "No recent conversation. Check if anything needs attention (system health, updates, or proactively share something useful)."
+        try: health_summary = get_resource_summary()
+        except: health_summary = "Unable to fetch system health."
 
         prompt = f"""You are ASURA, a sovereign autonomous AI. You have been idle for {idle_seconds/60:.0f} minutes.
-{topic_hint}
-
 System Health: {health_summary}
-Tasks: {open_todos} open.
+Context: {context}
 
-Based on your awareness, initiate a conversation or suggest an action.
-Rules:
-- DO NOT ask "How can I help?". PROPOSE a specific action or share a useful observation.
-- Use a sentient, proactive tone.
-- Keep it under 3 sentences.
+Based on system vitals and memory, identify 2-3 specific recommendations for your Master.
+Return ONLY a JSON list of objects:
+[
+  {{"summary": "One sentence system status summary", "recommendations": ["rec 1", "rec 2", ...]}}
+]
 """
         try:
-            # Use unified call_llm wrapper
-            initiation = asyncio.run(call_llm(prompt, model=config.OLLAMA_MODEL, stream=False))
-            if initiation:
-                return f"💡 {initiation}"
-        except Exception:
-            pass
+            import json, re
+            raw = asyncio.run(call_llm(prompt, model=config.OLLAMA_MODEL, stream=False))
+            match = re.search(r'\[.*\]', raw, re.DOTALL)
+            if match:
+                data = json.loads(match.group())[0]
+                summary = data.get("summary", "System status updated.")
+                recs = data.get("recommendations", [])
+                
+                # Store recommendations
+                for r in recs:
+                    recommendation_store.add(content=r, source="proactive", priority=2)
+                
+                # Notify with Expand button
+                count = len(recs)
+                if count > 0:
+                    self._notify_summary(summary, count)
+                    return None # Don't return string for old _send logic
+        except Exception as e:
+            log_app(f"Proactive recommendation error: {e}")
 
         return None
+
+    def _notify_summary(self, summary: str, count: int):
+        """Send a summarized notification with an Expand button and shredding enabled."""
+        if self._notify_fn:
+            msg = f"🧠 <b>ASURA Insight</b>\n{summary}\n\n<i>I have {count} new recommendations for you.</i>"
+            try:
+                self._notify_fn(msg, type="proactive_summary", shred=True)
+            except:
+                self._notify_fn(msg)
 
     def _send(self, message: str):
         if self._notify_fn:

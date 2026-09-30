@@ -6,7 +6,7 @@ from skills.logger import log_audit, log_app
 from core.model_manager import model_manager
 from core.utils.retry import async_retry
 
-async def call_llm(prompt: str, model: str = None, system_prompt: str = None, stream: bool = False, format: str = None, images: list[str] = None, temperature: float = 0.7):
+async def call_llm(prompt: str, model: str = None, system_prompt: str = None, stream: bool = False, format: str = None, images: list[str] = None, temperature: float = 0.7, timeout: int = None):
     """
     Unified LLM call interface supporting Ollama, SGLang, and Groq.
     Supports multimodal inputs (images) and parameter tuning.
@@ -18,6 +18,10 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
         log_audit("LLM_ROUTING", f"Auto-routed to {model}")
     # ──────────────────────────────────────────────────
 
+    # Intelligent default timeout: 30s for fast models, 300s for heavy
+    if timeout is None:
+        timeout = 30 if "fast" in (model or "").lower() or "0.8b" in (model or "").lower() else 300
+
     provider = getattr(config, "LLM_PROVIDER", "ollama").lower()
     
     from core.resource_governor import get_governor
@@ -25,9 +29,14 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
     
     if provider == "groq" and not gov.is_exhausted("groq"):
         try:
-            # Map model if needed (don't send Qwen names to Groq)
-            groq_model = model if "llama" in (model or "").lower() else config.GROQ_MODEL
-            res = await _call_groq(prompt, groq_model, system_prompt, stream, format, images, temperature)
+            # Map model to valid Groq models (openai/gpt-oss-20b, openai/gpt-oss-120b, qwen/qwen3.8-27b)
+            if model and ("gpt-oss" in model or "qwen3.8" in model):
+                groq_model = model
+            elif model and any(k in model.lower() for k in ["heavy", "35b", "reasoning", "architect", "120b"]):
+                groq_model = config.GROQ_MODEL_HEAVY
+            else:
+                groq_model = config.GROQ_MODEL_FAST
+            res = await _call_groq(prompt, groq_model, system_prompt, stream, format, images, temperature, timeout=timeout)
             gov.record_usage("groq")
             return res
         except Exception as e:
@@ -35,7 +44,7 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
 
     if provider == "openrouter" and not gov.is_exhausted("openrouter"):
         try:
-            res = await _call_openrouter(prompt, model or config.OPENROUTER_MODEL_FREE, system_prompt, stream, format, images, temperature)
+            res = await _call_openrouter(prompt, model or config.OPENROUTER_MODEL_FREE, system_prompt, stream, format, images, temperature, timeout=timeout)
             gov.record_usage("openrouter")
             return res
         except Exception as e:
@@ -43,16 +52,46 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
 
     # Default/Fallback Chain
     try:
-        return await _call_ollama(prompt, model or config.OLLAMA_MODEL, system_prompt, stream, format, images, temperature)
+        return await _call_ollama(prompt, model or config.OLLAMA_MODEL, system_prompt, stream, format, images, temperature, timeout=timeout)
     except Exception as e:
-        log_app(f"Ollama failed ({e.__class__.__name__}), checking cloud fallbacks")
+        log_app(f"Ollama failed ({e.__class__.__name__}). Checking if daemon is alive before fallback...")
+        
+        # Ping Ollama daemon
+        is_ollama_alive = False
+        base_url = model_manager.get_ollama_url()
+        try:
+            async with httpx.AsyncClient(timeout=2.0) as client:
+                resp = await client.get(f"{base_url}/")
+                if resp.status_code == 200:
+                    is_ollama_alive = True
+        except Exception:
+            pass
+            
+        if is_ollama_alive:
+            log_app("Ollama daemon is ALIVE. Checking VRAM state and aggressively retrying local model (No Cloud Fallback).")
+            # Check currently loaded models
+            try:
+                async with httpx.AsyncClient(timeout=5.0) as client:
+                    ps_resp = await client.get(f"{base_url}/api/ps")
+                    loaded_models = [m.get("name") for m in ps_resp.json().get("models", [])]
+                    log_app(f"Currently loaded in VRAM: {loaded_models}")
+            except Exception as ps_e:
+                log_app(f"Failed to fetch /api/ps: {ps_e}")
+                
+            # Retry forcefully with extreme timeout
+            log_app("Asserting strict Ollama usage. Increasing timeout to 900s.")
+            return await _call_ollama(prompt, model or config.OLLAMA_MODEL, system_prompt, stream, format, images, temperature, timeout=900)
+            
+        log_app("Ollama daemon is DEAD or unreachable. Proceeding to Cloud Fallbacks.")
         
         # Try Groq if not exhausted
-        if not gov.is_exhausted("groq"):
+        if not images and not gov.is_exhausted("groq"):
             try:
                 # MAP to Groq-compatible model
-                fallback_model = config.GROQ_MODEL_HEAVY if "35b" in (model or "").lower() else config.GROQ_MODEL_FAST
-                res = await _call_groq(prompt, fallback_model, system_prompt, stream, format, images, 0.5)
+                fallback_model = config.GROQ_MODEL_HEAVY if any(k in (model or "").lower() for k in ["35b", "heavy", "120b", "reasoning", "architect"]) else config.GROQ_MODEL_FAST
+                # Handle JSON enforcement
+                prompt_to_send = prompt + " Return strictly JSON." if format == "json" else prompt
+                res = await _call_groq(prompt_to_send, fallback_model, system_prompt, stream, format, None, 0.5, timeout=timeout)
                 gov.record_usage("groq")
                 return res
             except Exception as ge:
@@ -61,7 +100,11 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
         # Try OpenRouter if not exhausted
         if not gov.is_exhausted("openrouter"):
             try:
-                res = await _call_openrouter(prompt, config.OPENROUTER_MODEL_FREE, system_prompt, stream, format, images, 0.5)
+                # Auto-patch deprecated models
+                or_model = config.OPENROUTER_MODEL_FREE
+                if "gemini-2.0-flash-exp" in or_model:
+                    or_model = "google/gemini-2.0-flash-lite-preview-02-05:free"
+                res = await _call_openrouter(prompt, or_model, system_prompt, stream, format, images, 0.5, timeout=timeout)
                 gov.record_usage("openrouter")
                 return res
             except Exception as oe:
@@ -69,7 +112,7 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
                 
         raise e # Re-raise if everything failed
 
-async def _call_openrouter(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.5):
+async def _call_openrouter(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.5, timeout: int = 120):
     """Fallback caller for OpenRouter."""
     headers = {
         "Authorization": f"Bearer {config.OPENROUTER_API_KEY}",
@@ -110,7 +153,7 @@ async def _call_openrouter(prompt: str, model: str, system_prompt: str, stream: 
             log_app(f"OpenRouter call failed: {e}")
             raise
 
-async def _call_groq(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.5):
+async def _call_groq(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.5, timeout: int = 120):
     headers = {
         "Authorization": f"Bearer {config.GROQ_API_KEY}",
         "Content-Type": "application/json"
@@ -149,8 +192,8 @@ async def _call_groq(prompt: str, model: str, system_prompt: str, stream: bool, 
             log_app(f"Groq call failed: {e}")
             raise
 
-@async_retry(retries=3, delay=5.0, backoff=2.0, exceptions=(httpx.HTTPStatusError, httpx.ConnectError))
-async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.7):
+@async_retry(retries=3, delay=5.0, backoff=2.0, exceptions=(httpx.HTTPStatusError, httpx.ConnectError, httpx.ReadTimeout))
+async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.7, timeout: int = 300):
     # Use /api/chat (universal)
     messages = []
     if system_prompt:
@@ -176,7 +219,7 @@ async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool
     # FORCE NO PROXY for local Ollama calls
     mounts = {"all://": None}
     base_url = model_manager.get_ollama_url()
-    async with httpx.AsyncClient(mounts=mounts, timeout=300, trust_env=False) as client:
+    async with httpx.AsyncClient(mounts=mounts, timeout=timeout, trust_env=False) as client:
         try:
             resp = await client.post(f"{base_url}/api/chat", json=payload)
             resp.raise_for_status()

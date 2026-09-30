@@ -83,7 +83,35 @@ class DaemonMonitor:
         app.add_handler(TelegramCommandHandler("stop", self.process_msg))
         app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), self.process_msg))
         
+        # Start background health monitoring
+        import threading
+        threading.Thread(target=self._health_check_loop, daemon=True, name="daemon-health-check").start()
+        
         app.run_polling()
+
+    def _health_check_loop(self):
+        """Background loop to ensure ASURA Core is alive."""
+        import time, httpx
+        logger.info("🛡️ Daemon Health Monitoring active.")
+        fail_count = 0
+        while True:
+            try:
+                # Check health endpoint
+                resp = httpx.get("http://localhost:8080/health", timeout=5)
+                if resp.status_code == 200:
+                    fail_count = 0
+                else:
+                    fail_count += 1
+            except Exception:
+                fail_count += 1
+            
+            if fail_count >= 3:
+                logger.warning(f"🚨 ASURA Core unresponsive ({fail_count} checks). Triggering auto-restart...")
+                self.handler.restart_asura()
+                fail_count = 0
+                time.sleep(60) # Wait longer after restart
+            
+            time.sleep(30)
 
 if __name__ == "__main__":
     monitor = DaemonMonitor()

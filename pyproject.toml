@@ -47,3 +47,23 @@ packages = ["src/skills", "src/core", "src/cli"]
 
 [project.scripts]
 asura = "asura.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [
+    "data",
+    "data/recovery_cache",
+    "recovery_cache",
+    ".venv",
+    ".tf_vcs",
+    "build",
+    "dist",
+    "__pycache__"
+]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::RuntimeWarning",
+    "ignore::UserWarning"
+]

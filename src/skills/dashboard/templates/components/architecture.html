@@ -31,9 +31,11 @@
 
     <!-- Graph Container -->
     <div class="relative bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm flex-1 min-h-[640px] overflow-hidden group">
-        <div id="graph-loading" class="absolute inset-0 z-10 bg-white/80 backdrop-blur-md flex flex-col items-center justify-center gap-4 transition-all duration-700">
-            <div class="w-12 h-12 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin"></div>
-            <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Initializing Neural Scan...</p>
+        <div id="graph-loading" class="modal-overlay z-10 transition-all duration-700" style="background-color: rgba(255,255,255,0.8); backdrop-filter: blur(12px);">
+            <div class="modal-card glass-card modal-center flex flex-col items-center justify-center gap-4 border-none shadow-none bg-transparent">
+                <div class="w-12 h-12 border-4 border-zinc-100 border-t-zinc-900 rounded-full animate-spin"></div>
+                <p class="text-[10px] font-black text-zinc-400 uppercase tracking-[0.3em]">Initializing Neural Scan...</p>
+            </div>
         </div>
         
         <div id="knowledge-graph-container" class="w-full h-full cursor-grab active:cursor-grabbing">
@@ -41,17 +43,19 @@
         </div>
 
         <!-- Detail Modal (Floating) -->
-        <div id="node-detail-panel" class="hidden absolute top-8 right-8 w-80 bg-white/90 backdrop-blur-xl border border-zinc-200 rounded-2xl shadow-2xl z-20 animate-in slide-in-from-right-8 duration-300">
-            <div class="p-6 border-b border-zinc-100 flex justify-between items-center">
-                <div>
-                    <h3 id="ndp-title" class="font-black text-zinc-900 text-sm uppercase tracking-tight">Node Details</h3>
-                    <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Metadata Inspector</p>
+        <div id="node-detail-panel" class="hidden modal-overlay z-20">
+            <div class="modal-card glass-card modal-center w-80 shadow-2xl">
+                <div class="p-6 border-b border-zinc-100 flex justify-between items-center">
+                    <div>
+                        <h3 id="ndp-title" class="font-black text-zinc-900 text-sm uppercase tracking-tight">Node Details</h3>
+                        <p class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Metadata Inspector</p>
+                    </div>
+                    <button onclick="document.getElementById('node-detail-panel').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors">
+                        <span class="material-symbols-outlined text-sm">close</span>
+                    </button>
                 </div>
-                <button onclick="document.getElementById('node-detail-panel').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-zinc-100 transition-colors">
-                    <span class="material-symbols-outlined text-sm">close</span>
-                </button>
+                <div id="ndp-content" class="p-6 text-xs text-zinc-600 leading-relaxed max-h-96 overflow-y-auto custom-scrollbar"></div>
             </div>
-            <div id="ndp-content" class="p-6 text-xs text-zinc-600 leading-relaxed max-h-96 overflow-y-auto custom-scrollbar"></div>
         </div>
     </div>
 </div>

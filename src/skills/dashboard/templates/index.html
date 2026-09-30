@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>ASURA — Sovereign Command Center</title>
     <!-- Premium Typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Product+Sans:wght@300;400;500;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
-    
+    <link href="https://fonts.googleapis.com/css2?family=Product+Sans:wght@300;400;500;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
     <!-- Core External Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>    <!-- Tailwind CSS Engine -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script> <!-- Tailwind CSS Engine -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -44,6 +46,7 @@
 
     <!-- Legacy Modular CSS (for component-specific refined styles) -->
     <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/design-system.css">
     <style>
         .memory-tab {
             padding: 1rem 1.5rem;
@@ -51,33 +54,151 @@
             transition: all 0.2s ease;
             color: #71717a;
         }
+
         .memory-tab:hover {
             color: #18181b;
             border-bottom-color: #e4e4e7;
         }
+
         .memory-tab.active {
             color: #000000;
             border-bottom-color: #000000;
         }
 
+        .modal-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .modal-overlay {
+            width: 100%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            height: 100vh;
+            transform: translate(-50%, -50%);
+            z-index: 999;
+            background-color: #0000004f;
+        }
+
+        .modal-header {
+            display: grid;
+            grid-auto-flow: column;
+            justify-content: space-between;
+        }
+
         /* Markdown Styling Fallback for marked.js */
-        .prose h1 { font-size: 1.5rem; font-weight: 800; margin-bottom: 1rem; border-bottom: 1px solid #f4f4f5; padding-bottom: 0.5rem; }
-        .prose h2 { font-size: 1.25rem; font-weight: 800; margin-top: 1.5rem; margin-bottom: 0.75rem; }
-        .prose h3 { font-size: 1.1rem; font-weight: 800; margin-top: 1.25rem; margin-bottom: 0.5rem; }
-        .prose p { margin-bottom: 1rem; line-height: 1.6; color: #3f3f46; }
-        .prose ul, .prose ol { margin-left: 1.5rem; margin-bottom: 1rem; list-style-type: disc; }
-        .prose li { margin-bottom: 0.5rem; }
-        .prose code { background: #f4f4f5; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.85em; }
-        .prose strong { font-weight: 700; color: #18181b; }
-        .prose blockquote { border-left: 4px solid #e4e4e7; padding-left: 1rem; font-style: italic; color: #71717a; margin-bottom: 1rem; }
+        .prose h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #f4f4f5;
+            padding-bottom: 0.5rem;
+        }
+
+        .prose h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .prose h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .prose p {
+            margin-bottom: 1rem;
+            line-height: 1.6;
+            color: #3f3f46;
+        }
+
+        .prose ul,
+        .prose ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            list-style-type: disc;
+        }
+
+        .prose li {
+            margin-bottom: 0.5rem;
+        }
+
+        .prose code {
+            background: #f4f4f5;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+            font-size: 0.85em;
+        }
+
+        .prose strong {
+            font-weight: 700;
+            color: #18181b;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid #e4e4e7;
+            padding-left: 1rem;
+            font-style: italic;
+            color: #71717a;
+            margin-bottom: 1rem;
+        }
+
+        /* ─── Mobile Responsiveness ─── */
+        @media (max-width: 1024px) {
+            .lg\:relative { position: fixed !important; }
+            .lg\:translate-x-0 { transform: translateX(-100%); }
+            .lg\:translate-x-0.translate-x-0 { transform: translateX(0); }
+            
+            main { padding: 1rem !important; overflow-x: hidden !important; }
+            .grid-cols-12 { grid-template-columns: 1fr !important; }
+            .col-span-8, .col-span-4, .col-span-3, .col-span-9 { grid-column: span 1 / span 1 !important; }
+            
+            .hero-stats { grid-template-columns: 1fr !important; gap: 1rem !important; }
+            .asura-card { padding: 1.5rem !important; }
+            .text-3xl { font-size: 1.75rem !important; }
+            
+            /* Ensure children take full width */
+            .w-full { width: 100% !important; }
+            .asura-section { width: 100% !important; max-width: 100vw !important; }
+        }
+
+        @media (max-width: 640px) {
+            .asura-card { padding: 1rem !important; }
+            .text-3xl { font-size: 1.5rem !important; }
+            .nav-link { padding: 0.75rem !important; }
+            header { padding: 1rem !important; }
+        }
     </style>
 </head>
 
-<body class="bg-[#f8f9fa] text-black font-['Product_Sans'] selection:bg-black selection:text-white">
-    <div class="flex h-screen w-full overflow-hidden">
+<body class="bg-[#f8f9fa] text-black font-sans selection:bg-black selection:text-white flex flex-col h-screen overflow-hidden">
+    <!-- Mobile Header -->
+    <header class="lg:hidden bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-30 shadow-sm flex-shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center shadow-md">
+                <span class="material-symbols-outlined text-xl">shield</span>
+            </div>
+            <div class="text-lg font-bold tracking-tighter">ASURA</div>
+        </div>
+        <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 rounded-lg transition-all">
+            <span class="material-symbols-outlined" id="menu-icon">menu</span>
+        </button>
+    </header>
+
+    <div class="flex flex-1 w-full overflow-hidden relative">
+        <!-- Sidebar Backdrop (Mobile) -->
+        <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/20 backdrop-blur-sm z-20 hidden lg:hidden transition-all duration-300"></div>
+
         <!-- Sidebar -->
-        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-20 shadow-sm">
-            <div class="p-8 flex items-center gap-3 border-b border-gray-50">
+        <aside id="main-sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 z-30 shadow-sm transform -translate-x-full transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:shadow-none">
+            <div class="p-8 hidden lg:flex items-center gap-3 border-b border-gray-50">
                 <div class="w-10 h-10 bg-black text-white rounded-xl flex items-center justify-center shadow-lg">
                     <span class="material-symbols-outlined text-2xl">shield</span>
                 </div>
@@ -85,68 +206,100 @@
             </div>
 
             <nav class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white active-page:shadow-md" onclick="showPage('dashboard')">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white active-page:shadow-md"
+                    onclick="showPage('dashboard')">
                     <span class="material-symbols-outlined">dashboard</span>
                     <span>Dashboard</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('chat')">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('chat')">
                     <span class="material-symbols-outlined">forum</span>
                     <span>Chat Console</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('voice')">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('voice')">
                     <span class="material-symbols-outlined">mic</span>
                     <span>Voice Portal</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('memory', loadMemory)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('memory', loadMemory)">
                     <span class="material-symbols-outlined">memory</span>
                     <span>Memory Store</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('evolution', loadEvolution)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('evolution', loadEvolution)">
                     <span class="material-symbols-outlined">psychology</span>
                     <span>Evolution</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('trace', () => { loadDrafts(); loadIntelligence(); })">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('trace', () => { loadDrafts(); loadIntelligence(); })">
                     <span class="material-symbols-outlined">radar</span>
                     <span>Trace</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('repl')">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('repl')">
                     <span class="material-symbols-outlined">terminal</span>
                     <span>Live REPL</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('skills', listSkills)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('skills', listSkills)">
                     <span class="material-symbols-outlined">extension</span>
                     <span>Skill Registry</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('knowledge', loadKnowledgeGraph)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('knowledge', loadKnowledgeGraph)">
                     <span class="material-symbols-outlined">schema</span>
                     <span>Architecture</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('persona', loadPersona)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('persona', loadPersona)">
                     <span class="material-symbols-outlined">settings_account_box</span>
                     <span>Persona</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('settings', loadSettings)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('settings', loadSettings)">
                     <span class="material-symbols-outlined">settings</span>
                     <span>Settings</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('security', loadSecurityPage)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('security', loadSecurityPage)">
                     <span class="material-symbols-outlined">security</span>
                     <span>Security</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('logs')">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('logs')">
                     <span class="material-symbols-outlined">list_alt</span>
                     <span>Audit Logs</span>
                 </button>
-                <button class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white" onclick="showPage('plugins', loadPlugins)">
+                <button
+                    class="nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:text-black hover:bg-gray-50 transition-all font-medium active-page:bg-black active-page:text-white"
+                    onclick="showPage('plugins', loadPlugins)">
                     <span class="material-symbols-outlined">apps</span>
                     <span>Plugins</span>
                 </button>
             </nav>
 
             <div class="p-6 border-t border-gray-100 bg-gray-50/50">
-                <div class="flex items-center gap-2 mb-4">
+                <div class="flex items-center gap-2 mb-2">
                     <span class="w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-400"></span>
                     <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">System Active</span>
+                </div>
+                <div class="flex items-center gap-2 mb-4" id="llm-status-indicator" title="Local LLM Connectivity Status">
+                    <span class="w-2 h-2 bg-zinc-400 rounded-full" id="llm-status-dot"></span>
+                    <span class="text-[10px] font-bold text-gray-600 uppercase tracking-widest" id="llm-status-text">LLM: Checking...</span>
                 </div>
                 <div class="flex flex-col gap-1">
                     <span class="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Master:</span>
@@ -156,7 +309,7 @@
         </aside>
 
         <!-- Main Content Wrapper -->
-        <main class="flex-1 overflow-y-auto bg-[#f8f9fa] custom-scrollbar py-8 px-8">
+        <main class="flex-1 overflow-y-auto bg-[#f8f9fa] custom-scrollbar py-6 px-4 lg:py-8 lg:px-8">
             <div class="w-full flex flex-col gap-0">
                 {% include "components/dashboard.html" %}
                 {% include "components/architecture.html" %}
@@ -178,10 +331,10 @@
     </div>
 
     <!-- UI Overlay Components -->
-    <div id="toast-container" class="toast-container"></div>
+    <div id="toast-container" class="modal-overlay" style="display: none; background-color: transparent; pointer-events: none;"></div>
 
     <div id="cmd-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-card glass-card">
+        <div class="modal-card glass-card modal-center">
             <header class="modal-header">
                 <h3 id="modal-title">Output</h3>
                 <button onclick="document.getElementById('cmd-modal').style.display='none'" class="close-btn">
@@ -193,6 +346,32 @@
     </div>
 
     <script>
+        // ─── Mobile Navigation ───
+        function toggleSidebar() {
+            const sidebar = document.getElementById('main-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            const icon = document.getElementById('menu-icon');
+            
+            const isOpen = sidebar.classList.contains('translate-x-0');
+            
+            if (isOpen) {
+                sidebar.classList.replace('translate-x-0', '-translate-x-full');
+                backdrop.classList.add('hidden');
+                icon.textContent = 'menu';
+            } else {
+                sidebar.classList.replace('-translate-x-full', 'translate-x-0');
+                backdrop.classList.remove('hidden');
+                icon.textContent = 'close';
+            }
+        }
+
+        // Close sidebar on link click (mobile)
+        document.querySelectorAll('aside nav button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (window.innerWidth < 1024) toggleSidebar();
+            });
+        });
+
         // ─── Initialization ───
         window.addEventListener('DOMContentLoaded', () => {
             showPage('dashboard');
@@ -218,7 +397,7 @@
             } else {
                 card.style.display = 'block';
             }
-            
+
             const pStatus = document.getElementById('p-status');
             const pPercent = document.getElementById('p-percent');
             const pBar = document.getElementById('p-bar');
@@ -236,7 +415,7 @@
 
         // ─── Theme & UI ───
         if (localStorage.getItem('theme') === 'light') document.body.classList.replace('dark-theme', 'light-theme');
-        
+
         function toggleTheme() {
             const isLight = document.body.classList.contains('light-theme');
             if (isLight) {
@@ -250,14 +429,26 @@
 
         function showToast(message, isError) {
             const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${isError ? 'error' : 'success'} glass-card`;
-            toast.innerHTML = `<span class="material-symbols-outlined">${isError ? 'error' : 'check_circle'}</span><span>${message}</span>`;
-            container.appendChild(toast);
+            container.style.display = 'block';
             
+            const toast = document.createElement('div');
+            toast.className = `modal-card glass-card modal-center ${isError ? 'error' : 'success'}`;
+            toast.style.pointerEvents = 'auto';
+            toast.style.display = 'flex';
+            toast.style.alignItems = 'center';
+            toast.style.gap = '8px';
+            toast.innerHTML = `<span class="material-symbols-outlined">${isError ? 'error' : 'check_circle'}</span><span>${message}</span>`;
+            
+            container.appendChild(toast);
+
             setTimeout(() => {
-                toast.classList.add('fade-out');
-                setTimeout(() => toast.remove(), 300);
+                toast.classList.add('transition-opacity', 'duration-300', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                    if (container.children.length === 0) {
+                        container.style.display = 'none';
+                    }
+                }, 300);
             }, 5000);
         }
 
@@ -273,13 +464,13 @@
                 p.classList.add('hidden');
                 p.classList.remove('flex');
             });
-            
+
             const pageEl = document.getElementById('page-' + name);
             if (!pageEl) { console.warn('showPage: unknown page', name); return; }
-            
+
             pageEl.classList.remove('hidden');
             pageEl.classList.add('flex');
-            
+
             // Sidebar highlighting
             document.querySelectorAll('.nav-link').forEach(link => {
                 link.classList.remove('bg-black', 'text-white', 'shadow-md');
@@ -295,7 +486,7 @@
 
         // ─── Chat Logic ───
         let _chatTurn = 0;
-        
+
         function handleChatKeypress(event) {
             if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault();
@@ -307,14 +498,14 @@
             const input = document.getElementById('chatInput');
             const msg = input.value.trim();
             if (!msg) return;
-            
+
             input.value = '';
             input.style.height = 'auto';
 
             const msgs = document.getElementById('chatHistory');
             const turnId = 'chat-turn-' + (++_chatTurn);
             const safeMsg = msg.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            
+
             // User Message
             msgs.innerHTML += `
                 <div class="chat-message user animate-slide-in">
@@ -322,7 +513,7 @@
                     <div class="message-bubble">${safeMsg}</div>
                 </div>
             `;
-            
+
             // Loading State
             msgs.innerHTML += `
                 <div id="${turnId}" class="chat-message asura animate-slide-in">
@@ -333,18 +524,18 @@
                     </div>
                 </div>
             `;
-            
+
             msgs.scrollTop = msgs.scrollHeight;
 
             try {
                 const res = await fetch('/api/chat', {
-                    method: 'POST', 
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: msg })
                 });
                 const data = await res.json();
                 const aiEl = document.getElementById(turnId);
-                
+
                 if (aiEl) {
                     const reply = data.response || 'Inquiry processed. No output generated.';
                     aiEl.querySelector('.message-bubble').classList.remove('loading');
@@ -362,7 +553,7 @@
         // ─── Markdown (marked.js) ───
         function renderMarkdown(text) {
             if (!text) return '';
-            try { return marked.parse(text); } 
+            try { return marked.parse(text); }
             catch (e) { return text; }
         }
 
@@ -406,7 +597,7 @@
                 const microphone = audioContext.createMediaStreamSource(audioStream);
                 microphone.connect(analyser);
                 analyser.fftSize = 512;
-                
+
                 const bufferLength = analyser.frequencyBinCount;
                 const dataArray = new Uint8Array(bufferLength);
 
@@ -515,24 +706,24 @@
                 data: {
                     labels: [],
                     datasets: [
-                        { 
-                            label: 'CPU %', 
-                            data: [], 
-                            borderColor: '#000000', 
-                            borderWidth: 2, 
-                            tension: 0.4, 
-                            fill: false, 
+                        {
+                            label: 'CPU %',
+                            data: [],
+                            borderColor: '#000000',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: false,
                             pointRadius: 0,
                             pointHoverRadius: 4
                         },
-                        { 
-                            label: 'RAM %', 
-                            data: [], 
-                            borderColor: '#aaaaaa', 
-                            borderWidth: 1.5, 
+                        {
+                            label: 'RAM %',
+                            data: [],
+                            borderColor: '#aaaaaa',
+                            borderWidth: 1.5,
                             borderDash: [5, 5],
-                            tension: 0.4, 
-                            fill: false, 
+                            tension: 0.4,
+                            fill: false,
                             pointRadius: 0,
                             pointHoverRadius: 4
                         }
@@ -540,12 +731,12 @@
                 },
                 options: {
                     responsive: true,
-                    scales: { 
-                        y: { 
-                            min: 0, 
-                            max: 100, 
-                            ticks: { color: '#999', padding: 10 }, 
-                            grid: { color: '#f0f0f0' } 
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: { color: '#999', padding: 10 },
+                            grid: { color: '#f0f0f0' }
                         },
                         x: { display: false }
                     },
@@ -576,7 +767,7 @@
                 resourceChart.data.datasets[0].data = data.map(d => d.cpu);
                 resourceChart.data.datasets[1].data = data.map(d => d.mem);
                 resourceChart.update('none');
-                
+
                 // Keep trace stream updated if dashboard is visible
                 const dashboardPage = document.getElementById('page-dashboard');
                 if (dashboardPage && !dashboardPage.classList.contains('hidden')) {
@@ -596,7 +787,7 @@
                     fetch('/api/system/processes'),
                     fetch('/api/vcs/history')
                 ]);
-                
+
                 const jobs = await jobRes.json();
                 const jobList = document.getElementById('process-list');
                 jobList.innerHTML = jobs.map(j => `
@@ -628,66 +819,88 @@
         // ─── System Configuration ───
         async function loadSettings() {
             const list = document.getElementById('settings-list');
-            list.innerHTML = '<div class="loading-state">Synchronizing settings...</div>';
+            list.innerHTML = '<div class="loading-state">Synchronizing settings registry...</div>';
             try {
-                const res = await fetch('/api/settings');
+                const res = await fetch('/api/settings/list');
                 const data = await res.json();
 
-                let html = `
-                    <div class="settings-group glass-card">
-                        <header class="group-header">
-                            <span class="material-symbols-outlined">fingerprint</span>
-                            <h3>Neural Identity</h3>
-                        </header>
-                        <div class="group-content">
-                            <div class="input-container">
-                                <label>Master Name</label>
-                                <input type="text" class="input-field" id="set-MASTER_NAME" value="${data.MASTER_NAME || ''}">
-                            </div>
-                            <div class="input-container">
-                                <label>Telegram Uplink</label>
-                                <input type="password" class="input-field" id="set-TELEGRAM_BOT_TOKEN" value="${data.TELEGRAM_BOT_TOKEN || ''}">
-                            </div>
-                        </div>
-                    </div>
+                let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">';
+                
+                // Group settings into cards for better organization
+                const groups = {
+                    "Identity & Auth": ["MASTER_NAME", "MASTER_USERNAME", "MASTER_PASSWORD", "PEER_AUTH_TOKEN", "JWT_SECRET"],
+                    "Communication": ["TELEGRAM_BOT_TOKEN", "TELEGRAM_ADMIN_CHAT_ID", "INSTAGRAM_BOT_TOKEN", "PUBLIC_ACCESS_ALLOWED", "EMAIL_ADDRESS"],
+                    "LLM & Intelligence": ["LLM_PROVIDER", "OLLAMA_BASE_URL", "OLLAMA_MODEL", "OLLAMA_MODEL_FAST", "GROQ_API_KEY", "GROQ_MODEL"],
+                    "System & Updates": ["API_PORT", "DASHBOARD_PORT", "SELF_UPDATE_INTERVAL_HOURS", "LOG_RETENTION_DAYS", "DAILY_TRIGGER_HOUR"],
+                    "Other Settings": []
+                };
 
-                    <div class="settings-group glass-card highlight">
-                        <header class="group-header">
-                            <span class="material-symbols-outlined">psychology</span>
-                            <h3>Core LLM Provider</h3>
-                        </header>
-                        <div class="group-content">
-                            <select id="set-LLM_PROVIDER" class="input-field">
-                                <option value="ollama" ${data.LLM_PROVIDER === 'ollama' ? 'selected' : ''}>Ollama (Local Node)</option>
-                                <option value="groq" ${data.LLM_PROVIDER === 'groq' ? 'selected' : ''}>Groq (Cloud Accelerator)</option>
-                            </select>
-                        </div>
-                    </div>
+                const used = new Set();
+                for (const [groupName, keys] of Object.entries(groups)) {
+                    let fieldsHtml = '';
+                    keys.forEach(k => {
+                        if (data[k] !== undefined) {
+                            used.add(k);
+                            const val = data[k];
+                            const label = k.replace(/_/g, ' ');
+                            const isComplex = typeof val === 'object' && val !== null;
+                            const displayVal = isComplex ? JSON.stringify(val, null, 2) : val;
+                            const type = (k.includes('TOKEN') || k.includes('KEY') || k.includes('PASSWORD') || k.includes('SECRET')) ? 'password' : 'text';
+                            
+                            fieldsHtml += `
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">${label}</label>
+                                    ${isComplex ? 
+                                        `<textarea class="bg-zinc-50 border border-zinc-100 p-2.5 rounded-xl text-xs font-mono focus:outline-none focus:ring-1 focus:ring-black h-24" id="set-${k}">${displayVal}</textarea>` :
+                                        `<input type="${type}" class="bg-zinc-50 border border-zinc-100 p-2.5 rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-black" id="set-${k}" value="${displayVal}">`
+                                    }
+                                </div>
+                            `;
+                        }
+                    });
 
-                    <div class="settings-group glass-card">
-                        <header class="group-header">
-                            <span class="material-symbols-outlined">hub</span>
-                            <h3>Ollama Node</h3>
-                        </header>
-                        <div class="group-content">
-                            <div class="input-container">
-                                <label>Terminal Endpoint</label>
-                                <input type="text" class="input-field" id="set-OLLAMA_BASE_URL" value="${data.OLLAMA_BASE_URL || ''}">
+                    if (fieldsHtml) {
+                        html += `
+                            <div class="asura-card p-6">
+                                <header class="asura-header mb-4"><h3>${groupName}</h3></header>
+                                <div class="flex flex-col gap-3">${fieldsHtml}</div>
                             </div>
-                        </div>
-                    </div>
+                        `;
+                    }
+                }
 
-                    <div class="settings-group glass-card">
-                        <header class="group-header">
-                            <span class="material-symbols-outlined">bolt</span>
-                            <h3>Groq Acceleration</h3>
-                        </header>
-                        <div class="group-content">
-                            <div class="input-container"><label>API Key</label><input type="password" class="input-field" id="set-GROQ_API_KEY" value="${data.GROQ_API_KEY || ''}"></div>
-                            <div class="input-container"><label>Primary Model</label><input type="text" class="input-field" id="set-GROQ_MODEL" value="${data.GROQ_MODEL || ''}"></div>
+                // Any remains
+                let remainsHtml = '';
+                Object.keys(data).forEach(k => {
+                    if (!used.has(k)) {
+                        const val = data[k];
+                        const label = k.replace(/_/g, ' ');
+                        const isComplex = typeof val === 'object' && val !== null;
+                        const displayVal = isComplex ? JSON.stringify(val, null, 2) : val;
+                        const type = (k.includes('TOKEN') || k.includes('KEY') || k.includes('PASSWORD') || k.includes('SECRET')) ? 'password' : 'text';
+                        
+                        remainsHtml += `
+                            <div class="flex flex-col gap-1">
+                                <label class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">${label}</label>
+                                ${isComplex ? 
+                                    `<textarea class="bg-zinc-50 border border-zinc-100 p-2.5 rounded-xl text-xs font-mono focus:outline-none focus:ring-1 focus:ring-black h-24" id="set-${k}">${displayVal}</textarea>` :
+                                    `<input type="${type}" class="bg-zinc-50 border border-zinc-100 p-2.5 rounded-xl text-xs font-bold focus:outline-none focus:ring-1 focus:ring-black" id="set-${k}" value="${displayVal}">`
+                                }
+                            </div>
+                        `;
+                    }
+                });
+
+                if (remainsHtml) {
+                    html += `
+                        <div class="asura-card p-6">
+                            <header class="asura-header mb-4"><h3>Advanced Config</h3></header>
+                            <div class="flex flex-col gap-3">${remainsHtml}</div>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
+
+                html += '</div>';
                 list.innerHTML = html;
             } catch (e) {
                 list.innerHTML = `<div class="error-card glass-card">⚠️ System link failure: ${e.message}<br><button class="btn-premium" onclick="loadSettings()">Recursive Retry</button></div>`;
@@ -697,7 +910,14 @@
         async function updateSettings() {
             const data = {};
             document.querySelectorAll('[id^="set-"]').forEach(i => {
-                data[i.id.replace('set-', '')] = i.value;
+                let val = i.value;
+                try {
+                    // Robust JSON handling for complex types
+                    if (val.trim().startsWith('{') || val.trim().startsWith('[')) {
+                        val = JSON.parse(val);
+                    }
+                } catch(e) {}
+                data[i.id.replace('set-', '')] = val;
             });
             const res = await fetch('/api/settings/update', {
                 method: 'POST', body: JSON.stringify(data), headers: { 'Content-Type': 'application/json' }
@@ -749,7 +969,7 @@
                 const data = await res.json();
                 const list = document.getElementById('draftsGallery');
                 document.getElementById('draftsCountBadge').textContent = data.length || 0;
-                
+
                 list.innerHTML = data.map((d) => `
                     <div class="group flex items-stretch justify-between gap-3 rounded-xl bg-white border border-zinc-200 p-4 hover:border-zinc-400 hover:shadow-sm transition-all cursor-pointer relative overflow-hidden">
                         <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-zinc-200 group-hover:bg-zinc-900 transition-colors"></div>
@@ -769,7 +989,7 @@
                     </div>
                 `).join('') || '<div class="text-zinc-400 text-xs text-center py-4 font-medium">No active drafts found.</div>';
             } catch (e) {
-               console.error("Failed loading drafts:", e);
+                console.error("Failed loading drafts:", e);
             }
         }
 
@@ -777,12 +997,12 @@
         function switchMemoryTab(tabId) {
             document.querySelectorAll('.memory-tab').forEach(t => t.classList.remove('active', 'border-black'));
             document.querySelectorAll('.memory-container').forEach(c => c.classList.add('hidden'));
-            
+
             const activeTab = document.getElementById('tab-' + tabId);
             if (activeTab) {
                 activeTab.classList.add('active', 'border-black');
             }
-            
+
             const activeContainer = document.getElementById('memory-' + tabId + '-list');
             if (activeContainer) {
                 activeContainer.classList.remove('hidden');
@@ -793,7 +1013,7 @@
             const ragList = document.getElementById('memory-rag-list');
             const vaultList = document.getElementById('memory-vault-list');
             const episodicList = document.getElementById('memory-episodic-list');
-            
+
             const memCount = document.getElementById('mem-count');
             const freshness = document.getElementById('mem-freshness');
             const bar = document.getElementById('mem-freshness-bar');
@@ -811,12 +1031,12 @@
                     fetch('/api/memory/vault'),
                     fetch('/api/memory/episodes')
                 ]);
-                
+
                 const stats = await statsRes.json();
                 if (memCount) memCount.innerText = (stats.total_memories || 0) + (stats.vault_count || 0) + (stats.episodic_count || 0);
                 if (freshness) freshness.innerText = (stats.freshness_score || 94) + '%';
                 if (bar) bar.style.width = (stats.freshness_score || 94) + '%';
-                
+
                 // Render RAG
                 const ragDocs = await ragRes.json();
                 if (ragList) {
@@ -854,7 +1074,7 @@
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="px-2 py-0.5 bg-zinc-100 text-zinc-600 text-[8px] font-black uppercase rounded">${e.category}</span>
                                         <div class="flex gap-0.5 text-[8px] text-zinc-300">
-                                            ${'★'.repeat(Math.round(e.importance*5))}${'☆'.repeat(5-Math.round(e.importance*5))}
+                                            ${'★'.repeat(Math.round(e.importance * 5))}${'☆'.repeat(5 - Math.round(e.importance * 5))}
                                         </div>
                                     </div>
                                     <p class="text-xs text-zinc-800 leading-normal">${escapeHtml(e.event)}</p>
@@ -878,7 +1098,7 @@
         function renderMemoryCard(d, typeLabel, icon) {
             const docId = d.id || `mem-${Math.random().toString(16).slice(2, 10)}`;
             memoryCache[docId] = d;
-            
+
             const content = (d.content || d.text || d.page_content || '');
             const displayContent = content.length > 200 ? content.substring(0, 200) + '...' : content;
             const source = d.metadata?.source || d.metadata?.source_file || 'KERNEL_CORE';
@@ -916,12 +1136,12 @@
             const modal = document.getElementById('cmd-modal');
             const title = document.getElementById('modal-title');
             const content = document.getElementById('modal-content');
-            
+
             const rawText = d.content || d.text || d.page_content || '';
             const source = d.metadata?.source || d.metadata?.source_file || 'KERNEL_CORE';
-            
+
             title.innerHTML = `<span class="flex items-center gap-2"><span class="material-symbols-outlined">psychology</span> Memory Fragment Detail</span>`;
-            
+
             // Render markdown using marked.js if available, else use fallback
             let renderedHtml = '';
             if (typeof marked !== 'undefined') {
@@ -940,7 +1160,7 @@
                     <pre class="whitespace-pre-wrap text-sm leading-relaxed text-zinc-700 font-sans">${escapeHtml(rawText)}</pre>
                 `;
             }
-            
+
             content.innerHTML = renderedHtml;
             modal.style.display = 'flex';
         }
@@ -950,7 +1170,7 @@
                 const res = await fetch('/api/intelligence/trace');
                 const data = await res.json();
                 const container = document.getElementById('traceLogsContainer');
-                
+
                 if (container) {
                     container.innerHTML = data.map(t => {
                         const isAction = (t.action || '').includes('ACTION') || (t.action || '').includes('_') || (t.action || '').length > 10;
@@ -971,12 +1191,12 @@
                 const res = await fetch('/api/features/list');
                 const data = await res.json();
                 const features = data.features || {};
-                
+
                 // Update cognitive capabilities count
                 const count = Object.keys(features).length;
                 const skillsEl = document.getElementById('skillsCount');
                 if (skillsEl) skillsEl.textContent = count;
-                
+
                 // Animate orb as visual feedback
                 const orb = document.getElementById('evolutionOrb');
                 if (orb) {
@@ -993,7 +1213,7 @@
             const originalHtml = btn.innerHTML;
             btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> EVOLVING...';
             btn.disabled = true;
-            
+
             try {
                 const res = await fetch('/api/evolve', { method: 'POST' });
                 const data = await res.json();
@@ -1055,27 +1275,27 @@
             const codeInput = document.getElementById('replCode');
             const outputTerminal = document.getElementById('replOutput');
             const code = codeInput ? codeInput.value : '';
-            
+
             if (!code.trim()) return;
 
             const startTime = performance.now();
             outputTerminal.innerHTML += `<div class="text-[var(--accent)] mb-1 font-mono">> Executing payload...</div>`;
-            
+
             try {
                 const res = await fetch('/api/system/repl', {
                     method: 'POST', body: JSON.stringify({ code: code }), headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await res.json();
                 const executionTime = ((performance.now() - startTime) / 1000).toFixed(2);
-                
+
                 document.getElementById('replTime').textContent = executionTime + 's';
-                
+
                 if (data.output) {
-                     outputTerminal.innerHTML += `<div class="text-slate-300 font-mono whitespace-pre-wrap">${data.output.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+                    outputTerminal.innerHTML += `<div class="text-slate-300 font-mono whitespace-pre-wrap">${data.output.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
                 } else if (data.error) {
-                     outputTerminal.innerHTML += `<div class="text-rose-400 font-mono whitespace-pre-wrap">${data.error}</div>`;
+                    outputTerminal.innerHTML += `<div class="text-rose-400 font-mono whitespace-pre-wrap">${data.error}</div>`;
                 }
-                
+
                 outputTerminal.scrollTop = outputTerminal.scrollHeight;
             } catch (e) {
                 outputTerminal.innerHTML += `<div class="text-rose-400 font-mono whitespace-pre-wrap">Connection Error: ${e.message}</div>`;
@@ -1098,8 +1318,8 @@
                 const res = await fetch('/api/skills/source', { headers: { 'X-Skill-Name': skill } });
                 const data = await res.json();
                 view.innerHTML = `<pre class="p-8 font-mono text-xs text-zinc-600 leading-relaxed overflow-x-auto custom-scrollbar">${escapeHtml(data.source || 'No source found.')}</pre>`;
-            } catch (e) { 
-                view.innerHTML = `<div class="p-8 text-red-500 font-bold text-xs uppercase tracking-widest">Breach Trace: ${e.message}</div>`; 
+            } catch (e) {
+                view.innerHTML = `<div class="p-8 text-red-500 font-bold text-xs uppercase tracking-widest">Breach Trace: ${e.message}</div>`;
             }
         }
 
@@ -1110,11 +1330,11 @@
             try {
                 const res = await fetch(`/api/skills/docs?name=${skill}`);
                 const data = await res.json();
-                view.innerHTML = data.docs 
-                    ? `<div class="p-10 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap font-medium">${escapeHtml(data.docs)}</div>` 
+                view.innerHTML = data.docs
+                    ? `<div class="p-10 text-sm leading-relaxed text-zinc-700 whitespace-pre-wrap font-medium">${escapeHtml(data.docs)}</div>`
                     : '<div class="p-10 text-zinc-300 text-xs font-black uppercase tracking-widest">No documentation found.</div>';
-            } catch (e) { 
-                view.innerHTML = `<div class="p-8 text-red-500 font-bold text-xs uppercase tracking-widest">Retrieval Error: ${e.message}</div>`; 
+            } catch (e) {
+                view.innerHTML = `<div class="p-8 text-red-500 font-bold text-xs uppercase tracking-widest">Retrieval Error: ${e.message}</div>`;
             }
         }
 
@@ -1152,14 +1372,14 @@
             try {
                 const res = await fetch('/api/cluster/health');
                 const data = await res.json();
-                
+
                 container.innerHTML = data.map(node => {
                     const sys = node.system || {};
                     const cpu = sys.cpu?.usage_percent || 0;
                     const mem = sys.memory?.used_percent || 0;
                     const disk = sys.disk?.used_percent || 0;
                     const isOnline = node.status === "online";
-                    
+
                     return `
                         <div class="bg-white border ${node.is_local ? 'border-zinc-950' : 'border-zinc-200'} rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col gap-6 relative overflow-hidden">
                             ${node.is_local ? '<div class="absolute top-0 right-0 px-3 py-1 bg-zinc-950 text-white text-[8px] font-black uppercase tracking-widest rounded-bl-xl">Local Node</div>' : ''}
@@ -1349,7 +1569,7 @@
                     fetch('/api/security/vault'),
                     fetch('/api/security/audit-trail')
                 ]);
-                
+
                 const integrity = await intRes.json();
                 const integrityEl = document.getElementById('integrity-report');
                 if (integrityEl) {
@@ -1658,6 +1878,163 @@
                 showToast('Error: ' + e.message, true);
             }
         }
+        let currentNode = 'local';
+        
+        async function switchNode() {
+            const selector = document.getElementById('node-selector');
+            currentNode = selector.value;
+            showToast(`🌐 Switching view to ${currentNode}...`, false);
+            // Hero Header might need instance name update
+            updateClusterStatus(true); // Force immediate refresh
+            loadProcesses(); // Reload processes for this node if proxied (future)
+        }
+
+        async function updateClusterStatus(force = false) {
+            try {
+                const res = await fetch('/api/cluster/health');
+                const nodes = await res.json();
+                
+                // 1. Update Selector if needed (keep current node selected)
+                const selector = document.getElementById('node-selector');
+                if (selector) {
+                    let optionsHtml = '';
+                    nodes.forEach(n => {
+                        const label = n.is_local ? `📍 ${n.instance_name} (Local)` : `📡 ${n.instance_name} (${n.status})`;
+                        optionsHtml += `<option value="${n.url}" ${currentNode === n.url ? 'selected' : ''}>${label}</option>`;
+                    });
+                    if (selector.innerHTML !== optionsHtml) {
+                        selector.innerHTML = optionsHtml;
+                    }
+                }
+
+                // 2. Find selected node data
+                const targetNode = nodes.find(n => n.url === currentNode) || nodes[0];
+                if (!targetNode) return;
+
+                // 3. Update Status Indicators
+                const roleEl = document.getElementById('node-role');
+                if (roleEl) {
+                    roleEl.textContent = (targetNode.is_leader ? "Leader" : "Follower") + (targetNode.status === 'offline' ? " (OFFLINE)" : "");
+                    roleEl.className = targetNode.status === 'offline' ? "text-xs font-bold text-red-500" : (targetNode.is_leader ? "text-xs font-bold text-green-600" : "text-xs font-bold text-zinc-500");
+                }
+                
+                // 4. Update Hero Stats
+                const cpuEl = document.getElementById('m-cpu');
+                const memEl = document.getElementById('m-mem');
+                const diskEl = document.getElementById('m-disk');
+                
+                if (targetNode.status === 'online') {
+                    if (cpuEl) cpuEl.textContent = targetNode.cpu + '%';
+                    if (memEl) memEl.textContent = targetNode.ram + '%';
+                    if (diskEl) diskEl.textContent = targetNode.disk + '%';
+                    
+                    document.getElementById('bar-cpu').style.width = targetNode.cpu + '%';
+                    document.getElementById('bar-mem').style.width = targetNode.ram + '%';
+                    document.getElementById('bar-disk').style.width = targetNode.disk + '%';
+                } else {
+                    // Node is offline
+                    if (cpuEl) cpuEl.textContent = '---';
+                    if (memEl) memEl.textContent = '---';
+                    if (diskEl) diskEl.textContent = '---';
+                    
+                    document.getElementById('bar-cpu').style.width = '0%';
+                    document.getElementById('bar-mem').style.width = '0%';
+                    document.getElementById('bar-disk').style.width = '0%';
+                }
+
+            } catch (e) {
+                console.error("Cluster poll failed:", e);
+            }
+        }
+        setInterval(updateClusterStatus, 10000);
+
+        async function updateLlmStatus() {
+            try {
+                const res = await fetch('/api/llm/status');
+                const data = await res.json();
+                const dot = document.getElementById('llm-status-dot');
+                const txt = document.getElementById('llm-status-text');
+                if(dot && txt) {
+                    if(data.live) {
+                        dot.className = 'w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-400';
+                        txt.className = 'text-[10px] font-bold text-green-600 uppercase tracking-widest';
+                        txt.textContent = 'LLM: LIVE';
+                    } else {
+                        dot.className = 'w-2 h-2 bg-red-500 rounded-full shadow-sm shadow-red-400';
+                        txt.className = 'text-[10px] font-bold text-red-600 uppercase tracking-widest';
+                        txt.textContent = 'LLM: OFFLINE';
+                    }
+                }
+            } catch(e) {}
+        }
+        setInterval(updateLlmStatus, 15000);
+        updateLlmStatus();
+        window.addEventListener('load', updateClusterStatus);
+
+        // ─── Parallel Process Orchestration ───
+        async function loadProcesses() {
+            try {
+                const res = await fetch('/api/system/processes');
+                const data = await res.json();
+                
+                // Update badge count
+                const badge = document.getElementById('op-counter');
+                if (badge) badge.textContent = data.processes ? data.processes.length : 0;
+
+                const container = document.getElementById('process-list');
+                if (!container) return;
+
+                if (data.processes && data.processes.length > 0) {
+                    container.innerHTML = data.processes.map(p => `
+                        <div class="flex flex-col gap-2 p-4 bg-white border border-zinc-100 rounded-xl hover:border-zinc-300 transition-all shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-3">
+                                    <span class="w-2 h-2 rounded-full ${p.status === 'active' || p.status === 'running' ? 'bg-green-500 animate-pulse shadow-sm shadow-green-400' : 'bg-zinc-300'}"></span>
+                                    <span class="text-xs font-black tracking-tight text-zinc-900">${p.name}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">${p.type}</span>
+                                    <div class="w-px h-2 bg-zinc-200"></div>
+                                    <button class="hover:text-red-500 transition-colors" title="Terminate" onclick="killProcess('${p.id}', '${p.name}')">
+                                        <span class="material-symbols-outlined text-[14px]">stop_circle</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-[10px] text-zinc-500 font-medium">Uptime: ${Math.floor(p.uptime / 60)}m ${p.uptime % 60}s</span>
+                                <div class="flex gap-2 text-zinc-400">
+                                    <span class="text-[9px] font-bold uppercase tracking-tighter">PID: ${p.id}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="p-6 text-center text-zinc-400 text-xs font-bold uppercase tracking-widest">No Active Parallel Ops</div>';
+                }
+            } catch (e) {
+                console.error("Failed to load processes:", e);
+            }
+        }
+
+        async function killProcess(pid, name) {
+            if (!confirm(`Are you sure you want to terminate ${name} (PID: ${pid})?`)) return;
+            showToast(`🛑 Terminating ${name}...`, false);
+            try {
+                const res = await fetch(`/api/system/terminate?pid=${pid}`);
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`✅ ${name} terminated.`, false);
+                    loadProcesses();
+                } else {
+                    showToast(`❌ Failed: ${data.error}`, true);
+                }
+            } catch (e) {
+                showToast(`❌ Error: ${e.message}`, true);
+            }
+        }
+        setInterval(loadProcesses, 5000);
+        window.addEventListener('load', loadProcesses);
+
         // ─── Utilities ───
         function escapeHtml(str) {
             if (!str) return '';
