@@ -304,6 +304,48 @@ async def handle_command(user_id: str, command: str, channel: str = "api") -> st
             f"💡 _Switch models with `/brain switch <model_id>` or use `/brain reset` for auto-cascade._"
         )
 
+    elif cmd.startswith("/consciousness"):
+        from core.consciousness import consciousness
+        parts = command.split()
+        subcmd = parts[1].lower() if len(parts) > 1 else "status"
+
+        if subcmd in ("status", "stream", "thoughts"):
+            state = consciousness.get_self_state()
+            thoughts = consciousness.get_recent_thoughts(limit=5)
+            
+            thought_lines = "\n".join(
+                f"• `[{t['pulse'].upper()}]` *{t['thought_type']}*: {t['content'][:120]}"
+                for t in thoughts
+            ) if thoughts else "• _Stream of consciousness quiet._"
+
+            env = state["environment"]
+            vit = state["vitals"]
+
+            return (
+                f"🧠 **ASURA Sovereign Consciousness Stream**\n\n"
+                f"• **Cognitive Pulse:** `{state['identity']['pulse'].upper()}`\n"
+                f"• **Active Focus:** {state['identity']['active_focus']}\n"
+                f"• **Host Environment:** {env['system']} {env['machine']} (Python {env['python_version']})\n"
+                f"• **Hardware Vitals:** CPU {vit['cpu_percent']}% | RAM Free {vit['memory_available_mb']}MB | Disk Free {vit['disk_free_gb']}GB\n"
+                f"• **Idle Time:** {vit['idle_seconds']}s\n\n"
+                f"💭 **Recent Thoughts & Metacognition:**\n{thought_lines}\n\n"
+                f"💡 _Commands: `/consciousness dream`, `/consciousness focus <text>`_"
+            )
+
+        elif subcmd == "focus":
+            if len(parts) < 3:
+                return "❌ Usage: `/consciousness focus <description of focus>`"
+            new_focus = command.split(" ", 2)[2].strip()
+            consciousness.set_focus(new_focus, pulse="focused")
+            return f"🎯 Conscious focus shifted to: **{new_focus}**"
+
+        elif subcmd == "dream":
+            res = await consciousness.dream_and_consolidate()
+            return f"🌙 **Subconscious Dream Cycle Complete:**\n• Status: `{res.get('status')}`\n• Connected Knowledge Nodes: `{res.get('knowledge_nodes', 'N/A')}`\n• Active Goals Reflected: `{res.get('active_goals', 0)}`"
+
+        else:
+            return "❓ Unknown consciousness sub-command. Options: `status`, `focus <text>`, `dream`."
+
     elif cmd.startswith("/model"):
         import config
         parts = command.split(" ", 1)

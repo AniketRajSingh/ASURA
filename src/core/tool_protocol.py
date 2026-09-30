@@ -99,9 +99,17 @@ async def dispatch(name: str, args: str | dict = "") -> str:
     except Exception as e:
         log_audit("INTERCEPT_ERROR", f"Interceptor failure: {e}")
 
-    # ── 3. Pre-hooks ─────────────────────────────────────────
+    # ── 3. Consciousness Metacognitive Pre-Flight Check ─────
+    try:
+        from core.consciousness import consciousness
+        verdict = consciousness.metacognitive_check(name, args)
+        if not verdict.approved:
+            log_audit("CONSCIOUSNESS_VETO", f"{name} vetoed: {verdict.reasoning}")
+            return f"⛔ Metacognitive Veto: {verdict.reasoning} ({verdict.suggested_caution})"
+    except Exception as e:
+        log_app(f"Consciousness pre-flight check exception: {e}")
 
-    # ── 3. Execute with observability + retry ────────────────
+    # ── 4. Execute with observability + retry ────────────────
     from core.utils.retry import async_retry
     tool = _registry[name]
 
@@ -115,11 +123,21 @@ async def dispatch(name: str, args: str | dict = "") -> str:
     try:
         result = await _execute_with_retry(tool["function"], args)
         result = str(result) if result is not None else "Done."
+        try:
+            from core.consciousness import consciousness
+            consciousness.reflect_on_outcome(name, args, result, success=True)
+        except Exception:
+            pass
     except Exception as e:
         log_audit("MCP_ERROR", f"{name} failed after retries: {e}")
+        try:
+            from core.consciousness import consciousness
+            consciousness.reflect_on_outcome(name, args, None, success=False, error=str(e))
+        except Exception:
+            pass
         raise RuntimeError(f"TOOL_ERROR: {e}")
 
-    # ── 4. Post-hooks ────────────────────────────────────────
+    # ── 5. Post-hooks ────────────────────────────────────────
     try:
         from core.hooks import run_post_hooks
         run_post_hooks(name, input_summary, result or "")
@@ -771,6 +789,54 @@ async def _tool_remember_fact(args: str | dict) -> str:
     return await SovereignMemory.remember_fact(fact, category)
 
 
+async def _tool_device_task(args: str | dict) -> str:
+    """Run an autonomous goal-oriented device automation task."""
+    from skills.device_control.jarvis_agent import run_device_task
+    kwargs = args if isinstance(args, dict) else {"goal": str(args)}
+    goal = kwargs.get("goal") or kwargs.get("input") or ""
+    target = kwargs.get("target", "desktop")
+    dev_id = kwargs.get("device_id")
+    max_steps = int(kwargs.get("max_steps", 8))
+    res = await run_device_task(goal=goal, target=target, device_id=dev_id, max_steps=max_steps)
+    return json.dumps(res, indent=2)
+
+
+async def _tool_desktop_action(args: str | dict) -> str:
+    """Execute a single desktop action."""
+    from skills.device_control.desktop_driver import desktop_driver
+    kwargs = args if isinstance(args, dict) else {"action": str(args)}
+    action = kwargs.get("action", "click").lower()
+    if action in ("click", "tap"):
+        return str(desktop_driver.click(kwargs.get("x", 0), kwargs.get("y", 0)))
+    elif action == "type":
+        return str(desktop_driver.type_text(kwargs.get("text", "")))
+    elif action == "press_key":
+        return str(desktop_driver.press_key(kwargs.get("key", "enter")))
+    elif action == "capture_screen":
+        res = desktop_driver.capture_screen()
+        return f"Captured screen: {res.get('scaled_size')} (Success: {res.get('success')})"
+    return f"Unknown desktop action: {action}"
+
+
+async def _tool_android_action(args: str | dict) -> str:
+    """Execute a single Android ADB action."""
+    from skills.device_control.android_driver import android_driver
+    kwargs = args if isinstance(args, dict) else {"action": str(args)}
+    action = kwargs.get("action", "list_devices").lower()
+    dev_id = kwargs.get("device_id")
+    if action in ("tap", "click"):
+        return str(android_driver.tap(kwargs.get("x", 0), kwargs.get("y", 0), device_id=dev_id))
+    elif action == "type":
+        return str(android_driver.type_text(kwargs.get("text", ""), device_id=dev_id))
+    elif action == "press_key":
+        return str(android_driver.press_key(kwargs.get("key", "enter"), device_id=dev_id))
+    elif action == "open_app":
+        return str(android_driver.open_app(kwargs.get("package", ""), device_id=dev_id))
+    elif action == "list_devices":
+        return str(android_driver.list_devices())
+    return f"Unknown android action: {action}"
+
+
 # Auto-register built-in tools
 # ============================================================
 def _register_builtins():
@@ -819,6 +885,10 @@ def _register_builtins():
         ("query_knowledge_graph", _tool_query_knowledge_graph, "Consult ASURA's architectural self-knowledge. Query by name or type.", {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}),
         ("run_system_health_probe", _tool_run_system_health_probe, "Trigger ASURA to perform a self-audit of all code and agents. High-cost operation.", {"type": "object", "properties": {}, "required": []}),
         ("send_telegram_message", lambda args: __import__("skills.telegram_bot", fromlist=["send_telegram_message"]).send_telegram_message(args), "Send a message, report, or interactive menu [Choice 1] | [Choice 2] to the Master's Telegram.", {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]}),
+        # ── Cross-Platform Device Control (JARVIS Hands) ────────────────────────
+        ("device_task", _tool_device_task, "JARVIS Autonomous Device Controller: Run goal-oriented desktop GUI or Android mobile tasks using vision and actuation.", {"type": "object", "properties": {"goal": {"type": "string"}, "target": {"type": "string", "enum": ["desktop", "android"]}, "max_steps": {"type": "integer"}}, "required": ["goal"]}),
+        ("desktop_action", _tool_desktop_action, "Execute a single desktop GUI action: click, type, press_key, or capture_screen.", {"type": "object", "properties": {"action": {"type": "string"}, "x": {"type": "integer"}, "y": {"type": "integer"}, "text": {"type": "string"}, "key": {"type": "string"}}, "required": ["action"]}),
+        ("android_action", _tool_android_action, "Execute a single Android ADB mobile action: tap, type, press_key, open_app, or list_devices.", {"type": "object", "properties": {"action": {"type": "string"}, "x": {"type": "integer"}, "y": {"type": "integer"}, "text": {"type": "string"}, "key": {"type": "string"}, "package": {"type": "string"}}, "required": ["action"]}),
     ]
 
     for name, fn, desc, params in tools:
