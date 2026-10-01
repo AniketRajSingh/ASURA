@@ -101,6 +101,13 @@ async def init_system():
     from core.sovereignty import get_authority
     get_authority().stay_awake()
     
+    # ─── Initialize Consciousness Engine ────────
+    try:
+        from core.consciousness import consciousness
+        consciousness.start_consciousness_daemon()
+    except Exception as e:
+        log_app(f"Consciousness daemon startup skipped: {e}")
+
     init_memory()
 
     from skills.skill_registry import load_skills

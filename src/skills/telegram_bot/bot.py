@@ -358,6 +358,51 @@ async def cmd_think(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await status.edit_text(f"❌ Reasoning failed: {e}")
 
+async def cmd_jarvis(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Trigger autonomous JARVIS device execution."""
+    goal = " ".join(context.args) if context.args else ""
+    if not goal:
+        await update.effective_message.reply_text(
+            "🤖 <b>JARVIS Autonomous Device Controller</b>\n\n"
+            "Usage: <code>/jarvis &lt;goal&gt;</code>\n"
+            "Examples:\n"
+            "• <code>/jarvis open browser and search for weather</code>\n"
+            "• <code>/jarvis [android] open chrome and search for weather</code>\n"
+            "• <code>/jarvis [desktop] launch calculator</code>",
+            parse_mode="HTML"
+        )
+        return
+    status = await update.effective_message.reply_text("🤖 <i>JARVIS Autonomous Perception-Action loop engaging...</i>", parse_mode="HTML")
+    try:
+        from core.gateway import handle_command
+        res = await handle_command(str(update.effective_user.id), f"/jarvis {goal}", channel="telegram")
+        from core.formatter import format_message
+        await status.edit_text(format_message(res, platform="telegram"), parse_mode="HTML")
+    except Exception as e:
+        await status.edit_text(f"❌ JARVIS Execution failed: {e}")
+
+async def cmd_device(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Direct cross-platform device actuation."""
+    sub = " ".join(context.args) if context.args else "status"
+    try:
+        from core.gateway import handle_command
+        res = await handle_command(str(update.effective_user.id), f"/device {sub}", channel="telegram")
+        from core.formatter import format_message
+        await update.effective_message.reply_text(format_message(res, platform="telegram"), parse_mode="HTML")
+    except Exception as e:
+        await update.effective_message.reply_text(f"❌ Device command failed: {e}")
+
+async def cmd_consciousness(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """View ASURA's conscious stream and vitals."""
+    sub = " ".join(context.args) if context.args else "status"
+    try:
+        from core.gateway import handle_command
+        res = await handle_command(str(update.effective_user.id), f"/consciousness {sub}", channel="telegram")
+        from core.formatter import format_message
+        await update.effective_message.reply_text(format_message(res, platform="telegram"), parse_mode="HTML")
+    except Exception as e:
+        await update.effective_message.reply_text(f"❌ Consciousness query failed: {e}")
+
 async def skill_info_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query; await query.answer()
     from skills.skill_registry import load_skills
@@ -778,6 +823,9 @@ def create_core_bot():
         from telegram import BotCommand
         await app.bot.set_my_commands([
             BotCommand("start", "Launch Hub & Dashboard"),
+            BotCommand("jarvis", "Autonomous Device Controller"),
+            BotCommand("device", "Control Screen & Mobile"),
+            BotCommand("consciousness", "Mind & Vitals Stream"),
             BotCommand("skills", "View Capabilities"),
             BotCommand("think", "Deep Reasoning Mode"),
             BotCommand("screenshot", "Capture Screen"),
@@ -787,6 +835,9 @@ def create_core_bot():
     app = Application.builder().token(cfg.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
     
     app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(CommandHandler("jarvis", cmd_jarvis))
+    app.add_handler(CommandHandler("device", cmd_device))
+    app.add_handler(CommandHandler("consciousness", cmd_consciousness))
     app.add_handler(CommandHandler("skills", cmd_skills))
     app.add_handler(CommandHandler("run", cmd_run))
     app.add_handler(CommandHandler("think", cmd_think))

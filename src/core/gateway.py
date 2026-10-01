@@ -346,6 +346,93 @@ async def handle_command(user_id: str, command: str, channel: str = "api") -> st
         else:
             return "❓ Unknown consciousness sub-command. Options: `status`, `focus <text>`, `dream`."
 
+    elif cmd.startswith("/jarvis"):
+        from skills.device_control.jarvis_agent import run_device_task
+        parts = command.split(" ", 1)
+        if len(parts) < 2 or not parts[1].strip():
+            return (
+                "🤖 **JARVIS Autonomous Device Controller**\n\n"
+                "Usage: `/jarvis <goal>`\n"
+                "Examples:\n"
+                "• `/jarvis open terminal and check git status`\n"
+                "• `/jarvis [android] open browser and check weather`\n"
+                "• `/jarvis [desktop] launch editor and inspect main.py`"
+            )
+        raw_goal = parts[1].strip()
+        target = "desktop"
+        if raw_goal.lower().startswith("[android]"):
+            target = "android"
+            raw_goal = raw_goal[9:].strip()
+        elif raw_goal.lower().startswith("[desktop]"):
+            target = "desktop"
+            raw_goal = raw_goal[9:].strip()
+
+        result = await run_device_task(goal=raw_goal, target=target)
+        if result.get("success"):
+            return f"✅ **JARVIS Execution Succeeded**\n\n🎯 **Goal:** {raw_goal}\n🏁 **Outcome:** {result.get('outcome', 'Task finished')}\n🔢 **Steps:** {len(result.get('steps', []))}"
+        else:
+            return f"⚠️ **JARVIS Execution Incomplete**\n\n🎯 **Goal:** {raw_goal}\n❌ **Error:** {result.get('error', 'Execution stopped')}\n🔢 **Steps Executed:** {len(result.get('steps', []))}"
+
+    elif cmd.startswith("/device"):
+        from skills.device_control.desktop_driver import desktop_driver
+        from skills.device_control.android_driver import android_driver
+        parts = command.split()
+        subcmd = parts[1].lower() if len(parts) > 1 else "status"
+
+        if subcmd in ("status", "info"):
+            d_size = desktop_driver.get_screen_size()
+            a_devices = android_driver.list_devices()
+            adb_avail = android_driver._check_adb()
+
+            adb_str = "🟢 Available" if adb_avail else "⚪ Not detected"
+            dev_str = ", ".join(f"`{d['id']}` ({d['state']})" for d in a_devices) if a_devices else "None connected"
+
+            return (
+                f"🖥️📱 **Cross-Platform Device Controller**\n\n"
+                f"• **Desktop Display:** {d_size['width']}x{d_size['height']} ({desktop_driver._os})\n"
+                f"• **Android ADB Bridge:** {adb_str}\n"
+                f"• **Connected Android Devices:** {dev_str}\n\n"
+                f"💡 _Subcommands: `/device screenshot [desktop|android]`, `/device click <x> <y>`, `/device type <text>`, `/device key <key>`_"
+            )
+
+        elif subcmd in ("screenshot", "screen"):
+            target = parts[2].lower() if len(parts) > 2 else "desktop"
+            if target == "android":
+                res = android_driver.capture_screen()
+            else:
+                res = desktop_driver.capture_screen(add_grid=True)
+
+            if res.get("success"):
+                return f"📸 **Screenshot Captured ({target})**\n• Path: `{res.get('path')}`\n• Dimensions: {res.get('width')}x{res.get('height')}"
+            return f"❌ Screenshot failed: {res.get('error')}"
+
+        elif subcmd in ("tap", "click"):
+            if len(parts) < 4:
+                return "❌ Usage: `/device click <x> <y>` or `/device tap <x> <y>`"
+            try:
+                x, y = int(parts[2]), int(parts[3])
+                res = desktop_driver.click(x, y)
+                return f"🖱️ Clicked ({x}, {y}): {res.get('success')}"
+            except Exception as e:
+                return f"❌ Click failed: {e}"
+
+        elif subcmd in ("type", "text"):
+            if len(parts) < 3:
+                return "❌ Usage: `/device type <text>`"
+            text_to_type = command.split(" ", 2)[2]
+            res = desktop_driver.type_text(text_to_type)
+            return f"⌨️ Typed text: {res.get('success')}"
+
+        elif subcmd in ("key", "press"):
+            if len(parts) < 3:
+                return "❌ Usage: `/device key <key_name>` (e.g. enter, tab, escape)"
+            key_name = parts[2].lower()
+            res = desktop_driver.press_key(key_name)
+            return f"⌨️ Pressed key `{key_name}`: {res.get('success')}"
+
+        else:
+            return "❓ Unknown device sub-command. Options: `status`, `screenshot`, `click <x> <y>`, `type <text>`, `key <key>`."
+
     elif cmd.startswith("/model"):
         import config
         parts = command.split(" ", 1)

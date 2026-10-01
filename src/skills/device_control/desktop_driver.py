@@ -50,10 +50,11 @@ class CrossPlatformDesktopDriver:
 
     # ─── Screen Observation ────────────────────────────────────
 
-    def capture_screen(self, output_path: Optional[str] = None, max_dimension: int = 1280) -> Dict[str, Any]:
+    def capture_screen(self, output_path: Optional[str] = None, max_dimension: int = 1280, add_grid: bool = False) -> Dict[str, Any]:
         """
         Capture the current desktop screen in a cross-platform manner.
         Downscales proportionally if width or height exceeds max_dimension to preserve token budget.
+        Optionally overlays visual coordinate grid for grounded model reasoning.
         """
         try:
             img = None
@@ -86,6 +87,13 @@ class CrossPlatformDesktopDriver:
                 img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
             else:
                 new_w, new_h = orig_w, orig_h
+
+            if add_grid:
+                try:
+                    from skills.device_control.visual_grounding import visual_grounding
+                    img = visual_grounding.draw_coordinate_grid(img)
+                except Exception:
+                    pass
 
             if img.mode != "RGB":
                 img = img.convert("RGB")

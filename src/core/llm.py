@@ -20,6 +20,18 @@ async def call_llm(prompt: str, model: str = None, system_prompt: str = None, st
     from core.resource_governor import get_governor
     gov = get_governor()
 
+    # ─── Unified Sovereign Memory Context Injection ─────────
+    try:
+        from core.unified_memory import unified_memory
+        mem_ctx = unified_memory.compile_context_for_prompt(prompt)
+        if mem_ctx:
+            if system_prompt:
+                system_prompt = f"{system_prompt}\n\n{mem_ctx}"
+            else:
+                system_prompt = mem_ctx
+    except Exception as e:
+        log_app(f"Unified memory context injection skipped: {e}")
+
     # Determine task classification
     task_type = "default"
     if images:

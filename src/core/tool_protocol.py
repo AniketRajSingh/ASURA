@@ -837,6 +837,31 @@ async def _tool_android_action(args: str | dict) -> str:
     return f"Unknown android action: {action}"
 
 
+def _tool_synthesize_skill(args: str | dict) -> str:
+    """Synthesize, test, and dynamically register a new autonomous skill."""
+    if isinstance(args, str):
+        try:
+            args = json.loads(args)
+        except Exception:
+            return "Error: arguments must be JSON object or dict."
+    name = args.get("name", "")
+    description = args.get("description", "")
+    code = args.get("code", "")
+    tool_name = args.get("tool_name")
+    test_code = args.get("test_code")
+    if not name or not code:
+        return "Error: 'name' and 'code' are required parameters."
+    from skills.skill_synthesizer import skill_synthesizer
+    res = skill_synthesizer.synthesize_skill(
+        name=name,
+        description=description,
+        code=code,
+        tool_name=tool_name,
+        test_code=test_code,
+    )
+    return json.dumps(res, indent=2)
+
+
 # Auto-register built-in tools
 # ============================================================
 def _register_builtins():
@@ -889,6 +914,8 @@ def _register_builtins():
         ("device_task", _tool_device_task, "JARVIS Autonomous Device Controller: Run goal-oriented desktop GUI or Android mobile tasks using vision and actuation.", {"type": "object", "properties": {"goal": {"type": "string"}, "target": {"type": "string", "enum": ["desktop", "android"]}, "max_steps": {"type": "integer"}}, "required": ["goal"]}),
         ("desktop_action", _tool_desktop_action, "Execute a single desktop GUI action: click, type, press_key, or capture_screen.", {"type": "object", "properties": {"action": {"type": "string"}, "x": {"type": "integer"}, "y": {"type": "integer"}, "text": {"type": "string"}, "key": {"type": "string"}}, "required": ["action"]}),
         ("android_action", _tool_android_action, "Execute a single Android ADB mobile action: tap, type, press_key, open_app, or list_devices.", {"type": "object", "properties": {"action": {"type": "string"}, "x": {"type": "integer"}, "y": {"type": "integer"}, "text": {"type": "string"}, "key": {"type": "string"}, "package": {"type": "string"}}, "required": ["action"]}),
+        # ── Autonomous Self-Evolution & Synthesis ───────────────────────────────
+        ("synthesize_skill", _tool_synthesize_skill, "Synthesize, verify with AST, test with pytest, and hot-load a new autonomous skill and tool without restart.", {"type": "object", "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "code": {"type": "string"}, "tool_name": {"type": "string"}, "test_code": {"type": "string"}}, "required": ["name", "code"]}),
     ]
 
     for name, fn, desc, params in tools:

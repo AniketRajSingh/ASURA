@@ -50,8 +50,8 @@ async def run_device_task(
             ui_nodes = android_driver.dump_ui_hierarchy(device_id=device_id)
             ui_context = "\n".join([f"- '{n['text'] or n['content_desc']}' at center {n['center']}" for n in ui_nodes[:20]])
         else:
-            obs = desktop_driver.capture_screen()
-            ui_context = "Desktop graphical interface"
+            obs = desktop_driver.capture_screen(add_grid=True)
+            ui_context = "Desktop graphical interface with indexed coordinate grid overlay"
 
         if not obs.get("success"):
             err = obs.get("error", "Screen observation failed")
@@ -153,18 +153,27 @@ Respond strictly in JSON with this schema:
                     device_id=device_id
                 )
         else:
-            # Desktop Actuation
+            # Desktop Actuation with physical coordinate unscaling
+            from skills.device_control.visual_grounding import visual_grounding
+            orig_size = obs.get("original_size", (1920, 1080))
+            scaled_size = obs.get("scaled_size", orig_size)
+
             if action_type in ("click", "tap"):
-                act_res = desktop_driver.click(decision.get("x", 0), decision.get("y", 0))
+                raw_x, raw_y = decision.get("x", 0), decision.get("y", 0)
+                phys_x, phys_y = visual_grounding.unscale_coordinates((raw_x, raw_y), scaled_size, orig_size)
+                act_res = desktop_driver.click(phys_x, phys_y)
             elif action_type == "type":
                 act_res = desktop_driver.type_text(decision.get("text", ""))
             elif action_type == "press_key":
                 act_res = desktop_driver.press_key(decision.get("key", "enter"))
             elif action_type in ("drag", "swipe"):
-                act_res = desktop_driver.drag(
-                    decision.get("start_x", 0), decision.get("start_y", 0),
-                    decision.get("end_x", 0), decision.get("end_y", 0)
+                sx, sy = visual_grounding.unscale_coordinates(
+                    (decision.get("start_x", 0), decision.get("start_y", 0)), scaled_size, orig_size
                 )
+                ex, ey = visual_grounding.unscale_coordinates(
+                    (decision.get("end_x", 0), decision.get("end_y", 0)), scaled_size, orig_size
+                )
+                act_res = desktop_driver.drag(sx, sy, ex, ey)
 
         step_record = {
             "step": step,
