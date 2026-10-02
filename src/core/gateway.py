@@ -433,6 +433,55 @@ async def handle_command(user_id: str, command: str, channel: str = "api") -> st
         else:
             return "❓ Unknown device sub-command. Options: `status`, `screenshot`, `click <x> <y>`, `type <text>`, `key <key>`."
 
+    elif cmd.startswith("/sandbox"):
+        from skills.sandbox.container_manager import sandbox_manager
+        parts = command.split()
+        subcmd = parts[1].lower() if len(parts) > 1 else "status"
+
+        if subcmd in ("status", "info"):
+            st = sandbox_manager.get_status()
+            if not st.get("available"):
+                return f"📦 **ASURA Virtual Sandbox**\n\n❌ Docker daemon is not active. Status: `{st.get('error')}`"
+            run_status = "🟢 Active" if st.get("running") else "⚪ Stopped"
+            return (
+                f"📦 **ASURA Isolated Virtual Sandbox**\n\n"
+                f"• **Status:** {run_status}\n"
+                f"• **Engine:** `{st.get('engine')}`\n"
+                f"• **Virtual Display:** `{st.get('virtual_display')}`\n"
+                f"• **noVNC Web Interface:** `http://localhost:{st.get('novnc_port')}`\n"
+                f"• **Isolated ADB Port:** `{st.get('adb_port')}`\n\n"
+                f"💡 _Subcommands: `/sandbox start`, `/sandbox stop`, `/sandbox run <cmd>`, `/sandbox screen`_"
+            )
+
+        elif subcmd == "start":
+            res = sandbox_manager.start_sandbox()
+            if res.get("success"):
+                return "✅ **Virtual Sandbox Started**\nVirtual X11 display `:99` and noVNC Web UI live at `http://localhost:6080`."
+            return f"❌ Sandbox startup failed: {res.get('error')}"
+
+        elif subcmd == "stop":
+            res = sandbox_manager.stop_sandbox()
+            return f"🛑 Sandbox stop: {res.get('message') or res.get('error')}"
+
+        elif subcmd in ("run", "exec"):
+            if len(parts) < 3:
+                return "❌ Usage: `/sandbox run <command>`"
+            exec_str = command.split(" ", 2)[2]
+            res = sandbox_manager.execute_isolated_command(exec_str)
+            if res.get("success"):
+                out = res.get("stdout", "") or "(command finished with no stdout)"
+                return f"🛡️ **Sandbox Execution Output (Exit 0):**\n```\n{out[:3000]}\n```"
+            return f"⚠️ **Sandbox Execution Error (Exit {res.get('exit_code')}):**\n```\n{(res.get('stderr') or res.get('error'))[:2000]}\n```"
+
+        elif subcmd in ("screen", "screenshot"):
+            res = sandbox_manager.capture_sandbox_screen()
+            if res.get("success"):
+                return f"📸 **Sandbox Screen Captured:**\n• Path: `{res.get('path')}`\n• Virtual Display: `{res.get('display')}`"
+            return f"❌ Sandbox screen capture failed: {res.get('error')}"
+
+        else:
+            return "❓ Unknown sandbox sub-command. Options: `status`, `start`, `stop`, `run <cmd>`, `screen`."
+
     elif cmd.startswith("/model"):
         import config
         parts = command.split(" ", 1)

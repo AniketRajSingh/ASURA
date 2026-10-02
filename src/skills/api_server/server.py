@@ -286,6 +286,84 @@ def create_app():
         from skills.voice_chat.client import check_health
         return check_health()
 
+    # ── Duplex Voice Stream (WebSocket) ────────────────────────
+    @app.websocket("/voice/duplex")
+    async def duplex_voice_ws(websocket):
+        """
+        Bidirectional real-time duplex voice socket with live barge-in.
+        Supports binary PCM streams and JSON event controls.
+        """
+        from fastapi import WebSocketDisconnect
+        from skills.voice_chat.duplex_stream import duplex_engine
+        import uuid
+        import base64
+
+        await websocket.accept()
+        session_id = f"duplex_{uuid.uuid4().hex[:8]}"
+        session = duplex_engine.get_or_create_session(session_id)
+        log_audit("DUPLEX_CONNECTED", f"Client connected to duplex voice stream: {session_id}")
+
+        try:
+            await websocket.send_json({
+                "type": "ready",
+                "session_id": session_id,
+                "sample_rate": 16000,
+                "channels": 1,
+                "message": "ASURA Duplex Stream active. Ready for bidirectional audio.",
+            })
+
+            while True:
+                msg = await websocket.receive()
+                if "text" in msg and msg["text"]:
+                    try:
+                        payload = json.loads(msg["text"])
+                    except Exception:
+                        payload = {"type": "text", "text": msg["text"]}
+
+                    msg_type = payload.get("type", "text")
+
+                    if msg_type == "barge_in":
+                        interrupted = session.barge_in()
+                        await websocket.send_json({"type": "interrupted", "success": interrupted})
+
+                    elif msg_type == "text":
+                        user_text = payload.get("text", "").strip()
+                        if user_text:
+                            async def _send_token(token: str):
+                                try:
+                                    await websocket.send_json({"type": "token", "token": token})
+                                except Exception:
+                                    pass
+
+                            reply = await session.generate_response_stream(
+                                user_text=user_text,
+                                on_token=_send_token,
+                            )
+                            await websocket.send_json({"type": "done", "reply": reply})
+
+                    elif msg_type == "audio":
+                        # Base64 encoded PCM chunk
+                        raw_b64 = payload.get("data", "")
+                        if raw_b64:
+                            audio_chunk = base64.b64decode(raw_b64)
+                            res = session.ingest_audio_chunk(audio_chunk)
+                            if res["barge_in_triggered"]:
+                                await websocket.send_json({"type": "interrupted", "reason": "vad_barge_in"})
+
+                elif "bytes" in msg and msg["bytes"]:
+                    # Binary PCM chunk directly from microphone
+                    audio_chunk = msg["bytes"]
+                    res = session.ingest_audio_chunk(audio_chunk)
+                    if res["barge_in_triggered"]:
+                        await websocket.send_json({"type": "interrupted", "reason": "vad_barge_in"})
+
+        except WebSocketDisconnect:
+            log_audit("DUPLEX_DISCONNECTED", f"Client disconnected from duplex session: {session_id}")
+        except Exception as e:
+            log_app(f"Duplex WS error in {session_id}: {e}")
+        finally:
+            duplex_engine.close_session(session_id)
+
     return app
 
 

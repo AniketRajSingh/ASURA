@@ -349,7 +349,24 @@ class BrainRouter:
         from core.model_manager import model_manager
         local_model = model_manager.get_model_for_task(task_type)
 
-        if ollama_alive and not self.is_exhausted(local_model):
+        # 2a. Local Offline Multimodal Vision Model (Tier 0 for Privacy & Zero Latency)
+        if require_vision and ollama_alive:
+            try:
+                from skills.visual.local_vision import local_vision
+                local_vm = local_vision.get_active_model()
+                if local_vm and not self.is_exhausted(local_vm):
+                    if not any(c["model"] == local_vm for c in candidates):
+                        candidates.append({
+                            "provider": "ollama",
+                            "model": local_vm,
+                            "tier": "local_offline_vision",
+                            "is_local": True,
+                            "description": f"Local Ollama Vision ({local_vm})",
+                        })
+            except Exception as e:
+                log_app(f"BrainRouter local vision check: {e}")
+
+        elif ollama_alive and not self.is_exhausted(local_model):
             # If user explicitly requested another provider as primary, local might already be added
             if not any(c["model"] == local_model for c in candidates):
                 candidates.append({

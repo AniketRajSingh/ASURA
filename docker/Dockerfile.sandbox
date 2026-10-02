@@ -1,0 +1,53 @@
+# ============================================================
+# docker/Dockerfile.sandbox — Headless X11 & Android ADB Sandbox
+# ============================================================
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DISPLAY=:99
+ENV RESOLUTION=1280x800x24
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    xvfb \
+    x11vnc \
+    fluxbox \
+    xterm \
+    novnc \
+    websockify \
+    adb \
+    curl \
+    wget \
+    git \
+    imagemagick \
+    x11-apps \
+    python3 \
+    python3-pip \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create isolated non-root user
+RUN useradd -m -s /bin/bash asura-sandbox
+USER asura-sandbox
+WORKDIR /home/asura-sandbox
+
+# Startup script to initialize virtual display and window manager
+COPY --chmod=755 <<-"EOF" /home/asura-sandbox/entrypoint.sh
+#!/bin/bash
+echo "Starting Virtual X11 Display $DISPLAY ($RESOLUTION)..."
+Xvfb $DISPLAY -screen 0 $RESOLUTION -ac +extension GLX +render -noreset &
+sleep 1
+echo "Starting Fluxbox Window Manager..."
+fluxbox &
+echo "Starting VNC Server..."
+x11vnc -display $DISPLAY -nopw -forever -shared -rfbport 5900 &
+echo "Starting noVNC Web Interface on port 6080..."
+websockify --web /usr/share/novnc 6080 localhost:5900 &
+echo "Starting ADB Daemon..."
+adb start-server
+
+echo "ASURA Sandbox ready."
+wait -n
+EOF
+
+EXPOSE 5900 6080 5555
+ENTRYPOINT ["/home/asura-sandbox/entrypoint.sh"]

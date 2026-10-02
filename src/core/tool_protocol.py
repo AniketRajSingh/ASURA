@@ -862,6 +862,28 @@ def _tool_synthesize_skill(args: str | dict) -> str:
     return json.dumps(res, indent=2)
 
 
+def _tool_sandbox_exec(args: str | dict) -> str:
+    """Execute command inside isolated sandbox."""
+    cmd = args.get("command", "") if isinstance(args, dict) else str(args)
+    from skills.sandbox.container_manager import sandbox_manager
+    res = sandbox_manager.execute_isolated_command(cmd)
+    return json.dumps(res, indent=2)
+
+
+def _tool_sandbox_screen(args: str | dict) -> str:
+    """Capture virtual screen of sandbox."""
+    from skills.sandbox.container_manager import sandbox_manager
+    res = sandbox_manager.capture_sandbox_screen()
+    return json.dumps(res, indent=2)
+
+
+def _tool_sandbox_status(args: str | dict) -> str:
+    """Get status of sandbox."""
+    from skills.sandbox.container_manager import sandbox_manager
+    res = sandbox_manager.get_status()
+    return json.dumps(res, indent=2)
+
+
 # Auto-register built-in tools
 # ============================================================
 def _register_builtins():
@@ -916,6 +938,10 @@ def _register_builtins():
         ("android_action", _tool_android_action, "Execute a single Android ADB mobile action: tap, type, press_key, open_app, or list_devices.", {"type": "object", "properties": {"action": {"type": "string"}, "x": {"type": "integer"}, "y": {"type": "integer"}, "text": {"type": "string"}, "key": {"type": "string"}, "package": {"type": "string"}}, "required": ["action"]}),
         # ── Autonomous Self-Evolution & Synthesis ───────────────────────────────
         ("synthesize_skill", _tool_synthesize_skill, "Synthesize, verify with AST, test with pytest, and hot-load a new autonomous skill and tool without restart.", {"type": "object", "properties": {"name": {"type": "string"}, "description": {"type": "string"}, "code": {"type": "string"}, "tool_name": {"type": "string"}, "test_code": {"type": "string"}}, "required": ["name", "code"]}),
+        # ── Isolated Sandbox Execution ──────────────────────────────────────────
+        ("sandbox_exec", _tool_sandbox_exec, "Execute untrusted commands inside isolated Docker sandbox.", {"type": "object", "properties": {"command": {"type": "string"}}, "required": ["command"]}),
+        ("sandbox_screen", _tool_sandbox_screen, "Capture virtual X11 screen from isolated sandbox.", {"type": "object", "properties": {}, "required": []}),
+        ("sandbox_status", _tool_sandbox_status, "Get Docker sandbox status and ports.", {"type": "object", "properties": {}, "required": []}),
     ]
 
     for name, fn, desc, params in tools:
