@@ -136,11 +136,21 @@ def _get_embedding(text: str, retries: int = 3):
             import numpy as np
             
             host_ip = config.OLLAMA_BASE_URL.split("//")[-1].split(":")[0]
-            embedding_url = f"http://{host_ip}:11434/api/embed"
-            
+            # Try /api/embeddings first, fallback to /api/embed
             resp = requests.post(
-                embedding_url,
-                json={"model": "nomic-embed-text", "input": text},
+                f"http://{host_ip}:11434/api/embeddings",
+                json={"model": "nomic-embed", "prompt": text},
+                timeout=3
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                emb = data.get("embedding")
+                if emb:
+                    return np.array(emb, dtype=np.float32)
+            # Fallback to /api/embed
+            resp = requests.post(
+                f"http://{host_ip}:11434/api/embed",
+                json={"model": "nomic-embed", "input": text},
                 timeout=3
             )
             resp.raise_for_status()
