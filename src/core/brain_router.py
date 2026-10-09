@@ -377,14 +377,17 @@ class BrainRouter:
                     "description": f"Local Ollama ({local_model})",
                 })
 
+        prefer_openrouter = getattr(config, "LLM_PROVIDER", "").lower() == "openrouter"
+
         # 3. Groq High-Speed Tier (for text tasks)
+        groq_candidates: list[dict] = []
         groq_key = getattr(config, "GROQ_API_KEY", None)
         if groq_key and not require_vision and not gov.is_exhausted("groq"):
             is_heavy = task_type in ("heavy", "reasoning", "code", "review") or "120b" in (target_model or "")
             groq_model = getattr(config, "GROQ_MODEL_HEAVY", "openai/gpt-oss-120b") if is_heavy else getattr(config, "GROQ_MODEL_FAST", "openai/gpt-oss-20b")
             
             if not self.is_exhausted(groq_model) and not any(c["model"] == groq_model for c in candidates):
-                candidates.append({
+                groq_candidates.append({
                     "provider": "groq",
                     "model": groq_model,
                     "tier": "cloud_groq",
@@ -393,6 +396,7 @@ class BrainRouter:
                 })
 
         # 4. OpenRouter Dynamic Free Models Pool
+        openrouter_candidates: list[dict] = []
         or_key = getattr(config, "OPENROUTER_API_KEY", None)
         if or_key and not gov.is_exhausted("openrouter"):
             models = await self.fetch_openrouter_models()
@@ -401,7 +405,6 @@ class BrainRouter:
             if require_vision:
                 # Filter for vision capable models
                 vision_pool = [m for m in free_models if m.is_vision]
-                # Sort: preferred high-capacity vision models first
                 preferred_order = [
                     "qwen/qwen3.8-27b:free",
                     "google/gemma-4-31b-it:free",
@@ -414,7 +417,7 @@ class BrainRouter:
 
                 for vm in vision_pool:
                     if not any(c["model"] == vm.id for c in candidates):
-                        candidates.append({
+                        openrouter_candidates.append({
                             "provider": "openrouter",
                             "model": vm.id,
                             "tier": "openrouter_free_vision",
@@ -436,7 +439,7 @@ class BrainRouter:
                     reasoning_pool.sort(key=lambda m: (0 if m.id in preferred_order else 1, preferred_order.index(m.id) if m.id in preferred_order else -m.context_length))
                     for rm in reasoning_pool:
                         if not any(c["model"] == rm.id for c in candidates):
-                            candidates.append({
+                            openrouter_candidates.append({
                                 "provider": "openrouter",
                                 "model": rm.id,
                                 "tier": "openrouter_free_reasoning",
@@ -455,7 +458,7 @@ class BrainRouter:
                 fast_pool.sort(key=lambda m: (0 if m.id in preferred_fast else 1, preferred_fast.index(m.id) if m.id in preferred_fast else -m.context_length))
                 for fm in fast_pool:
                     if not any(c["model"] == fm.id for c in candidates):
-                        candidates.append({
+                        openrouter_candidates.append({
                             "provider": "openrouter",
                             "model": fm.id,
                             "tier": "openrouter_free_fast",
@@ -465,8 +468,8 @@ class BrainRouter:
 
                 # Append any remaining free models not already included
                 for om in free_models:
-                    if not any(c["model"] == om.id for c in candidates):
-                        candidates.append({
+                    if not any(c["model"] == om.id for c in candidates) and not any(c["model"] == om.id for c in openrouter_candidates):
+                        openrouter_candidates.append({
                             "provider": "openrouter",
                             "model": om.id,
                             "tier": "openrouter_free_general",
@@ -475,14 +478,22 @@ class BrainRouter:
                         })
 
                 # Universal OpenRouter dynamic router alias
-                if not self.is_exhausted("openrouter/free") and not any(c["model"] == "openrouter/free" for c in candidates):
-                    candidates.append({
+                if not self.is_exhausted("openrouter/free") and not any(c["model"] == "openrouter/free" for c in candidates) and not any(c["model"] == "openrouter/free" for c in openrouter_candidates):
+                    openrouter_candidates.append({
                         "provider": "openrouter",
                         "model": "openrouter/free",
                         "tier": "openrouter_free_auto",
                         "is_local": False,
                         "description": "OpenRouter Free Auto-Router",
                     })
+
+        # Order candidates based on provider preference
+        if prefer_openrouter:
+            candidates.extend(openrouter_candidates)
+            candidates.extend(groq_candidates)
+        else:
+            candidates.extend(groq_candidates)
+            candidates.extend(openrouter_candidates)
 
         # 5. OpenRouter Paid/Heavy Fallbacks (when free tier is completely exhausted)
         if or_key and not gov.is_exhausted("openrouter"):
