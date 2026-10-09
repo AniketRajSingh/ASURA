@@ -22,6 +22,7 @@ ASURA possesses a modular 'Skill' architecture. Each skill is a self-contained c
 | **codebase_investigator** | "Deep static analysis of ASURA's source code. Performs grep searches, symbol finding, import tracing, and architectural reporting." | `src/skills/codebase_investigator` |
 | **conversation** | "Manages conversation history, context retrieval, and system prompt construction for human-AI interaction." | `src/skills/conversation` |
 | **dashboard** | "Observability web dashboard. Shows system status, skills, TODOs, hardware metrics, and audit log." | `src/skills/dashboard` |
+| **device_control** | "Cross-platform desktop and mobile hardware actuation (mouse, keyboard, app launch, screenshot, ADB) for macOS, Linux, Windows, and Android." | `src/skills/device_control` |
 | **disk_usage** | "Monitors disk space utilization and provides detailed statistics for specified paths." | `src/skills/disk_usage` |
 | **doc_summarizer** | "Document summarization skill. Summarizes text, URLs, and PDFs into bullets, paragraphs, or TL;DR using LLM." | `src/skills/doc_summarizer` |
 | **dream_machine** | "Long-term background goals engine for managing and tracking AI autonomous tasks during idle time." | `src/skills/dream_machine` |
@@ -44,9 +45,11 @@ ASURA possesses a modular 'Skill' architecture. Each skill is a self-contained c
 | **multi_model** | "Task-aware LLM manager for dynamic model selection and capability-based routing." | `src/skills/multi_model` |
 | **nl_commands** | "Translates natural language messages into specific internal skill function calls using regex pattern matching." | `src/skills/nl_commands` |
 | **notification_router** | "Intelligent notification routing system for dispatching alerts across Telegram, email, and dashboard." | `src/skills/notification_router` |
+| **sandbox** | "Isolated headless virtual X11 desktop (Xvfb :99) and Android ADB container sandbox for untrusted execution." | `src/skills/sandbox` |
 | **scheduler** | "Core skill: Cron-style task scheduler. Add arbitrary recurring tasks (shell, python, notify, evolve) with persistent schedules and a background daemon." | `src/skills/scheduler` |
 | **shell_executor** | "Core skill: Sandboxed shell execution. Runs commands inside the project freely, blocks/asks master for commands outside the project or destructive operations. File read/write/list helpers." | `src/skills/shell_executor` |
 | **skill_hotreload** | "Dynamically hot-reload skill modules without restarting the ASURA system." | `src/skills/skill_hotreload` |
+| **skill_synthesizer** | "Autonomous dynamic skill compiler that synthesizes, tests, and registers new Python skills on demand." | `src/skills/skill_synthesizer.py` |
 | **smart_deps** | "Automatically detects and upgrades outdated Python dependencies." | `src/skills/smart_deps` |
 | **sub_agent_manager** | "Manager for spawning, commanding, and inspecting specialized sub-agents with isolated memory vaults." | `src/skills/sub_agent_manager` |
 | **system_health** | "Generates a concise, human-readable report of system health metrics including CPU, memory, disk, and uptime." | `src/skills/system_health` |

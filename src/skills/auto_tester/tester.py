@@ -55,10 +55,12 @@ def run_all_skill_imports() -> dict:
 
 def generate_test(code: str, purpose: str) -> str:
     """Use LLM to generate a test for given code."""
+    prompt = f"Write a comprehensive pytest unit test suite for the following Python code:\n\nPURPOSE: {purpose}\n\nCODE:\n{code}\n\nReturn only executable python code without backticks."
     try:
         from core.llm import call_llm
         return run_async(call_llm(prompt, model=config.OLLAMA_MODEL_REVIEWER, stream=False))
-    except: return ""
+    except Exception:
+        return ""
 
 def run_test_string(test_code: str) -> dict:
     """Run a test string in a temp file."""

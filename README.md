@@ -8,10 +8,12 @@ A high-autonomy, locally-sourced AI infrastructure featuring tiered intelligence
 ---
 
 ## 👁️ Core Intelligence
-- **Tiered Reasoning**: Dual-model routing (**0.8B Fast / GPT-OSS 20B Heavy**) for optimal resource allocation.
-- **Turbo-Parallelism**: Concurrent preparation tasks for sub-second agent selection and history context loading.
-- **Surgical Evolution**: AST-based code mutation with phantom-branch isolation, auto-testing, and **Ghost Repair** recovery.
-- **Agentic Sovereignty**: Markdown-defined specialist agents with **Cluster Intent Sync** for federated learning.
+- **Dynamic Multi-Model Cascades (BrainRouter)**: Prioritizes **OpenRouter** free/flagship models, **Groq** cloud speed, and local offline **Ollama** fallbacks.
+- **Autonomous Consciousness**: Real-time introspective monologue stream, continuous awareness pulse, and sovereign unified memory.
+- **Cross-Platform Device Actuation**: Native control over mouse, keyboard, applications, and mobile devices (via ADB) across macOS, Linux, Windows, and Android.
+- **Isolated Virtual Display & Sandbox**: Headless Docker/Podman container (`asura-sandbox`) with Xvfb (:99), ADB bridge, and noVNC live streaming for untrusted code execution.
+- **Real-Time Duplex Voice Stream**: Sub-second full-duplex voice interaction over WebSockets with pure-Python Voice Activity Detection (VAD) and barge-in.
+- **Surgical Evolution & Self-Healing**: AST-based symbol mutation, minimal run environment (MRE) surgical rooms, automated syntax/import validation, and **Ghost Repair** recovery.
 - **Structural Self-Awareness**: Incremental AST-scanned Architectural Knowledge Graph.
 
 ## 🚀 Quick Start
