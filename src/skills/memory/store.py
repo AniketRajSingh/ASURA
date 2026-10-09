@@ -132,7 +132,7 @@ def _get_embedding(text: str, retries: int = 3):
             resp = requests.post(
                 embedding_url,
                 json={"model": "nomic-embed-text", "input": text},
-                timeout=30
+                timeout=3
             )
             resp.raise_for_status()
             embeddings = resp.json().get("embeddings", [])
@@ -140,7 +140,7 @@ def _get_embedding(text: str, retries: int = 3):
                 return np.array(embeddings[0], dtype=np.float32)
         except Exception as e:
             if attempt < retries - 1:
-                time.sleep(1 * (attempt + 1)) # Exponential backoff
+                time.sleep(0.5) # Fast backoff
                 continue
             log_app(f"Memory: Ollama embedding failed after {retries} attempts: {e}")
     

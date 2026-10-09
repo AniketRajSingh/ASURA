@@ -187,7 +187,6 @@ async def start_parallel_services():
     set_proactive_engine(proactive)
     scheduler = SchedulerDaemon(notify_fn=notify)
     curiosity = CuriosityEngine(notify_fn=notify)
-    observer = FileSystemObserver(notify_fn=notify)
     
     # ── Start Federation Sync ───────────
     from core.federation import federation
@@ -199,8 +198,13 @@ async def start_parallel_services():
         asyncio.create_task(asyncio.to_thread(proactive.start)),
         asyncio.create_task(asyncio.to_thread(scheduler.start)),
         asyncio.create_task(asyncio.to_thread(curiosity.start)),
-        asyncio.create_task(observer.start()),
     ]
+    try:
+        from core.observer import FileSystemObserver
+        observer = FileSystemObserver(notify_fn=notify)
+        tasks.append(asyncio.create_task(observer.start()))
+    except Exception as e:
+        log_app(f"Observer startup skipped: {e}")
 
     # 3. Add Optional Services
     try:

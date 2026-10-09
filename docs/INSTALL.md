@@ -1,63 +1,68 @@
-# ⚙️ Installation & Setup
+# Installation & Setup
 
-TF is a high-performance, autonomous AI system. Follow these steps to get it running on your local machine.
+ASURA is an autonomous, sovereign AI infrastructure. The following instructions configure the system on local hardware.
 
-## 📋 Prerequisites
-- **Python 3.10+** (3.12 recommended)
-- **Ollama**: To run the local LLMs that power TF.
-- **Telegram Bot Token**: Create one via [@BotFather](https://t.me/BotFather).
-- **Cloudinary Account**: For image hosting (optional but recommended).
+## System Prerequisites
+- **Python 3.10+** (Python 3.12 recommended)
+- **uv** (recommended package and virtual environment manager)
+- **Telegram Bot Token**: Generated via [@BotFather](https://t.me/BotFather)
+- **Ollama**: Local model execution daemon (optional if using OpenRouter or Groq cloud providers)
 
-## 🚀 Step 1: Clone & Optimized Setup
-TF is cross-platform (Mac, Windows, Linux). We recommend using **uv** for the fastest setup.
+## Repository Setup
 
 ```bash
-git clone <your-repo-url>
-cd TF
+git clone <repository-url>
+cd ASURA
 
-# Optimized Cross-Platform Setup (Automatic)
+# Automated environment setup
 python run.py setup
 
-# Manual Setup (if desired)
+# Alternative manual virtual environment configuration
 uv venv
 uv pip install -e .
-python scripts/setup_env.py
-python scripts/setup_qwen_tts.py
 ```
-> **Note**: `psutil` is required for core resource governance and safety fail-safes.
 
-## 🔑 Step 2: Configuration
-Open `src/config.py` and set your credentials:
-1. `TELEGRAM_BOT_TOKEN`: Your bot's API key.
-2. `OLLAMA_BASE_URL`: Usually `http://localhost:11434`.
-3. `CLOUDINARY_*`: Your Cloudinary credentials.
+## Configuration
 
-## 🏠 Step 3: Ollama Models
-TF requires models that support tool-use and reasoning. We recommend:
+Credentials and environment variables are loaded from `.env` (or managed in `src/settings.py`):
+
+1. `TELEGRAM_BOT_TOKEN`: Telegram bot API token.
+2. `TELEGRAM_ADMIN_CHAT_ID`: Primary administrator chat ID.
+3. `ASURA_LLM_PROVIDER`: Provider routing (`openrouter`, `groq`, or `ollama`).
+4. `OPENROUTER_API_KEY`: API token for OpenRouter model access.
+5. `GROQ_API_KEY`: API token for Groq cloud inference.
+6. `OLLAMA_BASE_URL`: Local daemon URL (default: `http://localhost:11434`).
+
+## Local Model Deployment (Ollama Tier)
+
+For offline execution:
+
 ```bash
-ollama run gpt-oss:20b
-# Optional: vision support
+ollama pull qwen2.5:7b
 ollama pull llama3.2-vision
 ```
 
-## ▶️ Step 4: Launch
+## Execution
+
 ```bash
-python run.py              # Auto-setup + start with file watcher
-python run.py start        # Start with auto-restart on code changes
+python run.py              # Launch system with live file watcher
+python run.py start        # Background daemon mode with auto-restart
 python run.py start --no-watch  # Start without file watcher
+python src/main.py         # Direct orchestrator launch
 ```
-Upon the first run, the first user to type `/start` to the bot on Telegram will be registered as the permanent **Owner**.
 
-## ⏹️ Step 5: Stopping
+Upon initial execution, the first user issuing `/start` on Telegram claims permanent administrative ownership via Role-Based Access Control (RBAC).
+
+## Shutdown
+
 ```bash
-python stop.py             # Graceful shutdown (kills watcher + core + OS locks)
-python stop.py --force     # Force kill if graceful fails
+python stop.py             # Graceful shutdown (terminates watcher, core, and OS locks)
+python stop.py --force     # Force termination
 ```
-You can also send `/hibernate` via Telegram.
 
-## 🛡️ Security Note
-TF uses **RBAC (Role Based Access Control)**. 
-- **Owner**: Full system access.
-- **Admin**: Command access, no self-evolution.
-- **User**: Chat and basic skills only.
-- **Viewer**: Read-only access to stats.
+## Role-Based Access Control
+ASURA enforces multi-tier access control:
+- **Owner**: Unrestricted system actuation, shell execution, and self-evolution.
+- **Admin**: Command execution without self-evolution permissions.
+- **User**: Conversational capabilities and non-destructive skills.
+- **Viewer**: Read-only observability and status queries.

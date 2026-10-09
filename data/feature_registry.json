@@ -6,7 +6,7 @@
       "capability": "Upload images to cloud CDN",
       "implementation": "cloudinary",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.534191",
+      "registered": "2026-10-09T17:08:20.434588",
       "replaced_by": null,
       "active": true
     },
@@ -16,7 +16,7 @@
       "capability": "Encrypt/decrypt files and data",
       "implementation": "cryptography/fernet",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.540723",
+      "registered": "2026-10-09T17:08:20.438850",
       "replaced_by": null,
       "active": true
     },
@@ -26,7 +26,7 @@
       "capability": "Search the web for information",
       "implementation": "duckduckgo_search",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.534730",
+      "registered": "2026-10-09T17:08:20.435647",
       "replaced_by": null,
       "active": true
     },
@@ -36,7 +36,7 @@
       "capability": "Review code for quality and bugs",
       "implementation": "ollama+prompts",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.541113",
+      "registered": "2026-10-09T17:08:20.439176",
       "replaced_by": null,
       "active": true
     },
@@ -46,7 +46,7 @@
       "capability": "Extract content from web pages",
       "implementation": "beautifulsoup4",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.535037",
+      "registered": "2026-10-09T17:08:20.436075",
       "replaced_by": null,
       "active": true
     },
@@ -56,7 +56,7 @@
       "capability": "Summarize documents and URLs",
       "implementation": "ollama+prompts",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.541578",
+      "registered": "2026-10-09T17:08:20.439522",
       "replaced_by": null,
       "active": true
     },
@@ -66,7 +66,7 @@
       "capability": "Semantic memory storage and recall",
       "implementation": "faiss+sentence-transformers",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.536096",
+      "registered": "2026-10-09T17:08:20.436512",
       "replaced_by": null,
       "active": true
     },
@@ -76,7 +76,7 @@
       "capability": "Generate text with LLM",
       "implementation": "ollama",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.536947",
+      "registered": "2026-10-09T17:08:20.436943",
       "replaced_by": null,
       "active": true
     },
@@ -86,7 +86,7 @@
       "capability": "Execute shell commands safely",
       "implementation": "subprocess",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.537951",
+      "registered": "2026-10-09T17:08:20.437342",
       "replaced_by": null,
       "active": true
     },
@@ -96,7 +96,7 @@
       "capability": "Browse and interact with web pages",
       "implementation": "playwright",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.539474",
+      "registered": "2026-10-09T17:08:20.437757",
       "replaced_by": null,
       "active": true
     },
@@ -106,7 +106,7 @@
       "capability": "Speech-to-text conversion",
       "implementation": "whisper",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.539882",
+      "registered": "2026-10-09T17:08:20.438110",
       "replaced_by": null,
       "active": true
     },
@@ -116,7 +116,7 @@
       "capability": "Text-to-speech conversion",
       "implementation": "gTTS",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.540333",
+      "registered": "2026-10-09T17:08:20.438472",
       "replaced_by": null,
       "active": true
     },
@@ -126,7 +126,7 @@
       "capability": "Convert HTML/CSS to images",
       "implementation": "playwright",
       "version": "1.0",
-      "registered": "2026-03-24T13:00:35.533022",
+      "registered": "2026-10-09T17:08:20.430792",
       "replaced_by": null,
       "active": true
     }

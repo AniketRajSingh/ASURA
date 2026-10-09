@@ -48,54 +48,53 @@ graph TD
 
 | Module | Purpose | File |
 |:---|:---|:---|
-| **anesthesia** | Surgical lock that pauses background daemons during live code surgery | `src/core/anesthesia.py` |
-| **antigravity_bridge** | Sub-agent and IDE inter-process communication bridge | `src/core/antigravity_bridge.py` |
-| **ast_surgeon** | Precision AST line-range extraction and non-destructive code surgery | `src/core/ast_surgeon.py` |
-| **auth** | JWT authentication, session tokens, and sovereign API key validation | `src/core/auth.py` |
-| **brain_router** | Dynamic cascading LLM routing across OpenRouter, Groq, and Ollama | `src/core/brain_router.py` |
-| **consciousness** | Autonomous inner-monologue daemon, introspective pulse, and stream of consciousness | `src/core/consciousness.py` |
-| **context_manager** | Sliding context window management and token budget enforcement | `src/core/context_manager.py` |
-| **curiosity** | Background autonomous learning, hypothesis generation, and exploration | `src/core/curiosity.py` |
-| **declarative_agent_loader** | Markdown-defined specialist agent loader and system prompt builder | `src/core/declarative_agent_loader.py` |
-| **doc_updater** | Autonomous documentation synchronization daemon | `src/core/doc_updater.py` |
-| **federation** | Peer-to-peer AI synchronization, git push/pull, and leader election | `src/core/federation.py` |
-| **formatter** | Multi-channel message formatting (Markdown, HTML for Telegram/Web) | `src/core/formatter.py` |
-| **gateway** | Unified multi-channel routing (Telegram, Web, CLI, API) | `src/core/gateway.py` |
-| **habits** | Pattern recognition and habit-learning idle behaviors | `src/core/habits.py` |
-| **handoff** | Autonomous agent handoff and delegation protocol | `src/core/handoff.py` |
-| **hooks** | Pre/Post tool execution interceptor hooks | `src/core/hooks.py` |
-| **interceptors** | Security, safety, and rate-limiting interceptor pipeline | `src/core/interceptors.py` |
-| **job_manager** | Asynchronous background job execution and status tracking | `src/core/job_manager.py` |
-| **knowledge_graph** | In-memory concept graph, entity relationships, and symbol dependencies | `src/core/knowledge_graph.py` |
-| **knowledge_scanner** | Incremental AST structural repository indexer | `src/core/knowledge_scanner.py` |
-| **llm** | Unified LLM invocation client with streaming, retry, and fallback | `src/core/llm.py` |
-| **mcp** | Full Model Context Protocol (JSON-RPC 2.0) server implementation | `src/core/mcp.py` |
-| **memory_manager** | Vector semantic memory (FAISS) and episodic event store coordinator | `src/core/memory_manager.py` |
-| **model_manager** | Model capability registry, context sizes, and task-to-model resolution | `src/core/model_manager.py` |
-| **observability** | Real-time tool execution metrics and latency tracing | `src/core/observability.py` |
-| **observer** | Proactive file system event listener and change detection | `src/core/observer.py` |
-| **permissions** | Granular user capability and command access framework | `src/core/permissions.py` |
-| **phantom_verify** | Ghost sandbox verification and isolated pre-commit validation | `src/core/phantom_verify.py` |
-| **proactive** | Proactive messaging, idle notifications, and scheduled check-ins | `src/core/proactive.py` |
-| **rbac** | Role-Based Access Control (Owner, Admin, Guest permissions) | `src/core/rbac.py` |
-| **reasoning** | Chain-of-Thought (CoT) and ReAct loop engine | `src/core/reasoning.py` |
-| **recommendation** | Autonomous recommendation generator and action store | `src/core/recommendation.py` |
-| **resource_governor** | System hardware thresholds, RAM/CPU governor, and safe mode | `src/core/resource_governor.py` |
-| **rule_engine** | Declarative behavioral constraint rule engine | `src/core/rule_engine.py` |
-| **self_healing** | Autonomous self-healing daemon and log error auto-remediation | `src/core/self_healing.py` |
-| **self_recovery** | Deep recursive self-repair and golden snapshot restoration | `src/core/self_recovery.py` |
-| **self_updater** | LLM-driven autonomous feature evolution and code self-updater | `src/core/self_updater.py` |
-| **sovereignty** | Cross-platform OS wake-lock / anti-sleep daemon | `src/core/sovereignty.py` |
-| **startup_checks** | Boot-time tool registry validation and hardware sanity tests | `src/core/startup_checks.py` |
-| **state_manager** | Persistent JSON state store for locks, runtime flags, and sessions | `src/core/state_manager.py` |
-| **sub_agent_memory** | Isolated memory vaults for spawned specialized sub-agents | `src/core/sub_agent_memory.py` |
-| **surgeon** | Operating Table (OT) Minimal Run Environment (`data/surgery/`) | `src/core/surgeon.py` |
-| **task_queue** | Priority async task queue with thread pool execution | `src/core/task_queue.py` |
-| **tool_protocol** | MCP-Lite dynamic tool registration and execution protocol | `src/core/tool_protocol.py` |
-| **unified_memory** | Cross-channel sovereign memory (episodic, working, semantic) | `src/core/unified_memory.py` |
-| **vcs** | Lightweight internal patch-based version control (`.tf_vcs/`) | `src/core/vcs.py` |
-| **workflow_engine** | YAML-driven multi-step automation workflow engine | `src/core/workflow_engine.py` |
-
+| **anesthesia** | Unknown | `src/core/anesthesia.py` |
+| **antigravity_bridge** | Antigravity Agent & IDE Bridge | `src/core/antigravity_bridge.py` |
+| **ast_surgeon** | Unknown | `src/core/ast_surgeon.py` |
+| **auth** | Unknown | `src/core/auth.py` |
+| **brain_router** | Dynamic Brain Router & Failover Engine | `src/core/brain_router.py` |
+| **consciousness** | Autonomous Consciousness & Metacognition | `src/core/consciousness.py` |
+| **context_manager** | Context Window Management | `src/core/context_manager.py` |
+| **curiosity** | Unknown | `src/core/curiosity.py` |
+| **declarative_agent_loader** | Declarative Agent System | `src/core/declarative_agent_loader.py` |
+| **doc_updater** | Autonomous Documentation Daemon | `src/core/doc_updater.py` |
+| **federation** | Peer-to-Peer AI Synchronization | `src/core/federation.py` |
+| **formatter** |  | `src/core/formatter.py` |
+| **gateway** | Interactive Gateway | `src/core/gateway.py` |
+| **habits** | AI Idle Habits | `src/core/habits.py` |
+| **handoff** | Autonomous Agent Handoff Protocol | `src/core/handoff.py` |
+| **hooks** | Pre/Post Tool Execution Hooks | `src/core/hooks.py` |
+| **interceptors** | Security & Safety Interceptor System | `src/core/interceptors.py` |
+| **job_manager** | Async Background Job Execution | `src/core/job_manager.py` |
+| **knowledge_graph** | Unknown | `src/core/knowledge_graph.py` |
+| **knowledge_scanner** | Unknown | `src/core/knowledge_scanner.py` |
+| **llm** | Unknown | `src/core/llm.py` |
+| **mcp** | Full Model Context Protocol (JSON-RPC 2.0) | `src/core/mcp.py` |
+| **memory_manager** | Unknown | `src/core/memory_manager.py` |
+| **model_manager** | Model Capability Registry & Router | `src/core/model_manager.py` |
+| **observability** | Tool Execution Observability | `src/core/observability.py` |
+| **observer** | Proactive File System Observer | `src/core/observer.py` |
+| **permissions** | Granular Permissions Framework | `src/core/permissions.py` |
+| **phantom_verify** | Ghost Sandbox Verification | `src/core/phantom_verify.py` |
+| **proactive** | Proactive Messaging & Idle Behavior | `src/core/proactive.py` |
+| **rbac** | Role-Based Access Control | `src/core/rbac.py` |
+| **reasoning** | Chain-of-Thought Reasoning Engine | `src/core/reasoning.py` |
+| **recommendation** | Unified Recommendation & Task Store | `src/core/recommendation.py` |
+| **resource_governor** | Resource Governor | `src/core/resource_governor.py` |
+| **rule_engine** | Declarative Behavior Rule Engine | `src/core/rule_engine.py` |
+| **self_healing** | Autonomous Self-Healing Daemon | `src/core/self_healing.py` |
+| **self_recovery** | Deep Recursive Self-Repair | `src/core/self_recovery.py` |
+| **self_updater** | LLM-Driven Self-Evolution Engine | `src/core/self_updater.py` |
+| **sovereignty** | Cross-Platform Anti-Sleep Protocol | `src/core/sovereignty.py` |
+| **startup_checks** | Boot-time tool verification | `src/core/startup_checks.py` |
+| **state_manager** | Unknown | `src/core/state_manager.py` |
+| **sub_agent_memory** | Unknown | `src/core/sub_agent_memory.py` |
+| **surgeon** | Unknown | `src/core/surgeon.py` |
+| **task_queue** | Priority Task Queue | `src/core/task_queue.py` |
+| **tool_protocol** | MCP-Lite: Dynamic Tool Protocol | `src/core/tool_protocol.py` |
+| **unified_memory** | Unified Sovereign Memory System | `src/core/unified_memory.py` |
+| **vcs** | Unknown | `src/core/vcs.py` |
+| **workflow_engine** | YAML-Driven Workflow Automation | `src/core/workflow_engine.py` |
 ---
 
 ## 4. Multi-Layer Sovereign Memory
