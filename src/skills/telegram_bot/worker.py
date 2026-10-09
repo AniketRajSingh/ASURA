@@ -30,6 +30,29 @@ async def stream_worker_daemon(app):
             log_app(f"Worker Global Error: {e}")
             await asyncio.sleep(2) # Prevent rapid crashes
 
+def _render_pipeline_card(stage: int, detail: str = "", provider: str = "openrouter", elapsed: float = 0.0) -> str:
+    """Render a visual CI/CD pipeline stage card for Telegram."""
+    stages = [
+        ("📥 Ingest", "Session & memory context compiled"),
+        ("🧠 Route", f"BrainRouter model selection ({provider})"),
+        ("⚡ Stream", detail or "Synthesizing response stream..."),
+        ("🚀 Finish", "Response dispatched to Master"),
+    ]
+    lines = [f"⚡ <b>ASURA Execution Pipeline</b> <code>[{elapsed:.1f}s]</code>\n"]
+    for i, (name, desc) in enumerate(stages, 1):
+        if i < stage:
+            icon = "✅"
+            status = "Passed"
+        elif i == stage:
+            icon = "🔄"
+            status = "Running"
+        else:
+            icon = "⚪"
+            status = "Queued"
+        lines.append(f"{icon} <b>{name}</b>: <i>{desc}</i> [{status}]")
+    return "\n".join(lines)
+
+
 async def _process_llm_task(task: dict):
     user_id = task["user_id"]
     user_msg = task["user_msg"]
@@ -42,40 +65,75 @@ async def _process_llm_task(task: dict):
     full_reply = ""
     last_up = time.time()
     
+    # Render Stage 1: Ingestion
+    try:
+        await status_msg.edit_text(_render_pipeline_card(1, elapsed=time.perf_counter() - t_start), parse_mode="HTML")
+    except Exception:
+        pass
+
     try:
         from core.gateway import handle_message
+        from core.brain_router import brain_router
         
-        # This async generator connects to Ollama heavily
-        stream = await handle_message(user_id, user_msg, channel="telegram", stream=True, agent_name="asura-telegram")
-        
-        first_chunk_received = False
-        
-        async for chunk in stream:
-            if not first_chunk_received:
-                first_chunk_received = True
+        # Render Stage 2: Routing
+        active_prov = getattr(config, "LLM_PROVIDER", "openrouter")
+        try:
+            await status_msg.edit_text(_render_pipeline_card(2, provider=active_prov, elapsed=time.perf_counter() - t_start), parse_mode="HTML")
+        except Exception:
+            pass
 
-            if "[METADATA]" in chunk: continue
-            full_reply += chunk
-            
-            # Intelligent Throttling (3.0 seconds) to avoid Telegram HTTP 429 Flood Control
-            if time.time() - last_up > 3.0:
-                try:
-                    await status_msg.edit_text(format_message(full_reply + " █", platform="telegram"), parse_mode="HTML")
-                    last_up = time.time()
-                except Exception as e:
-                    if "Message is not modified" not in str(e):
-                        pass # Ignore minor edit_text sync errors
+        # Watchdog timeout: if no chunks arrive within 12s, fallback kicks in
+        async def _consume_stream():
+            nonlocal full_reply, last_up
+            stream = await handle_message(user_id, user_msg, channel="telegram", stream=True, agent_name="asura-telegram")
+            first_chunk = False
+            async for chunk in stream:
+                if not first_chunk:
+                    first_chunk = True
+                    # Render Stage 3: Streaming
+                    try:
+                        await status_msg.edit_text(_render_pipeline_card(3, detail="First token received. Generating...", provider=active_prov, elapsed=time.perf_counter() - t_start), parse_mode="HTML")
+                    except Exception:
+                        pass
+                if "[METADATA]" in chunk:
+                    continue
+                full_reply += chunk
+                if time.time() - last_up > 2.5:
+                    try:
+                        await status_msg.edit_text(format_message(full_reply + " █", platform="telegram"), parse_mode="HTML")
+                        last_up = time.time()
+                    except Exception:
+                        pass
+
+        try:
+            await asyncio.wait_for(_consume_stream(), timeout=18.0)
+        except asyncio.TimeoutError:
+            log_app("Pipeline Watchdog: Stream timeout reached (18s). Diverting pipeline to emergency local/Groq fallback...")
+            try:
+                await status_msg.edit_text(
+                    "⚠️ <b>Pipeline Watchdog Alert:</b> Primary model stalled (>18s).\n"
+                    "🔄 <i>Auto-diverting workload to high-speed fallback tier...</i>",
+                    parse_mode="HTML"
+                )
+            except Exception:
+                pass
+            from core.llm import call_llm
+            full_reply = await call_llm(user_msg, system_prompt="You are ASURA Sovereign AI. Respond concisely and accurately.")
 
         # Ensure minimal chunk was generated
         if not full_reply.strip():
-            full_reply = "I completed the thought process, but the stream yielded no direct response."
+            full_reply = "I processed your request, but the stream yielded no direct output. Please retry."
 
         # Cleanup Temporary Processing Elements
-        try: await status_msg.delete()
-        except: pass
+        try:
+            await status_msg.delete()
+        except Exception:
+            pass
         if sticker_msg:
-            try: await sticker_msg.delete()
-            except: pass
+            try:
+                await sticker_msg.delete()
+            except Exception:
+                pass
 
         # Final Formatting and MCQ Dispatch
         await _dispatch_final_reply(update, context, user_id, full_reply.strip())
@@ -85,8 +143,13 @@ async def _process_llm_task(task: dict):
         
     except Exception as e:
         log_app(f"Worker Task Processing Error: {e}")
-        try: await update.message.reply_text(f"❌ <b>Sovereign Queue Error:</b> {e}", parse_mode="HTML")
-        except: pass
+        try:
+            # Emergency fail-safe response
+            from core.formatter import format_message
+            err_notice = f"⚠️ <b>Pipeline Failover:</b> Encountered <code>{e}</code>.\n\nMaster, the system caught this state and remains operational."
+            await update.message.reply_text(format_message(err_notice, platform="telegram"), parse_mode="HTML")
+        except Exception:
+            pass
 
 
 async def _dispatch_final_reply(update, context, user_id, full_reply: str):

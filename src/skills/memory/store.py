@@ -42,15 +42,24 @@ def _rebuild_index():
     with _MEMORY_LOCK:
         docs_copy = list(_documents)
     
+    consecutive_failures = 0
     for doc in docs_copy:
         # Use cached embedding if available
         embedding = None
         if "embedding" in doc:
             embedding = np.array(doc["embedding"], dtype=np.float32)
         else:
+            if consecutive_failures >= 2:
+                break
             embedding = _get_embedding(doc["text"])
             if embedding is not None:
+                consecutive_failures = 0
                 doc["embedding"] = embedding.tolist() # Cache as list for JSON
+            else:
+                consecutive_failures += 1
+                if consecutive_failures >= 2:
+                    log_app("Memory: Embedding endpoint offline. Aborting index rebuild.")
+                    break
         
         if embedding is not None:
             if temp_index is None:

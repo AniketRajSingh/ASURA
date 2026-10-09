@@ -574,18 +574,18 @@
     "functions": []
   },
   "src/core/llm.py": {
-    "mtime": 1790844110.0458057,
+    "mtime": 1791550479.4740305,
     "imports": [
       "core.model_manager",
-      "core.brain_router",
-      "httpx",
-      "skills.logger",
-      "json",
-      "core.utils.retry",
-      "settings",
-      "core.unified_memory",
       "asyncio",
-      "core.resource_governor"
+      "skills.logger",
+      "httpx",
+      "json",
+      "settings",
+      "core.brain_router",
+      "core.resource_governor",
+      "core.unified_memory",
+      "core.utils.retry"
     ],
     "functions": [
       "call_llm",
@@ -1650,33 +1650,33 @@
     ]
   },
   "src/skills/memory/store.py": {
-    "mtime": 1791545800.6370456,
+    "mtime": 1791546562.32112,
     "imports": [
+      "settings",
+      "skills.logger",
+      "os",
       "typing",
+      "faiss",
+      "time",
+      "json",
+      "requests",
+      "datetime",
       "hashlib",
       "threading",
-      "os",
-      "requests",
-      "faiss",
-      "json",
-      "settings",
-      "datetime",
-      "skills.logger",
-      "time",
       "numpy"
     ],
     "functions": [
-      "recall",
-      "list_all",
-      "surgery_cleanup",
-      "delete_by_metadata",
-      "initialize",
       "get_freshness_score",
-      "get_memory_store",
-      "get_all_memories_summary",
-      "store_memory",
+      "store_update_log",
+      "surgery_cleanup",
+      "list_all",
       "prune_memories",
-      "store_update_log"
+      "get_memory_store",
+      "initialize",
+      "delete_by_metadata",
+      "store_memory",
+      "recall",
+      "get_all_memories_summary"
     ]
   },
   "src/skills/memory/self_awareness.py": {
@@ -2894,40 +2894,40 @@
     ]
   },
   "src/skills/ai_content/generator.py": {
-    "mtime": 1774336829.4848702,
+    "mtime": 1791546613.603793,
     "imports": [
-      "skills.memory.episodic",
-      "core.model_manager",
-      "skills.logger",
-      "time",
-      "skills.skill_registry",
-      "threading",
-      "os",
-      "core.declarative_agent_loader",
-      "skills.emotion.detector",
-      "json",
-      "core.tool_protocol",
-      "concurrent.futures",
-      "asyncio",
-      "core.reasoning",
-      "skills.memory.procedural",
       "core.llm",
-      "datetime",
-      "httpx",
-      "re",
+      "os",
       "core.memory_manager",
       "requests",
+      "threading",
+      "concurrent.futures",
       "skills.conversation.history",
+      "re",
+      "skills.memory.episodic",
+      "asyncio",
+      "core.model_manager",
+      "time",
+      "json",
+      "skills.emotion.detector",
+      "datetime",
+      "settings",
+      "skills.logger",
       "core.context_manager",
-      "settings"
+      "core.tool_protocol",
+      "core.reasoning",
+      "core.declarative_agent_loader",
+      "skills.memory.procedural",
+      "skills.skill_registry",
+      "httpx"
     ],
     "functions": [
-      "chat_stream",
-      "cancel_current_task",
-      "generate_caption",
+      "chat",
       "generate_topics",
-      "get_agent_task",
-      "chat"
+      "chat_stream",
+      "generate_caption",
+      "cancel_current_task",
+      "get_agent_task"
     ]
   },
   "src/skills/todo_manager/__init__.py": {
@@ -3209,39 +3209,41 @@
     ]
   },
   "src/skills/logger.py": {
-    "mtime": 1790774009.401083,
+    "mtime": 1791546112.3060474,
     "imports": [
       "pathlib",
-      "os",
-      "sys",
-      "logging.handlers",
-      "logging",
       "skills.logger.log",
-      "typing"
+      "os",
+      "typing",
+      "logging.handlers",
+      "sys",
+      "logging"
     ],
     "functions": [
-      "flush",
-      "clear_logs",
-      "get_recent_logs",
-      "log_app",
       "query_logs",
       "get_skill_manifest",
       "set_level",
-      "log_event",
-      "log_audit"
+      "get_recent_logs",
+      "log_app",
+      "flush",
+      "clear_logs",
+      "log_audit",
+      "log_event"
     ]
   },
   "src/skills/telegram_bot/worker.py": {
-    "mtime": 1774337334.3992167,
+    "mtime": 1791550554.021227,
     "imports": [
-      "skills.logger",
-      "telegram",
-      "asyncio",
-      "core.gateway",
       "re",
+      "telegram",
+      "core.gateway",
+      "asyncio",
+      "skills.logger",
+      "core.llm",
+      "skills.telegram_bot.bot",
+      "core.brain_router",
       "time",
-      "core.formatter",
-      "skills.telegram_bot.bot"
+      "core.formatter"
     ],
     "functions": [
       "stream_worker_daemon"
@@ -3300,36 +3302,36 @@
     ]
   },
   "src/core/brain_router.py": {
-    "mtime": 1791545064.1566136,
+    "mtime": 1791550517.5812945,
     "imports": [
       "core.model_manager",
-      "time",
+      "asyncio",
       "os",
       "httpx",
-      "skills.logger",
       "json",
-      "skills.visual.local_vision",
-      "dataclasses",
-      "typing",
       "settings",
+      "skills.logger",
+      "skills.visual.local_vision",
+      "time",
+      "typing",
+      "core.resource_governor",
       "__future__",
-      "asyncio",
-      "core.resource_governor"
+      "dataclasses"
     ],
     "functions": [
-      "record_failover",
-      "mark_exhausted",
+      "from_dict",
       "is_ollama_alive",
-      "get_status_summary",
-      "fetch_openrouter_models",
       "get_candidates",
-      "clear_exhaustion",
-      "to_dict",
-      "switch_model",
-      "is_exhausted",
-      "get_exhausted_models",
       "reset_to_automatic",
-      "from_dict"
+      "fetch_openrouter_models",
+      "clear_exhaustion",
+      "is_exhausted",
+      "switch_model",
+      "mark_exhausted",
+      "get_exhausted_models",
+      "record_failover",
+      "get_status_summary",
+      "to_dict"
     ]
   },
   "src/core/unified_memory.py": {

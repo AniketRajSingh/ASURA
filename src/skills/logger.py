@@ -174,13 +174,13 @@ def get_recent_logs(n: int = 100) -> List[str]:
     Notes
     -----
     If the log file does not exist or cannot be read, an empty list is
-    returned.
+    returned.  Encoding issues are handled gracefully via error replacement.
     """
     if n <= 0:
         return []
 
     try:
-        with _LOG_FILE.open("r", encoding="utf-8") as f:
+        with _LOG_FILE.open("r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
             return [line.rstrip("\n") for line in lines[-n:]]
     except Exception as exc:  # pragma: no cover - defensive
@@ -192,12 +192,21 @@ def clear_logs() -> None:
     Truncate the current log file.
 
     This operation is safe even if the log file is being written to
-    concurrently; the file will simply be emptied.
+    concurrently; the file is emptied in‑place without being deleted,
+    preventing RotatingFileHandler desynchronization crashes that
+    occurred when the file was unlinked and re‑created while the handler
+    still referenced the old inode.
+
+    Notes
+    -----
+    The handler remains attached to the original file path and continues
+    to function correctly after truncation.
     """
     try:
-        _LOG_FILE.unlink(missing_ok=True)
-        # Re‑create the file to ensure the handler continues to work.
-        _LOG_FILE.touch()
+        # Truncate the file in-place to avoid unlinking the open file
+        # descriptor associated with the RotatingFileHandler.
+        with open(_LOG_FILE, "w", encoding="utf-8") as f:
+            pass
     except Exception as exc:  # pragma: no cover - defensive
         _logger.debug("Failed to clear log file: %s", exc)
 

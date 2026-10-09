@@ -330,24 +330,41 @@ class BrainRouter:
         from core.resource_governor import get_governor
         gov = get_governor()
 
-        # 1. Manual Override or Explicit Requested Model
+        # 1. Local Daemon Health
+        ollama_alive = await self.is_ollama_alive()
+        from core.model_manager import model_manager
+        local_model = model_manager.get_model_for_task(task_type)
+
+        # 2. Manual Override or Explicit Requested Model
         target_model = requested_model or (self._active_override[1] if self._active_override else None)
         target_provider = self._active_override[0] if self._active_override else None
 
         if target_model and not self.is_exhausted(target_model):
-            provider = target_provider or ("openrouter" if "/" in target_model else getattr(config, "LLM_PROVIDER", "ollama"))
-            candidates.append({
-                "provider": provider,
-                "model": target_model,
-                "tier": "user_override",
-                "is_local": provider == "ollama",
-                "description": f"Explicit/Override target ({target_model})",
-            })
-
-        # 2. Local Ollama (Zero Latency & Privacy)
-        ollama_alive = await self.is_ollama_alive()
-        from core.model_manager import model_manager
-        local_model = model_manager.get_model_for_task(task_type)
+            if "/" in target_model or target_model == "openrouter/free":
+                candidates.append({
+                    "provider": "openrouter",
+                    "model": target_model,
+                    "tier": "user_override",
+                    "is_local": False,
+                    "description": f"Explicit/Override target ({target_model})",
+                })
+            elif target_provider:
+                if target_provider != "ollama" or ollama_alive:
+                    candidates.append({
+                        "provider": target_provider,
+                        "model": target_model,
+                        "tier": "user_override",
+                        "is_local": target_provider == "ollama",
+                        "description": f"Explicit/Override target ({target_model})",
+                    })
+            elif ollama_alive:
+                candidates.append({
+                    "provider": "ollama",
+                    "model": target_model,
+                    "tier": "user_override",
+                    "is_local": True,
+                    "description": f"Explicit/Override target ({target_model})",
+                })
 
         # 2a. Local Offline Multimodal Vision Model (Tier 0 for Privacy & Zero Latency)
         if require_vision and ollama_alive:

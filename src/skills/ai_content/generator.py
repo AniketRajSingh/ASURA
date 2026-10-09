@@ -583,7 +583,40 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
                                     "total_time": usage.get("total_time")
                                 }
                                 yield f"[METADATA]{json.dumps(metrics)}[/METADATA]"
-                        except: continue
+                        except Exception:
+                            continue
+            elif provider == "openrouter":
+                or_key = getattr(config, "OPENROUTER_API_KEY", "")
+                active_model = getattr(config, "ASURA_OPENROUTER_MODEL", "openrouter/free")
+                if "/" not in active_model:
+                    active_model = "openrouter/free"
+                
+                headers = {
+                    "Authorization": f"Bearer {or_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://github.com/asura-ai",
+                    "X-Title": "ASURA Sovereign AI",
+                }
+                payload = {
+                    "model": active_model,
+                    "messages": messages,
+                    "stream": True,
+                }
+                async with httpx.AsyncClient(timeout=120) as client:
+                    async with client.stream("POST", "https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload) as resp:
+                        async for line in resp.aiter_lines():
+                            if not line or _cancel_event.is_set(): continue
+                            if line.startswith("data: "):
+                                if line.strip() == "data: [DONE]": break
+                                try:
+                                    chunk = json.loads(line[6:])
+                                    delta = chunk.get("choices", [{}])[0].get("delta", {})
+                                    content = delta.get("content", "")
+                                    if content:
+                                        full_reply += content
+                                        yield content
+                                except Exception:
+                                    continue
             else:
                 # Default Ollama - User permanently disabled fast model routing natively
                 # Locking stream to heavy 20B reasoning model for maximum cognitive density

@@ -222,7 +222,7 @@ async def _call_groq(prompt: str, model: str, system_prompt: str, stream: bool, 
             log_app(f"Groq call failed: {e}")
             raise
 
-@async_retry(retries=3, delay=5.0, backoff=2.0, exceptions=(httpx.HTTPStatusError, httpx.ConnectError, httpx.ReadTimeout))
+@async_retry(retries=2, delay=1.0, backoff=1.5, exceptions=(httpx.HTTPStatusError, httpx.ReadTimeout))
 async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool, format: str, images: list[str] = None, temperature: float = 0.7, timeout: int = 300):
     # Use /api/chat (universal)
     messages = []
@@ -249,7 +249,8 @@ async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool
     # FORCE NO PROXY for local Ollama calls
     mounts = {"all://": None}
     base_url = model_manager.get_ollama_url()
-    async with httpx.AsyncClient(mounts=mounts, timeout=timeout, trust_env=False) as client:
+    t_cfg = httpx.Timeout(timeout or 60, connect=2.0)
+    async with httpx.AsyncClient(mounts=mounts, timeout=t_cfg, trust_env=False) as client:
         try:
             resp = await client.post(f"{base_url}/api/chat", json=payload)
             resp.raise_for_status()
