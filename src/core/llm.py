@@ -239,6 +239,7 @@ async def _call_ollama(prompt: str, model: str, system_prompt: str, stream: bool
         "model": model,
         "messages": messages,
         "stream": stream,
+        "keep_alive": -1,
         "options": {
             "temperature": temperature,
         },
