@@ -107,8 +107,11 @@ def format_message(text: str, platform: str = "cli"):
 
     elif platform == "telegram":
         # Telegram HTML mode is more robust for mobile clients.
-        # 1. Strip internal RAG/Memory tags
-        processed = re.sub(r'\[(EPISODIC|VAULT|ARCH)\]\s*', '', text)
+        # 1. Strip internal RAG/Memory, metadata and reasoning tags
+        processed = re.sub(r'\[METADATA\].*?\[/METADATA\]', '', text, flags=re.DOTALL)
+        processed = re.sub(r'<think>.*?</think>', '', processed, flags=re.DOTALL)
+        processed = re.sub(r'</?think>', '', processed)
+        processed = re.sub(r'\[(EPISODIC|VAULT|ARCH)\]\s*', '', processed)
         
         # 2. Strip Action/Observation markers
         processed = re.sub(r'\[/?(ACTION|OBSERVATION)\]', '', processed)

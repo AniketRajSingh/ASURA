@@ -500,10 +500,6 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
 
     history.append({"role": "user", "content": user_message})
 
-    # ── RESONANCE: Apply personality adaptation ───
-    from skills.emotion.detector import get_adaptive_prefix
-    adaptation = get_adaptive_prefix(emotional_pulse)
-    if adaptation: yield adaptation
 
     # ─── TURBO-PARALLEL: Concurrent Preparation ────────────
     from core.declarative_agent_loader import get_agent_loader
@@ -512,6 +508,7 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
     
     async def get_agent_task():
         if agent_name: return loader.get_agent(agent_name)
+        if not loader.agents: return None
         log_app(f"DEBUG: Parallel agent selection for: {user_message[:20]}...")
         best_match = await loader.find_agent_for_query_async(user_message)
         return loader.get_agent(best_match)
@@ -604,6 +601,7 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
                 }
                 async with httpx.AsyncClient(timeout=120) as client:
                     async with client.stream("POST", "https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload) as resp:
+                        resp.raise_for_status()
                         async for line in resp.aiter_lines():
                             if not line or _cancel_event.is_set(): continue
                             if line.startswith("data: "):
@@ -611,22 +609,23 @@ async def chat_stream(user_message: str, history: list[dict] | None = None, plat
                                 try:
                                     chunk = json.loads(line[6:])
                                     delta = chunk.get("choices", [{}])[0].get("delta", {})
-                                    content = delta.get("content", "")
+                                    content = delta.get("content") or delta.get("reasoning") or ""
                                     if content:
                                         full_reply += content
                                         yield content
                                 except Exception:
                                     continue
             else:
-                # Default Ollama - User permanently disabled fast model routing natively
-                # Locking stream to heavy 20B reasoning model for maximum cognitive density
-                active_model = getattr(config, "OLLAMA_MODEL_REASONING", getattr(config, "OLLAMA_MODEL", "gpt-oss:20b"))
+                # Default Ollama
+                active_model = getattr(config, "OLLAMA_MODEL_REASONING", getattr(config, "OLLAMA_MODEL", "jev-9b"))
                 log_app(f"DEBUG: Initiating Ollama stream (Model: {active_model})")
-                async with httpx.AsyncClient(timeout=300, trust_env=False) as client:
+                mounts = {"all://": None}
+                async with httpx.AsyncClient(mounts=mounts, timeout=300, trust_env=False) as client:
                     async with client.stream(
                         "POST", f"{config.OLLAMA_BASE_URL}/api/chat",
-                        json={"model": active_model, "messages": messages, "stream": True},
+                        json={"model": active_model, "messages": messages, "stream": True, "keep_alive": -1},
                     ) as resp:
+                        resp.raise_for_status()
                         async for line in resp.aiter_lines():
                             if not line: continue
                             try:

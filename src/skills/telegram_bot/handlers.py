@@ -497,7 +497,7 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     t_status = time.perf_counter()
     
     try:
-        from skills.telegram_bot.bot import get_llm_queue
+        from skills.telegram_bot.bot import get_llm_queue, ensure_stream_worker
         
         # Create Task Payload for the Sovereign Worker
         task = {
@@ -511,6 +511,7 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         
         # Enqueue the workload instantly to free the polling connection
         await get_llm_queue().put(task)
+        ensure_stream_worker(getattr(context, "application", None))
         log_audit("TELEGRAM", f"Message payload from {user_id} dispatched to Sovereign Worker Queue")
     except Exception as e:
         log_app(f"Chat Handler Error: {e}")

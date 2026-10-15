@@ -93,16 +93,7 @@ def detect_emotion(message: str) -> dict:
 
 def get_adaptive_prefix(emotion: str, confidence: float = 1.0) -> str:
     """Get a response style adaptation based on detected emotion."""
-    if confidence < 0.4: return ""
-    
-    adaptations = {
-        "frustrated": "I sense some frustration—let's resolve this with precision. ",
-        "excited": "Love the momentum! 🚀 ",
-        "tired": "Quick and efficient for you— ",
-        "curious": "Intriguing direction! ",
-        "neutral": "",
-    }
-    return adaptations.get(emotion, "")
+    return ""
 
 
 def should_suggest_break(message: str) -> bool:

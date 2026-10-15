@@ -53,8 +53,13 @@ async def main():
     
     await core_app.initialize()
     await core_app.start()
+    if core_app.post_init:
+        await core_app.post_init(core_app)
+
     await insta_app.initialize()
     await insta_app.start()
+    if insta_app.post_init:
+        await insta_app.post_init(insta_app)
     
     log_app("🤖 Dual Bots Polling: ACTIVE (Daemon Mode)")
     

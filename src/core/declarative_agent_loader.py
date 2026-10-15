@@ -134,6 +134,8 @@ class AgentLoader:
         import asyncio
         
         agent_names = list(self.agents.keys())
+        if not agent_names:
+            return ""
         prompt = f"[INST] Select agent for: \"{query[:200]}\"\nChoices: {agent_names}\nRespond with ONLY name.[/INST]"
 
         try:

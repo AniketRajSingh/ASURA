@@ -174,7 +174,7 @@ def voice_chat_loop(
                 # Fallback: direct Ollama
                 resp = requests.post(
                     f"{ollama_url}/api/generate",
-                    json={"model": "gpt-oss:20b", "prompt": user_text, "stream": False},
+                    json={"model": getattr(config, "OLLAMA_MODEL", "jev-9b"), "prompt": user_text, "stream": False, "keep_alive": -1},
                     timeout=60,
                 )
                 ai_text = resp.json().get("response", "")

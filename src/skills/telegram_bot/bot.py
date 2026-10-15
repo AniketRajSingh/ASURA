@@ -41,12 +41,26 @@ _proactive_engine = None
 _pending_approvals: dict[int, dict] = {}
 
 _llm_task_queue = None
+_worker_task = None
 
 def get_llm_queue():
     global _llm_task_queue
     if _llm_task_queue is None:
         _llm_task_queue = asyncio.Queue()
     return _llm_task_queue
+
+def ensure_stream_worker(app=None):
+    """Ensure the async LLM queue worker is active."""
+    global _worker_task, _core_app
+    target_app = app or _core_app
+    if target_app:
+        try:
+            loop = asyncio.get_running_loop()
+            if _worker_task is None or _worker_task.done():
+                from skills.telegram_bot.worker import stream_worker_daemon
+                _worker_task = loop.create_task(stream_worker_daemon(target_app))
+        except RuntimeError:
+            pass
 
 def set_proactive_engine(engine):
     global _proactive_engine
@@ -812,25 +826,25 @@ def create_core_bot():
     async def post_init(app: Application):
         app.main_loop = asyncio.get_running_loop()
         
-        # Initialize central LLM Queue
+        # Initialize central LLM Queue and Stream Worker
         get_llm_queue()
-        
-        # Start Async Stream Daemon
-        from skills.telegram_bot.worker import stream_worker_daemon
-        app.create_task(stream_worker_daemon(app))
+        ensure_stream_worker(app)
         
         # Register commands for the "Menu" button
         from telegram import BotCommand
-        await app.bot.set_my_commands([
-            BotCommand("start", "Launch Hub & Dashboard"),
-            BotCommand("jarvis", "Autonomous Device Controller"),
-            BotCommand("device", "Control Screen & Mobile"),
-            BotCommand("consciousness", "Mind & Vitals Stream"),
-            BotCommand("skills", "View Capabilities"),
-            BotCommand("think", "Deep Reasoning Mode"),
-            BotCommand("screenshot", "Capture Screen"),
-            BotCommand("run", "Execute Command"),
-        ])
+        try:
+            await app.bot.set_my_commands([
+                BotCommand("start", "Launch Hub & Dashboard"),
+                BotCommand("jarvis", "Autonomous Device Controller"),
+                BotCommand("device", "Control Screen & Mobile"),
+                BotCommand("consciousness", "Mind & Vitals Stream"),
+                BotCommand("skills", "View Capabilities"),
+                BotCommand("think", "Deep Reasoning Mode"),
+                BotCommand("screenshot", "Capture Screen"),
+                BotCommand("run", "Execute Command"),
+            ])
+        except Exception as e:
+            log_app(f"Failed to set bot commands: {e}")
     
     app = Application.builder().token(cfg.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
     

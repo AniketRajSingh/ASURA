@@ -11,6 +11,7 @@ import re
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from skills.logger import log_app, log_audit
 from core.formatter import format_message
+from settings import settings as config
 
 async def stream_worker_daemon(app):
     """Infinite loop daemon that processes tasks from the LLM Queue."""
@@ -135,8 +136,13 @@ async def _process_llm_task(task: dict):
             except Exception:
                 pass
 
+        # Clean metadata & reasoning tags
+        clean_reply = re.sub(r'\[METADATA\].*?\[/METADATA\]', '', full_reply, flags=re.DOTALL)
+        clean_reply = re.sub(r'<think>.*?</think>', '', clean_reply, flags=re.DOTALL)
+        clean_reply = re.sub(r'</?think>', '', clean_reply).strip()
+
         # Final Formatting and MCQ Dispatch
-        await _dispatch_final_reply(update, context, user_id, full_reply.strip())
+        await _dispatch_final_reply(update, context, user_id, clean_reply)
         
         gen_time = time.perf_counter() - t_start
         log_audit("TELEGRAM_QUEUE", f"Processed task for user {user_id} in {gen_time:.2f}s")

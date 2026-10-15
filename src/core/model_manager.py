@@ -207,7 +207,7 @@ class ModelManager:
         elif provider == "openrouter":
             return getattr(config, "OPENROUTER_MODEL_FREE", "nvidia/nemotron-3.5-lightning:free")
         else:
-            return getattr(config, "OLLAMA_MODEL", "gpt-oss:20b")
+            return getattr(config, "OLLAMA_MODEL", "jev-9b")
 
     async def route_by_complexity(self, prompt: str, system_prompt: str = None) -> str:
         """
@@ -289,30 +289,28 @@ Respond with ONLY one word: fast OR heavy."""
 
         # Map task types to standardized OLLAMA config variables
         model_map = {
-            "default": getattr(config, "OLLAMA_MODEL", "gpt-oss:20b"),
-            "reasoning": getattr(config, "OLLAMA_MODEL_REASONING", "gpt-oss:20b"),
-            "vision": getattr(config, "OLLAMA_MODEL_VISION", "qwen3.5:0.8b"),
-            "heavy_vision": getattr(config, "OLLAMA_MODEL", "gpt-oss:20b"),
-            "caption": getattr(config, "OLLAMA_MODEL_CAPTION", "qwen3.5:0.8b"),
-            "summary": getattr(config, "OLLAMA_MODEL_SUMMARY", "qwen3.5:0.8b"),
-            "code": getattr(config, "OLLAMA_MODEL_CODE", "gpt-oss:20b"),
-            "review": getattr(config, "OLLAMA_MODEL_REVIEWER", "gpt-oss:20b"),
-            "intent": getattr(config, "OLLAMA_MODEL_INTENT", "qwen3.5:0.8b"),
-            "fast": getattr(config, "OLLAMA_MODEL_FAST", "qwen3.5:0.8b"),
+            "default": getattr(config, "OLLAMA_MODEL", "jev-9b"),
+            "reasoning": getattr(config, "OLLAMA_MODEL_REASONING", "jev-9b"),
+            "vision": getattr(config, "OLLAMA_MODEL_VISION", "jev-9b"),
+            "heavy_vision": getattr(config, "OLLAMA_MODEL", "jev-9b"),
+            "caption": getattr(config, "OLLAMA_MODEL_CAPTION", "jev-9b"),
+            "summary": getattr(config, "OLLAMA_MODEL_SUMMARY", "jev-9b"),
+            "code": getattr(config, "OLLAMA_MODEL_CODE", "jev-9b"),
+            "review": getattr(config, "OLLAMA_MODEL_REVIEWER", "jev-9b"),
+            "intent": getattr(config, "OLLAMA_MODEL_INTENT", "jev-9b"),
+            "fast": getattr(config, "OLLAMA_MODEL_FAST", "jev-9b"),
         }
         
         active_ollama = model_map.get(task_type, model_map["default"])
         
         # Dynamic Vision Routing (Contextual override)
         if task_type in ("vision", "caption", "heavy_vision"):
-            # Use 20b for heavy vision tasks or if default is already 20b and multimodal
             if task_type == "heavy_vision":
-                return model_map["default"] if "20b" in model_map["default"].lower() else "gpt-oss:20b"
+                return model_map["default"]
 
             main_model = model_map["default"]
-            if self.is_multimodal(main_model) and "20b" in main_model.lower():
+            if self.is_multimodal(main_model):
                 return main_model
-            # Otherwise use the designated vision/caption model
             return active_ollama
 
         return active_ollama
